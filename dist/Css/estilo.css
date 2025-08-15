@@ -1,0 +1,302 @@
+/* ================================
+   ESTILO PRINCIPAL - El Arrendajo Azul
+   ================================ */
+
+/* Fuente global */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Nunito', sans-serif;
+    background: linear-gradient(135deg, #e6f7fa, #cce7f0);
+    color: #333;
+    line-height: 1.6;
+    padding: 10px;
+}
+
+/* Contenedor general */
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* Titulos */
+h1, h2, h3 {
+    color: #006d77;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+/* Texto resaltado */
+.highlight {
+    color: #00b4d8;
+    font-weight: bold;
+}
+
+/* Contenedor de botones */
+#closeButton {
+    background-color: #dc3545 !important; /* Rojo Bootstrap */
+    color: white !important;
+    border: none !important;
+}
+
+#closeButton:hover {
+    background-color: #b02a37 !important; /* Rojo más oscuro al pasar el mouse */
+}
+
+#closeButton,
+.btn-danger {
+    background-color: #dc3545 !important; /* Rojo Bootstrap */
+    color: white !important;
+    border: none !important;
+}
+
+#closeButton:hover,
+.btn-danger:hover {
+    background-color: #b02a37 !important; /* Rojo más oscuro */
+}
+
+.btn-orange {
+    background-color: #fd9814 !important; /* Naranja Bootstrap warning-dark */
+    color: white !important;
+    border: none !important;
+}
+
+.btn-orange:hover {
+    background-color: #fd9814 !important; /* Más oscuro al pasar el mouse */
+}
+
+.btn-warning {
+    background-color: #fd9814 !important; /* Naranja intenso */
+    color: white !important;
+    border: none !important;
+}
+
+
+.btn-warning:hover {
+    background-color: #fd9814 !important; /* Más oscuro al hover */
+}
+
+.botones {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+/* Estilo de botones generales (no afecta carrito) */
+button:not(.btn-cantidad):not(.btn-quitar),
+.btn:not(.btn-cantidad):not(.btn-quitar) {
+    background-color: var(--color-acento, #4CAF50); /* Verde por defecto */
+    color: #ffffff; /* Texto blanco */
+    padding: 5px 20px;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+
+/* Hover general */
+button:not(.btn-cantidad):not(.btn-quitar):hover,
+.btn:not(.btn-cantidad):not(.btn-quitar):hover {
+    background-color: #3e8e41;
+    transform: scale(1.05);
+}
+
+button:not(.btn-cantidad):not(.btn-quitar):active,
+.btn:not(.btn-cantidad):not(.btn-quitar):active {
+    transform: scale(0.97);
+}
+
+/* Inputs y formularios */
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #00b4d8;
+    box-shadow: 0 0 5px rgba(0, 180, 216, 0.5);
+}
+
+/* Tarjetas */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+/* Enlaces */
+a {
+    color: #0077b6;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Tablas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th, td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+    vertical-align: middle;
+}
+
+th {
+    background-color: #00b4d8;
+    color: white;
+}
+
+/* Responsive general */
+@media (max-width: 768px) {
+    body {
+        font-size: 15px;
+    }
+    h1 {
+        font-size: 1.5rem;
+    }
+    button, .btn {
+        font-size: 1rem;
+        padding: 12px;
+        min-width: 120px;
+    }
+    table {
+        font-size: 0.9rem;
+    }
+}
+
+/* Animaciones suaves */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* =========================================
+   Estilos específicos del carrito de compras
+   ========================================= */
+
+/* Columna cantidad */
+.col-cantidad {
+    width: 1%;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Contenedor botones y número */
+.cantidad-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+}
+
+/* Botones +/- */
+.btn-cantidad {
+    background-color: #f0f0f0 !important;
+    color: #333 !important;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.8rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.btn-cantidad:hover {
+    background-color: #ddd !important;
+    color: #000 !important;
+}
+
+.cantidad-num {
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Botón quitar */
+.btn-quitar {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.btn-quitar:hover {
+    background-color: #b02a37 !important;
+}
+
+/* Responsive carrito */
+@media (max-width: 768px) {
+    .cantidad-container {
+        gap: 6px;
+    }
+    .btn-cantidad {
+        padding: 5px 6px;
+        font-size: 0.8rem;
+        min-width: 30px;
+    }
+    .cantidad-num {
+        min-width: 22px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 420px) {
+    .btn-cantidad {
+        padding: 4px 5px;
+        font-size: 0.75rem;
+        min-width: 26px;
+    }
+    .cantidad-num {
+        min-width: 20px;
+        font-size: 0.85rem;
+    }
+}
+
+.btn-secondary {
+    background-color: #6c757d !important; /* Gris Bootstrap */
+    color: white !important;
+    border: none !important;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268 !important; /* Gris más oscuro en hover */
+}
