@@ -53,8 +53,13 @@ export async function cargarDetalleCuenta(clienteId) {
 
             productosHtml += `
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    ${producto.nombre || 'sin nombre'} (${producto.cantidad ?? 0} x ${producto.precioUnidad ?? 0})
-                    <span class="badge bg-primary rounded-pill">${precioTotalFormateado}</span>
+                    <div>
+                        ${producto.nombre || 'sin nombre'} (${producto.cantidad ?? 0} x ${producto.precioUnidad ?? 0})
+                    </div>
+                    <div>
+                        <span class="badge bg-primary rounded-pill me-2">${precioTotalFormateado}</span>
+                        <button class="btn btn-sm btn-outline-warning me-1" onclick="editarCantidadProducto('${clienteId}','${productoId}')">✏️</button>
+                    </div>
                 </li>
             `;
         }
@@ -85,9 +90,10 @@ export async function cargarDetalleCuenta(clienteId) {
             <h4>Total: ${totalFormateado}</h4>
             <div class="mt-3">
                 <div class="botones">
-                <button class="btn btn-success me-2" onclick="cerrarCuenta('${clienteId}')">Pagar</button>
-                <button class="btn btn-warning me-2" onclick="pagoAmericano('${clienteId}')">Pago Americano</button><br><br>
-                <button class="btn btn-secondary" onclick="mostrarContainer('container2')">Volver</button>
+                    <button class="btn btn-success me-2" onclick="cerrarCuenta('${clienteId}')">Pagar</button>
+                    <button class="btn btn-warning me-2" onclick="pagoAmericano('${clienteId}')">Pago Americano</button>
+                    <button class="btn btn-danger me-2" onclick="eliminarCuenta('${clienteId}')">Eliminar venta</button><br><br>
+                    <button class="btn btn-secondary" onclick="mostrarContainer('container2')">Volver</button>
                 </div>
             </div>
         `;
@@ -101,6 +107,85 @@ export async function cargarDetalleCuenta(clienteId) {
 
 // ---------- FUNCIONES GLOBALES ----------
 
+window.editarCantidadProducto = async function (clienteId, productoId) {
+    try {
+        const cuentaRef = doc(db, "cuentasActivas", clienteId);
+        const cuentaDoc = await getDoc(cuentaRef);
+        if (!cuentaDoc.exists()) return Swal.fire("Error", "La cuenta no existe.", "error");
+
+        const cuenta = cuentaDoc.data();
+        const producto = cuenta.productos?.[productoId];
+        if (!producto) return Swal.fire("Error", "Producto no encontrado.", "error");
+
+        const { value: nuevaCantidad } = await Swal.fire({
+            title: `Editar cantidad - ${producto.nombre}`,
+            input: 'number',
+            inputValue: producto.cantidad ?? 0,
+            inputAttributes: { min: 1 },
+            showCancelButton: true
+        });
+        if (!nuevaCantidad) return;
+
+        // 🔹 Calcular precio por unidad seguro
+        let precioUnidad = Number(producto.precioUnidad);
+        if (!precioUnidad || precioUnidad <= 0) {
+            const totalProducto = Number(producto.total) || 0;
+            const cantidadProducto = Number(producto.cantidad) || 1;
+            precioUnidad = totalProducto / cantidadProducto;
+        }
+
+        const nuevoTotalProducto = precioUnidad * nuevaCantidad;
+
+        // 🔹 Actualizamos la cantidad, precioUnidad y total del producto
+        cuenta.productos[productoId].cantidad = nuevaCantidad;
+        cuenta.productos[productoId].precioUnidad = precioUnidad; // aseguramos que se guarde
+        cuenta.productos[productoId].total = nuevoTotalProducto;
+
+        // 🔹 Recalculamos el total general de la cuenta
+        let nuevoTotalCuenta = 0;
+        for (const id in cuenta.productos) {
+            nuevoTotalCuenta += cuenta.productos[id].total ?? 0;
+        }
+
+        // 🔹 Guardamos todo junto
+        await updateDoc(cuentaRef, {
+            [`productos.${productoId}.cantidad`]: nuevaCantidad,
+            [`productos.${productoId}.precioUnidad`]: precioUnidad,
+            [`productos.${productoId}.total`]: nuevoTotalProducto,
+            total: nuevoTotalCuenta,
+            fechaUltimaModificacion: serverTimestamp()
+        });
+
+        Swal.fire("Actualizado", "La cantidad y el total fueron modificados correctamente.", "success");
+        cargarDetalleCuenta(clienteId); // recargar vista
+    } catch (err) {
+        Swal.fire("Error", err.message, "error");
+    }
+};
+
+
+// Eliminar cuenta completa
+window.eliminarCuenta = async function (clienteId) {
+    try {
+        const confirm = await Swal.fire({
+            title: "¿Eliminar venta?",
+            text: "Esta acción borrará la cuenta completa de la colección cuentasActivas.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        await deleteDoc(doc(db, "cuentasActivas", clienteId));
+        Swal.fire("Eliminada", "La venta fue borrada.", "success");
+        if (typeof mostrarContainer === 'function') mostrarContainer('container2');
+    } catch (err) {
+        Swal.fire("Error", err.message, "error");
+    }
+};
+
 window.pagoAmericano = async function (clienteId) {
     await cerrarCuenta(clienteId, true);
 };
@@ -110,7 +195,6 @@ window.pagoEfectivo = async function (clienteId) {
 };
 
 window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
-
     try {
         Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
