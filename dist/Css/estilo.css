@@ -100,7 +100,7 @@ h1, h2, h3 {
 /* Estilo de botones generales (no afecta carrito) */
 button:not(.btn-cantidad):not(.btn-quitar),
 .btn:not(.btn-cantidad):not(.btn-quitar) {
-    background-color: var(--color-acento, #4CAF50); /* Verde por defecto */
+    background-color: var(--color-acento, #2542c4); /* Verde por defecto */
     color: #ffffff; /* Texto blanco */
     padding: 5px 20px;
     border: none;
