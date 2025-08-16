@@ -116,7 +116,7 @@ button:not(.btn-cantidad):not(.btn-quitar),
 /* Hover general */
 button:not(.btn-cantidad):not(.btn-quitar):hover,
 .btn:not(.btn-cantidad):not(.btn-quitar):hover {
-    background-color: #3e8e41;
+    background-color: #2542c4;
     transform: scale(1.05);
 }
 
