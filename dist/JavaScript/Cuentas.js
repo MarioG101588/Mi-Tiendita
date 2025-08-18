@@ -97,8 +97,7 @@ export async function cargarDetalleCuenta(clienteId) {
                 </div>
             </div>
         `;
-
-        Swal.close();
+       Swal.close();
     } catch (error) {
         Swal.fire('Error', `No se pudo cargar el detalle: ${error.message}`, 'error');
         console.error("Error cargarDetalleCuenta:", error);

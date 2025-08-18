@@ -7,6 +7,7 @@ import { agregarAlCarrito, aumentarCantidad, disminuirCantidad, quitarDelCarrito
 import { realizarVenta } from "./VentasApp.js";
 import { db } from './Conexion.js';
 import { cargarDetalleCuenta } from "./Cuentas.js";
+import { exportarInventarioExcel, importarInventarioDesdeExcel } from "./Inventario.js";
 
 // IMPORTACIONES Firebase Firestore
 import { 
@@ -228,7 +229,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const recordarCheckbox = document.getElementById("recordarDatos");
     const btnIniciarSesion = document.getElementById("btnIniciarSesion");
     const container = document.getElementById("container");
-    const container1 = document.getElementById("container1");
+    const container1 = document.getElementById("container2");
     const loginForm = document.getElementById("loginForm");
     const loginButton = document.getElementById("loginButton");
     const closeButton = document.getElementById("closeButton");
@@ -296,3 +297,11 @@ window.realizarVenta = () => realizarVenta(window.carrito);
 window.cerrarSesion = cerrarSesion;
 window.mostrarContainer = mostrarContainer;
 window.mostrarDetalleCuenta = mostrarDetalleCuenta;
+document.getElementById("btnExportarInventario").addEventListener("click", exportarInventarioExcel);
+document.getElementById("importFile") .addEventListener("change", (e) => {
+        
+    if 
+    (e.target.files.length > 0) {
+            importarInventarioDesdeExcel(e.target.files[0]);
+        }
+    });

@@ -37,7 +37,6 @@ async function procesarVentaEfectivoACerrada(carrito, medioPago) {
 
     // 3. Calcular total
     const totalCalculado = Object.values(carrito).reduce((acc, item) => acc + item.total, 0);
-
     // 4. Construir objeto venta
     const horaVenta = new Date().toLocaleTimeString('es-CO', { hour12: false });
     const clienteObj = {
@@ -118,10 +117,11 @@ export async function realizarVenta(carrito) {
         title: 'Finalizar Venta',
         html:
             '<input id="swal-input-cliente" class="swal2-input" placeholder="Nombre del Cliente (opcional)">' +
-            '<select id="swal-select-clase-venta" class="swal2-select">' +
-            '<option value="Pago en efectivo" selected>Pago en efectivo</option>' +
+            '<select id="swal-select-clase-venta" class="swal2-select" style="width: auto;">' +
             '<option value="Consumo en el local">Consumo en el local</option>' +
             '<option value="En Cuaderno">Anotar en el Cuaderno</option>' +
+            '<option value="Pago en efectivo" selected>Pago en efectivo</option>' +
+
             '</select>',
         focusConfirm: false,
         preConfirm: () => {
@@ -145,25 +145,26 @@ export async function realizarVenta(carrito) {
 
             if (formValues.claseVenta === 'Pago en efectivo') {
                 // Preguntar medio de pago
-                const { value: medioPago } = await Swal.fire({
-                    title: 'Seleccione el medio de pago',
-                    input: 'select',
-                    inputOptions: {
-                        'Efectivo': 'Efectivo',
-                        'Nequi': 'Nequi',
-                        'Daviplata': 'Daviplata'
-                    },
-                    inputPlaceholder: 'Seleccione un medio de pago',
-                    showCancelButton: true,
-                    confirmButtonText: 'Continuar',
-                    cancelButtonText: 'Cancelar',
-                    inputValidator: (value) => {
-                        if (!value) {
-                            return 'Debe seleccionar un medio de pago';
-                        }
-                    }
-                });
-
+const { value: medioPago } = await Swal.fire({
+    title: 'Medio de pago',
+    input: 'select',
+    inputOptions: {
+        efectivo: 'Efectivo',
+        nequi: 'Nequi',
+        daviplata: 'Daviplata'
+    },
+    inputPlaceholder: 'Selecciona el medio de pago',
+    showCancelButton: true,
+    // --- AÑADE ESTO ---
+    didOpen: () => {
+        const select = Swal.getInput(); // Obtiene el input actual
+        if (select) {
+            select.style.width = 'auto'; // Ajusta el ancho al contenido
+            select.style.padding = '0.5em 1em'; // Añade un poco de padding para que se vea mejor
+        }
+    }
+    // --- FIN DE LA MODIFICACIÓN ---
+});
                 if (!medioPago) return; // Cancelado
 
                 tipoVenta = medioPago;

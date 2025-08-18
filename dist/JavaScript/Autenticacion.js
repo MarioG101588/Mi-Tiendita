@@ -4,70 +4,76 @@ import {
 import { 
     getFirestore, doc, setDoc, updateDoc, collection, query, where, getDocs 
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { app } from "./Conexion.js";
+import { app } from "./Conexion.js"; // Asegúrate que la ruta a tu archivo de conexión sea correcta.
 import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
 
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 /**
- * Inicia sesión y crea turno si no hay uno activo en Firestore.
+ * Inicia sesión, verifica el estado del usuario en Firebase y crea un turno si es necesario.
+ * Las notificaciones se manejan exclusivamente con SweetAlert2.
+ * @param {string} email - Correo electrónico del usuario.
+ * @param {string} password - Contraseña del usuario.
+ * @param {boolean} recordar - Opción para guardar las credenciales.
+ * @returns {Promise<boolean>} - Retorna true si el inicio de sesión fue exitoso, de lo contrario false.
  */
 export async function iniciarSesion(email, password, recordar) {
-    //console.log("📌 iniciarSesion() ejecutada");
-    //console.log("✉️ Email recibido:", email);
-    //console.log("🔑 Password recibido:", password ? "(oculto)" : "(vacío)");
-
-    // 🚫 Validar campos vacíos y cortar de inmediato
+    // 1. Validación inicial de campos
     if (!email?.trim() || !password?.trim()) {
-        //console.log("⚠️ Campos incompletos detectados → deteniendo flujo");
         await Swal.fire({
             icon: "warning",
             title: "Campos incompletos",
-            text: "Por favor completa todos los campos."
+            text: "Por favor, ingresa tu correo y contraseña."
         });
-        //console.log("⛔ Retornando por campos vacíos y bloqueando flujo");
-        throw new Error("Intento de inicio de sesión con campos vacíos"); // 🔒 Bloquea cualquier ejecución posterior
+        return false; // Detiene la ejecución si los campos están vacíos
     }
 
+    // 2. Modal de carga mientras se procesa la solicitud
+    Swal.fire({
+        title: 'Iniciando sesión...',
+        text: 'Por favor, espera un momento.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
     try {
-        //console.log("🛠 Configurando persistencia de sesión...");
+        // 3. Configuración de persistencia de la sesión
         await setPersistence(auth, browserLocalPersistence);
 
-        //console.log("⏳ Mostrando modal de carga...");
-        Swal.fire({
-            title: 'Iniciando sesión...',
-            text: 'Por favor, espere un momento.',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
-        //console.log("🚀 Intentando login con Firebase...");
+        // 4. Intento de autenticación con Firebase
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
 
-        if (!userCredential.user) {
-            //console.log("❌ No se obtuvo usuario de Firebase");
-            Swal.close();
-            await Swal.fire("Error", "No se pudo autenticar el usuario.", "error");
-            return false;
+        // 5. VERIFICACIÓN CRÍTICA: El usuario debe tener el email confirmado
+        if (!user.emailVerified) {
+            await signOut(auth); // Cerramos la sesión inmediatamente
+            Swal.close(); // Cerramos el modal de carga
+            await Swal.fire({
+                icon: 'error',
+                title: 'Verificación requerida',
+                text: 'Tu cuenta de correo no ha sido verificada. Por favor, revisa tu bandeja de entrada y confirma tu cuenta antes de iniciar sesión.',
+            });
+            return false; // Bloqueamos el acceso
         }
 
-        //console.log("✅ Usuario autenticado:", userCredential.user.uid);
+        // Si el usuario está verificado, procedemos a gestionar el turno
         Swal.close();
 
+        // 6. Manejo de la opción "Recordar"
         if (recordar) {
-            //console.log("💾 Guardando credenciales en localStorage");
             localStorage.setItem("recordar", "true");
             localStorage.setItem("email", email);
             localStorage.setItem("password", password);
         } else {
-            //console.log("🗑 Eliminando credenciales de localStorage");
             localStorage.removeItem("recordar");
             localStorage.removeItem("email");
             localStorage.removeItem("password");
         }
 
-        //console.log("🔍 Buscando turno activo en Firestore...");
+        // 7. Búsqueda de un turno activo en Firestore
         const q = query(
             collection(db, "turnos"),
             where("usuario", "==", email),
@@ -76,48 +82,78 @@ export async function iniciarSesion(email, password, recordar) {
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
-            //console.log("📂 Turno activo encontrado");
             const turnoExistente = querySnapshot.docs[0].data();
             localStorage.setItem("idTurno", turnoExistente.idTurno);
-            await Swal.fire("Turno activo", turnoExistente.idTurno, "info");
-            return true;
+            await Swal.fire({
+                icon: 'info',
+                title: 'Turno ya activo',
+                text: `Se encontró el turno activo: ${turnoExistente.idTurno}`
+            });
+        } else {
+            // 8. Creación de un nuevo turno si no hay uno activo
+            const fecha = new Date();
+            const idTurno = `${fecha.getFullYear()}-${fecha.getMonth() + 1}-${fecha.getDate()}_${fecha.getHours()}-${fecha.getMinutes()}`;
+            const fechaInicio = fecha.toLocaleString("es-CO", { timeZone: "America/Bogota" });
+
+            await setDoc(doc(db, "turnos", idTurno), {
+                idTurno,
+                usuario: email,
+                fechaInicio,
+                fechaFin: null,
+                estado: "activo"
+            });
+
+            localStorage.setItem("idTurno", idTurno);
+            await Swal.fire({
+                icon: 'success',
+                title: '¡Bienvenido!',
+                text: 'Turno iniciado correctamente.'
+            });
         }
 
-        //console.log("🆕 Creando nuevo turno...");
-        const fecha = new Date();
-        const idTurno = `${fecha.getFullYear()}-${fecha.getMonth() + 1}-${fecha.getDate()}_${fecha.getHours()}-${fecha.getMinutes()}`;
-        const fechaInicio = fecha.toLocaleString("es-CO", { timeZone: "America/Bogota" });
-
-        await setDoc(doc(db, "turnos", idTurno), {
-            idTurno,
-            usuario: email,
-            fechaInicio,
-            fechaFin: null,
-            estado: "activo"
-        });
-
-        localStorage.setItem("idTurno", idTurno);
-        //console.log("✅ Turno creado:", idTurno);
-        await Swal.fire("Éxito", "Turno iniciado correctamente", "success");
-        return true;
+        return true; // Inicio de sesión exitoso
 
     } catch (error) {
-        //console.log("💥 Error durante el login:", error);
-        Swal.close();
-        await Swal.fire("Error al iniciar sesión", error.message, "error");
-        return false;
+        Swal.close(); // Cierra el modal de carga en caso de error
+        
+        // 9. Manejo de errores específicos de Firebase Auth
+        let tituloError = "Error al iniciar sesión";
+        let mensajeError = "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.";
+
+        switch (error.code) {
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+            case 'auth/invalid-credential':
+                tituloError = "Credenciales incorrectas";
+                mensajeError = "El correo electrónico o la contraseña no son correctos. Por favor, verifica tus datos.";
+                break;
+            case 'auth/too-many-requests':
+                tituloError = "Demasiados intentos";
+                mensajeError = "El acceso a esta cuenta ha sido temporalmente deshabilitado debido a muchos intentos fallidos. Puedes restaurarlo restableciendo tu contraseña o intentarlo más tarde.";
+                break;
+            case 'auth/network-request-failed':
+                tituloError = "Error de red";
+                mensajeError = "No se pudo conectar con el servidor. Revisa tu conexión a internet.";
+                break;
+            default:
+                // Para otros errores, se puede mostrar el mensaje genérico o el de Firebase
+                mensajeError = error.message;
+                console.error("Error no controlado en login:", error);
+                break;
+        }
+
+        await Swal.fire(tituloError, mensajeError, "error");
+        return false; // Inicio de sesión fallido
     }
 }
 
 /**
- * Cierra sesión y termina el turno activo.
+ * Cierra la sesión del usuario en Firebase y finaliza el turno activo en Firestore.
  */
 export async function cerrarSesion() {
-    //console.log("📌 cerrarSesion() ejecutada");
     try {
         const idTurno = localStorage.getItem("idTurno");
         if (idTurno) {
-            //console.log("📝 Cerrando turno activo:", idTurno);
             const fechaFin = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
             await updateDoc(doc(db, "turnos", idTurno), {
                 fechaFin,
@@ -126,12 +162,20 @@ export async function cerrarSesion() {
             localStorage.removeItem("idTurno");
         }
 
-        //console.log("🚪 Cerrando sesión de Firebase...");
         await signOut(auth);
 
-        Swal.fire("Sesión cerrada", "Has cerrado sesión exitosamente.", "success");
+        await Swal.fire({
+            icon: 'success',
+            title: 'Sesión cerrada',
+            text: 'Has cerrado sesión exitosamente.'
+        });
+
     } catch (error) {
-        //console.log("💥 Error al cerrar sesión:", error);
-        Swal.fire("Error al cerrar sesión", error.message, "error");
+        console.error("Error al cerrar sesión:", error);
+        await Swal.fire(
+            "Error al cerrar sesión",
+            error.message,
+            "error"
+        );
     }
 }
