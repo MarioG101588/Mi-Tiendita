@@ -164,7 +164,6 @@ function mostrarContainer(idMostrar) {
         cargarResumenTurno();
     }
 }
-
 /** 📌 Función para cerrar sesión */
 async function cerrarSesion() {
     await cerrarSesionAuth();

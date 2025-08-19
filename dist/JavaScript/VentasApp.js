@@ -189,7 +189,13 @@ const { value: medioPago } = await Swal.fire({
             window.carrito = {};
             if (window.renderCarrito) window.renderCarrito();
 
-            Swal.fire('¡Éxito!', 'La venta ha sido registrada correctamente.', 'success');
+Swal.fire('¡Éxito!', 'La venta ha sido registrada correctamente.', 'success');
+
+// Limpiar búsqueda y volver a container2
+const campoBusqueda = document.getElementById("campoBusqueda1");
+if (campoBusqueda) campoBusqueda.value = "";
+
+window.mostrarContainer("container2");            
 
         } catch (error) {
             Swal.fire('Error', `Ocurrió un error al procesar la venta: ${error.message}`, 'error');

@@ -1,7 +1,4 @@
-import {
-    getFirestore, doc, getDoc, setDoc, deleteDoc, collection,
-    query, where, orderBy, limit, getDocs, updateDoc, arrayUnion, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import {getFirestore, doc, getDoc, setDoc, deleteDoc, deleteField, collection,query, where, orderBy, limit, getDocs, updateDoc, arrayUnion, serverTimestamp} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js"; // debe exportar `app`
 import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
 
@@ -120,10 +117,10 @@ window.editarCantidadProducto = async function (clienteId, productoId) {
             title: `Editar cantidad - ${producto.nombre}`,
             input: 'number',
             inputValue: producto.cantidad ?? 0,
-            inputAttributes: { min: 1 },
+            inputAttributes: { min: 0 },
             showCancelButton: true
         });
-        if (!nuevaCantidad) return;
+        if (nuevaCantidad === undefined) return;
 
         // 🔹 Calcular precio por unidad seguro
         let precioUnidad = Number(producto.precioUnidad);
@@ -133,20 +130,39 @@ window.editarCantidadProducto = async function (clienteId, productoId) {
             precioUnidad = totalProducto / cantidadProducto;
         }
 
-        const nuevoTotalProducto = precioUnidad * nuevaCantidad;
+        // 🔹 Si la nueva cantidad es 0, eliminar el producto
+        if (Number(nuevaCantidad) === 0) {
+            delete cuenta.productos[productoId];
 
-        // 🔹 Actualizamos la cantidad, precioUnidad y total del producto
+            // 🔹 Recalcular total de la cuenta sin ese producto
+            let nuevoTotalCuenta = 0;
+            for (const id in cuenta.productos) {
+                nuevoTotalCuenta += cuenta.productos[id].total ?? 0;
+            }
+
+            await updateDoc(cuentaRef, {
+                [`productos.${productoId}`]: deleteField(),
+                total: nuevoTotalCuenta,
+                fechaUltimaModificacion: serverTimestamp()
+            });
+
+            Swal.fire("Eliminado", "El producto fue eliminado de la cuenta.", "success");
+            cargarDetalleCuenta(clienteId);
+            return;
+        }
+
+        // 🔹 Si no es 0, actualizar normalmente
+        const nuevoTotalProducto = precioUnidad * nuevaCantidad;
         cuenta.productos[productoId].cantidad = nuevaCantidad;
-        cuenta.productos[productoId].precioUnidad = precioUnidad; // aseguramos que se guarde
+        cuenta.productos[productoId].precioUnidad = precioUnidad;
         cuenta.productos[productoId].total = nuevoTotalProducto;
 
-        // 🔹 Recalculamos el total general de la cuenta
+        // 🔹 Recalcular total general
         let nuevoTotalCuenta = 0;
         for (const id in cuenta.productos) {
             nuevoTotalCuenta += cuenta.productos[id].total ?? 0;
         }
 
-        // 🔹 Guardamos todo junto
         await updateDoc(cuentaRef, {
             [`productos.${productoId}.cantidad`]: nuevaCantidad,
             [`productos.${productoId}.precioUnidad`]: precioUnidad,
@@ -156,12 +172,11 @@ window.editarCantidadProducto = async function (clienteId, productoId) {
         });
 
         Swal.fire("Actualizado", "La cantidad y el total fueron modificados correctamente.", "success");
-        cargarDetalleCuenta(clienteId); // recargar vista
+        cargarDetalleCuenta(clienteId);
     } catch (err) {
         Swal.fire("Error", err.message, "error");
     }
 };
-
 
 // Eliminar cuenta completa
 window.eliminarCuenta = async function (clienteId) {

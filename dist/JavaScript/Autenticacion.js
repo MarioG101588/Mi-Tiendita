@@ -151,6 +151,19 @@ export async function iniciarSesion(email, password, recordar) {
  * Cierra la sesión del usuario en Firebase y finaliza el turno activo en Firestore.
  */
 export async function cerrarSesion() {
+    const confirmacion = await Swal.fire({
+        title: "¿Cerrar sesión?",
+        text: "Esto cerrará el turno actual y no podrás modificarlo después. ¿Deseas continuar?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, cerrar sesión",
+        cancelButtonText: "Cancelar"
+    });
+
+    if (!confirmacion.isConfirmed) {
+        return; // El usuario canceló, no se hace nada
+    }
+
     try {
         const idTurno = localStorage.getItem("idTurno");
         if (idTurno) {
