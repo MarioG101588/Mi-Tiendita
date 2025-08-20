@@ -1,14 +1,13 @@
 // JavaScript/main.js
 
 // Importaciones de módulos locales
-import { iniciarSesion, cerrarSesion as cerrarSesionAuth } from "./Autenticacion.js";
+import { iniciarSesion, cerrarSesionConConfirmacion } from "./Autenticacion.js";
 import { cargarInventario } from "./Inventario.js";
 import { agregarAlCarrito, aumentarCantidad, disminuirCantidad, quitarDelCarrito, renderCarrito } from "./CarritoCompras.js";
 import { realizarVenta } from "./VentasApp.js";
 import { db } from './Conexion.js';
 import { cargarDetalleCuenta } from "./Cuentas.js";
 import { exportarInventarioExcel, importarInventarioDesdeExcel } from "./Inventario.js";
-
 // IMPORTACIONES Firebase Firestore
 import { 
     getFirestore, doc, getDoc, getDocs, 
@@ -243,10 +242,15 @@ async function verResumenTurno(idTurno) {
 }
 /** 📌 Función para cerrar sesión */
 async function cerrarSesion() {
-    await cerrarSesionAuth();
+    const confirmacion = await cerrarSesionConConfirmacion();
+
+    if (!confirmacion) return; // El usuario canceló
+
+    // Solo si se cerró la sesión, actualiza la interfaz
     document.querySelectorAll('.container, .container1, .container2, .container3, .container4, .container5').forEach(el => {
         el.style.display = 'none';
     });
+
     document.getElementById('container').style.display = 'block';
     document.getElementById('loginButton').style.display = 'inline-block';
     document.getElementById('loginForm').style.display = 'none';
@@ -375,6 +379,7 @@ window.cargarHistorialTurnos = cargarHistorialTurnos;
 window.mostrarContainer = mostrarContainer;
 window.cargarResumenTurno = cargarResumenTurno;
 window.cerrarSesion = cerrarSesion;
+window.mostrarContainer = mostrarContainer;
 window.mostrarDetalleCuenta = mostrarDetalleCuenta;
 document.getElementById("btnExportarInventario").addEventListener("click", exportarInventarioExcel);
 document.getElementById("importFile") .addEventListener("change", (e) => {

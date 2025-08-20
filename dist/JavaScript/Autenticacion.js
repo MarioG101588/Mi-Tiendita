@@ -150,7 +150,7 @@ export async function iniciarSesion(email, password, recordar) {
 /**
  * Cierra la sesión del usuario en Firebase y finaliza el turno activo en Firestore.
  */
-export async function cerrarSesion() {
+export async function cerrarSesionConConfirmacion() {
     const confirmacion = await Swal.fire({
         title: "¿Cerrar sesión?",
         text: "Esto cerrará el turno actual y no podrás modificarlo después. ¿Deseas continuar?",
@@ -159,36 +159,26 @@ export async function cerrarSesion() {
         confirmButtonText: "Sí, cerrar sesión",
         cancelButtonText: "Cancelar"
     });
-
     if (!confirmacion.isConfirmed) {
-        return; // El usuario canceló, no se hace nada
+        return false; // El usuario canceló la acción
     }
-
-    try {
-        const idTurno = localStorage.getItem("idTurno");
-        if (idTurno) {
-            const fechaFin = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
-            await updateDoc(doc(db, "turnos", idTurno), {
-                fechaFin,
-                estado: "cerrado"
-            });
-            localStorage.removeItem("idTurno");
-        }
-
-        await signOut(auth);
-
-        await Swal.fire({
-            icon: 'success',
-            title: 'Sesión cerrada',
-            text: 'Has cerrado sesión exitosamente.'
+    const idTurno = localStorage.getItem("idTurno");
+    if (idTurno) {
+        const fechaFin = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
+        await updateDoc(doc(db, "turnos", idTurno), {
+            fechaFin,
+            estado: "cerrado"
         });
-
-    } catch (error) {
-        console.error("Error al cerrar sesión:", error);
-        await Swal.fire(
-            "Error al cerrar sesión",
-            error.message,
-            "error"
-        );
+        localStorage.removeItem("idTurno");
     }
+
+    await signOut(auth);
+
+    await Swal.fire({
+        icon: 'success',
+        title: 'Sesión cerrada',
+        text: 'Has cerrado sesión exitosamente.'
+    });
+    return true;
+
 }
