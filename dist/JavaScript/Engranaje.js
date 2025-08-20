@@ -147,7 +147,7 @@ async function cargarResumenTurno() {
 
 /** 📌 Función para cambiar entre contenedores */
 function mostrarContainer(idMostrar) {
-    document.querySelectorAll('.container, .container1, .container2, .container3, .container4').forEach(el => {
+    document.querySelectorAll('.container, .container1, .container2, .container3, .container4, .container5').forEach(el => {
         el.style.display = 'none';
     });
 
@@ -163,11 +163,88 @@ function mostrarContainer(idMostrar) {
     if (idMostrar === "container4") {
         cargarResumenTurno();
     }
+    if (idMostrar === "container5") {
+    cargarHistorialTurnos();
+}
+}
+
+/** Funcion para Cargar Historial de Turnos */
+
+async function cargarHistorialTurnos() {
+    const contenedor = document.getElementById("historialTurnosContainer");
+    contenedor.innerHTML = "<p>Cargando historial...</p>";
+
+    try {
+        const turnosRef = collection(db, "ventasCerradas");
+        const snap = await getDocs(turnosRef);
+
+        if (snap.empty) {
+            contenedor.innerHTML = "<p>No hay turnos cerrados.</p>";
+            return;
+        }
+
+        let html = '<div class="list-group">';
+        snap.forEach(doc => {
+            const datos = doc.data();
+            const idTurno = doc.id;
+            const fecha = datos?.fechaFin || "Sin fecha";
+            const total = datos?.clientes?.reduce((acc, c) => acc + (c.total || 0), 0) || 0;
+            const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(total);
+
+            html += `
+                <div class="list-group-item">
+                    <h6>Turno: ${idTurno}</h6>
+                    <p>Fecha cierre: ${fecha}</p>
+                    <p>Total: ${totalFormateado}</p>
+                    <button class="btn btn-sm btn-primary" onclick="verResumenTurno('${idTurno}')">Ver detalle</button>
+                </div>
+            `;
+        });
+        html += '</div>';
+        contenedor.innerHTML = html;
+    } catch (err) {
+        contenedor.innerHTML = `<p>Error: ${err.message}</p>`;
+    }
+}
+
+/** Funcion Ver Detalles de Turno */
+async function verResumenTurno(idTurno) {
+    const contenedor = document.getElementById("historialTurnosContainer");
+    contenedor.innerHTML = "<p>Cargando resumen...</p>";
+
+    try {
+        const cuentaRef = doc(db, "ventasCerradas", idTurno);
+        const cuentaSnap = await getDoc(cuentaRef);
+
+        if (!cuentaSnap.exists()) {
+            contenedor.innerHTML = "<p>No hay datos para este turno.</p>";
+            return;
+        }
+
+        const datos = cuentaSnap.data();
+        const clientes = datos.clientes || [];
+        let html = `<h3>Resumen del turno ${idTurno}</h3><ul class="list-group">`;
+
+        clientes.forEach((c, i) => {
+            html += `
+                <li class="list-group-item">
+                    <strong>Cliente:</strong> ${c.cliente}<br>
+                    <strong>Tipo:</strong> ${c.tipoVenta}<br>
+                    <strong>Total:</strong> ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(c.total)}
+                </li>
+            `;
+        });
+
+        html += "</ul>";
+        contenedor.innerHTML = html;
+    } catch (err) {
+        contenedor.innerHTML = `<p>Error: ${err.message}</p>`;
+    }
 }
 /** 📌 Función para cerrar sesión */
 async function cerrarSesion() {
     await cerrarSesionAuth();
-    document.querySelectorAll('.container, .container1, .container2, .container3, .container4').forEach(el => {
+    document.querySelectorAll('.container, .container1, .container2, .container3, .container4, .container5').forEach(el => {
         el.style.display = 'none';
     });
     document.getElementById('container').style.display = 'block';
@@ -293,8 +370,11 @@ window.disminuirCantidad = disminuirCantidad;
 window.quitarDelCarrito = quitarDelCarrito;
 window.renderCarrito = renderCarrito;
 window.realizarVenta = () => realizarVenta(window.carrito);
-window.cerrarSesion = cerrarSesion;
+window.verResumenTurno = verResumenTurno;
+window.cargarHistorialTurnos = cargarHistorialTurnos;
 window.mostrarContainer = mostrarContainer;
+window.cargarResumenTurno = cargarResumenTurno;
+window.cerrarSesion = cerrarSesion;
 window.mostrarDetalleCuenta = mostrarDetalleCuenta;
 document.getElementById("btnExportarInventario").addEventListener("click", exportarInventarioExcel);
 document.getElementById("importFile") .addEventListener("change", (e) => {

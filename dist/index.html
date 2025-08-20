@@ -70,11 +70,18 @@
     <div class="container4" id="container4" style="display:none;">
     <h1 class="titulo-superior">Resumen de Turno</h1>
     <div id="resumenTurnoDatos" class="mt-3"></div>
-   <div class="botones">
+    <div class="botones">
     <button onclick="mostrarContainer('container2')" class="btn btn-secondary mt-3">Volver</button>
     <button onclick="cerrarSesion()" class="btn btn-danger" style="margin-left:10px;">Cerrar sesión</button>
-
+    <button onclick="mostrarContainer('container5')" class="btn btn-info mt-3">Ver turnos anteriores</button>
     </div>
+</div>
+<div class="container5" id="container5" style="display:none;">
+    <h1 class="titulo-superior">Historial de Turnos</h1>
+    <div id="historialTurnosContainer" class="mt-3"></div>
+       <div class="botones">
+        <button onclick="mostrarContainer('container4')" class="btn btn-secondary mt-3">Volver</button>
+        </div>
 </div>
 
 
