@@ -143,13 +143,13 @@ async function cargarResumenTurno() {
 
         contenedor.innerHTML = `
             <ul class="list-group">
-                <li class="list-group-item">Bebidas con<b>Alcohol</b>: ${formatoCOP.format(totalBebidasAlcohol)}</li>
-                <li class="list-group-item">Venta de <b>TABACO</b>: ${formatoCOP.format(totalProductosTabaco)}</li>
-                <li class="list-group-item">Pagos recibidos por <b>NEQUI</b>: ${formatoCOP.format(totalNequi)}</li>
-                <li class="list-group-item">Pagos recibidos por <b>DAVIPLATA</b>: ${formatoCOP.format(totalDaviplata)}</li>
-                <li class="list-group-item">Pagos recibidos por <b>EFECTIVO</b>: ${formatoCOP.format(totalEfectivo)}</li>
-                <li class="list-group-item active">TOTAL Turno <b>En Curso</b>: ${formatoCOP.format(totalGeneral)}</li>
-                <li class="list-group-item">Pago por Turno 10%: ${formatoCOP.format(diezPorciento)}</li>
+                <li class="list-group-item">Bebidas <b>ALCOHOLICAS</b>:<BR> ${formatoCOP.format(totalBebidasAlcohol)}</li><BR>
+                <li class="list-group-item">Venta de <b>TABACO</b>:<BR> ${formatoCOP.format(totalProductosTabaco)}</li><BR>
+                <li class="list-group-item">Pagos recibidos en <b>NEQUI</b>: ${formatoCOP.format(totalNequi)}</li><BR>
+                <li class="list-group-item">Pagos recibidos en <b>DAVIPLATA</b>: ${formatoCOP.format(totalDaviplata)}</li><BR>
+                <li class="list-group-item">Pagos recibidos en <b>EFECTIVO</b>: ${formatoCOP.format(totalEfectivo)}</li><BR>
+                <li class="list-group-item active">TOTAL VENTAS <b>HASTA AHORA</b>: ${formatoCOP.format(totalGeneral)}</li><BR>
+                <li class="list-group-item">Pago del 10% por Turno: ${formatoCOP.format(diezPorciento)}</li><BR>
             </ul>
         `;
     } catch (error) {
