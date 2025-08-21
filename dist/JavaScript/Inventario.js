@@ -1,9 +1,6 @@
 // JavaScript/inventario.js
-import { 
-    getFirestore, collection, getDocs, setDoc, doc, deleteDoc 
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import {getFirestore, collection, getDocs, setDoc, doc, deleteDoc} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js";
-
 // Librería para Excel
 import * as XLSX from "https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs";
 

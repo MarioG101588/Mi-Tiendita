@@ -1,9 +1,5 @@
-import { 
-    getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence 
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-import { 
-    getFirestore, doc, setDoc, updateDoc, collection, query, where, getDocs 
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import {getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {getFirestore,serverTimestamp, doc, setDoc, updateDoc, collection, query, where, getDocs} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js"; // Asegúrate que la ruta a tu archivo de conexión sea correcta.
 import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
 
@@ -66,11 +62,11 @@ export async function iniciarSesion(email, password, recordar) {
         if (recordar) {
             localStorage.setItem("recordar", "true");
             localStorage.setItem("email", email);
-            localStorage.setItem("password", password);
+            //localStorage.setItem("password", password);
         } else {
             localStorage.removeItem("recordar");
             localStorage.removeItem("email");
-            localStorage.removeItem("password");
+            //localStorage.removeItem("password");
         }
 
         // 7. Búsqueda de un turno activo en Firestore
@@ -91,9 +87,8 @@ export async function iniciarSesion(email, password, recordar) {
             });
         } else {
             // 8. Creación de un nuevo turno si no hay uno activo
-            const fecha = new Date();
-            const idTurno = `${fecha.getFullYear()}-${fecha.getMonth() + 1}-${fecha.getDate()}_${fecha.getHours()}-${fecha.getMinutes()}`;
-            const fechaInicio = fecha.toLocaleString("es-CO", { timeZone: "America/Bogota" });
+            const idTurno = `${email}_${Date.now()}`; // ✅ más seguro que fecha formateada
+            const fechaInicio = serverTimestamp();    // ✅ sin parámetros
 
             await setDoc(doc(db, "turnos", idTurno), {
                 idTurno,
@@ -164,7 +159,7 @@ export async function cerrarSesionConConfirmacion() {
     }
     const idTurno = localStorage.getItem("idTurno");
     if (idTurno) {
-        const fechaFin = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
+        const fechaFin = serverTimestamp();   // ✅ sin parámetros
         await updateDoc(doc(db, "turnos", idTurno), {
             fechaFin,
             estado: "cerrado"
