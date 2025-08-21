@@ -202,6 +202,9 @@ async function cargarHistorialTurnos() {
         for (const docSnap of snap.docs) {
             const datosTurno = docSnap.data();
             const idTurno = docSnap.id;
+
+            // 🔹 fechas de inicio y fin
+            const fechaInicio = datosTurno.fechaInicio?.toDate?.().toLocaleString("es-CO") || "Sin fecha";
             const fechaFin = datosTurno.fechaFin?.toDate?.().toLocaleString("es-CO") || "Sin fecha";
 
             // buscar total en ventasCerradas
@@ -217,6 +220,7 @@ async function cargarHistorialTurnos() {
             html += `
                 <div class="list-group-item">
                     <h6>Turno: ${idTurno}</h6>
+                    <p>Fecha inicio: ${fechaInicio}</p>
                     <p>Fecha cierre: ${fechaFin}</p>
                     <p>Total: ${totalFormateado}</p>
                     <button class="btn btn-sm btn-primary" onclick="verResumenTurno('${idTurno}')">Ver detalle</button>

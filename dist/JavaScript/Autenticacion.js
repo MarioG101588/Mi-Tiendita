@@ -1,5 +1,5 @@
-import {getAuth, signInWithEmailAndPassword, signOut, setPersistence, onAuthStateChanged, browserLocalPersistence} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-import {getFirestore,serverTimestamp, doc, setDoc, updateDoc, collection, query, where, getDocs} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import {getAuth,  signInWithEmailAndPassword, signOut, setPersistence, onAuthStateChanged, browserLocalPersistence} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {getFirestore,serverTimestamp, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js"; // Asegúrate que la ruta a tu archivo de conexión sea correcta.
 import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
 
@@ -8,6 +8,7 @@ const db = getFirestore(app);
 
 // Configurar persistencia
 setPersistence(auth, browserLocalPersistence).catch(console.error);
+
 /**
  * Inicia sesión, verifica el estado del usuario en Firebase y crea un turno si es necesario.
  * Las notificaciones se manejan exclusivamente con SweetAlert2.
@@ -46,10 +47,10 @@ export async function iniciarSesion(email, password, recordar) {
     try {
         // 3. Configuración de persistencia de la sesión
         await setPersistence(auth, browserLocalPersistence);
-
+        
         // 4. Intento de autenticación con Firebase
-const cred = await signInWithEmailAndPassword(auth, email, password);        
-const user = cred.user;
+        const cred = await signInWithEmailAndPassword(auth, email, password);        
+        const user = cred.user;
 
         // 5. VERIFICACIÓN CRÍTICA: El usuario debe tener el email confirmado
         if (!user.emailVerified) {
@@ -62,22 +63,43 @@ const user = cred.user;
             });
             return false; // Bloqueamos el acceso
         }
+        
+        // ✨ INICIO DE LA MODIFICACIÓN ✨
+        // 6. Obtener datos (nombre y rol) desde la colección "usuarios"
+        const usuarioRef = doc(db, "usuarios", user.email);
+        const usuarioSnap = await getDoc(usuarioRef);
 
-        // Si el usuario está verificado, procedemos a gestionar el turno
+        if (!usuarioSnap.exists()) {
+            await signOut(auth); // Si está autenticado pero no tiene perfil, lo sacamos.
+            Swal.close();
+            await Swal.fire({
+                icon: 'error',
+                title: 'Perfil no encontrado',
+                text: 'No hemos podido encontrar los datos de tu perfil. Contacta al administrador.'
+            });
+            return false; // Detenemos el proceso
+        }
+
+        const { nombre, role } = usuarioSnap.data();
+        const usuarioConcatenado = `${nombre}${role}`; // Se unen nombre y rol. Ej: "anaarizaadmin"
+        // ✨ FIN DE LA MODIFICACIÓN ✨
+
+        // Si el usuario está verificado, procedemos
         Swal.close();
 
-        // 6. Manejo de la opción "Recordar"
-if (recordar) {
-    localStorage.setItem("recordar", "true");
-    localStorage.setItem("email", email);
-  } else {
-    localStorage.removeItem("recordar");
-    localStorage.removeItem("email");
-  }
-        // 7. Búsqueda de un turno activo en Firestore
+        // 7. Manejo de la opción "Recordar"
+        if (recordar) {
+            localStorage.setItem("recordar", "true");
+            localStorage.setItem("email", email);
+        } else {
+            localStorage.removeItem("recordar");
+            localStorage.removeItem("email");
+        }
+
+        // 8. Búsqueda de un turno activo en Firestore (con el valor concatenado)
         const q = query(
             collection(db, "turnos"),
-            where("usuario", "==", email),
+            where("usuario", "==", email), // <-- ¡CAMBIO IMPORTANTE!
             where("estado", "==", "activo")
         );
         const querySnapshot = await getDocs(q);
@@ -91,13 +113,13 @@ if (recordar) {
                 text: `Se encontró el turno activo: ${turnoExistente.idTurno}`
             });
         } else {
-            // 8. Creación de un nuevo turno si no hay uno activo
-            const idTurno = `${email}_${Date.now()}`; // ✅ más seguro que fecha formateada
-            const fechaInicio = serverTimestamp();    // ✅ sin parámetros
+            // 9. Creación de un nuevo turno si no hay uno activo
+            const idTurno = `${usuarioConcatenado}_${Date.now()}`; // ✅ más seguro que fecha formateada
+            const fechaInicio = serverTimestamp(); // ✅ sin parámetros
 
             await setDoc(doc(db, "turnos", idTurno), {
                 idTurno,
-                usuario: email,
+                usuario: email, // <-- ¡CAMBIO IMPORTANTE!
                 fechaInicio,
                 fechaFin: null,
                 estado: "activo"
@@ -116,7 +138,7 @@ if (recordar) {
     } catch (error) {
         Swal.close(); // Cierra el modal de carga en caso de error
         
-        // 9. Manejo de errores específicos de Firebase Auth
+        // 10. Manejo de errores específicos de Firebase Auth
         let tituloError = "Error al iniciar sesión";
         let mensajeError = "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.";
 
@@ -159,12 +181,13 @@ export async function cerrarSesionConConfirmacion() {
         confirmButtonText: "Sí, cerrar sesión",
         cancelButtonText: "Cancelar"
     });
+
     if (!confirmacion.isConfirmed) {
         return false; // El usuario canceló la acción
     }
     const idTurno = localStorage.getItem("idTurno");
     if (idTurno) {
-        const fechaFin = serverTimestamp();   // ✅ sin parámetros
+        const fechaFin = serverTimestamp(); // ✅ sin parámetros
         await updateDoc(doc(db, "turnos", idTurno), {
             fechaFin,
             estado: "cerrado"
@@ -180,5 +203,4 @@ export async function cerrarSesionConConfirmacion() {
         text: 'Has cerrado sesión exitosamente.'
     });
     return true;
-
 }
