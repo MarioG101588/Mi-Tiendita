@@ -1,7 +1,7 @@
 // JavaScript/main.js
 
 // Importaciones de módulos locales
-import { iniciarSesion, cerrarSesionConConfirmacion } from "./Autenticacion.js";
+import { iniciarSesion, cerrarSesionConConfirmacion, observarSesion } from "./Autenticacion.js";
 import { cargarInventario } from "./Inventario.js";
 import { agregarAlCarrito, aumentarCantidad, disminuirCantidad, quitarDelCarrito, renderCarrito } from "./CarritoCompras.js";
 import { realizarVenta } from "./VentasApp.js";
@@ -10,6 +10,21 @@ import { cargarDetalleCuenta } from "./Cuentas.js";
 import { exportarInventarioExcel, importarInventarioDesdeExcel } from "./Inventario.js";
 // IMPORTACIONES Firebase Firestore
 import {doc, getDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+
+observarSesion((user) => {
+    if (user) {
+        console.log("✅ Sesión activa detectada:", user.email);
+        container.style.display = 'none';
+        loginForm.style.display = 'none';
+        container1.style.display = 'block';
+        cargarInventario("");
+        renderCarrito();
+        cargarCuentasActivas();
+    } else {
+        console.log("⚠️ No hay sesión activa");
+    }
+});
+
 
 function normalizarNombre(nombre) {
     return nombre

@@ -1,4 +1,4 @@
-import {getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {getAuth, signInWithEmailAndPassword, signOut, setPersistence, onAuthStateChanged, browserLocalPersistence} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import {getFirestore,serverTimestamp, doc, setDoc, updateDoc, collection, query, where, getDocs} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js"; // Asegúrate que la ruta a tu archivo de conexión sea correcta.
 import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
@@ -6,6 +6,8 @@ import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Configurar persistencia
+setPersistence(auth, browserLocalPersistence).catch(console.error);
 /**
  * Inicia sesión, verifica el estado del usuario en Firebase y crea un turno si es necesario.
  * Las notificaciones se manejan exclusivamente con SweetAlert2.
@@ -14,8 +16,14 @@ const db = getFirestore(app);
  * @param {boolean} recordar - Opción para guardar las credenciales.
  * @returns {Promise<boolean>} - Retorna true si el inicio de sesión fue exitoso, de lo contrario false.
  */
+// ✅ Exportar observador
+export function observarSesion(callback) {
+  onAuthStateChanged(auth, (user) => {
+    callback(user);
+  });
+}
 export async function iniciarSesion(email, password, recordar) {
-    // 1. Validación inicial de campos
+      // 1. Validación inicial de campos
     if (!email?.trim() || !password?.trim()) {
         await Swal.fire({
             icon: "warning",
@@ -40,8 +48,8 @@ export async function iniciarSesion(email, password, recordar) {
         await setPersistence(auth, browserLocalPersistence);
 
         // 4. Intento de autenticación con Firebase
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+const cred = await signInWithEmailAndPassword(auth, email, password);        
+const user = cred.user;
 
         // 5. VERIFICACIÓN CRÍTICA: El usuario debe tener el email confirmado
         if (!user.emailVerified) {
@@ -59,16 +67,13 @@ export async function iniciarSesion(email, password, recordar) {
         Swal.close();
 
         // 6. Manejo de la opción "Recordar"
-        if (recordar) {
-            localStorage.setItem("recordar", "true");
-            localStorage.setItem("email", email);
-            //localStorage.setItem("password", password);
-        } else {
-            localStorage.removeItem("recordar");
-            localStorage.removeItem("email");
-            //localStorage.removeItem("password");
-        }
-
+if (recordar) {
+    localStorage.setItem("recordar", "true");
+    localStorage.setItem("email", email);
+  } else {
+    localStorage.removeItem("recordar");
+    localStorage.removeItem("email");
+  }
         // 7. Búsqueda de un turno activo en Firestore
         const q = query(
             collection(db, "turnos"),
