@@ -1,8 +1,4 @@
-import {
-    getFirestore, doc, getDoc, setDoc, collection,
-    query, where, orderBy, limit, getDocs, updateDoc, arrayUnion,
-    runTransaction, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import {getFirestore, doc, getDoc, setDoc, collection,query, where, orderBy, limit, getDocs, updateDoc, arrayUnion,runTransaction, serverTimestamp} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js";
 import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
 
