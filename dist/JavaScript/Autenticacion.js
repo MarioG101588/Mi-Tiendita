@@ -124,7 +124,7 @@ export async function iniciarSesion(email, password, recordar) {
                 fechaFin: null,
                 estado: "activo"
             });
-
+onAuthStateChanged
             localStorage.setItem("idTurno", idTurno);
             await Swal.fire({
                 icon: 'success',

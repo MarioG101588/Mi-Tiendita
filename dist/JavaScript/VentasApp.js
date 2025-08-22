@@ -3,6 +3,24 @@ import { app } from "./Conexion.js";
 import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
 
 const db = getFirestore(app);
+// ✅ Utilidad mínima para este archivo (solo añadida, no reemplaza nada)
+function calcularTotal(carrito) {
+  try {
+    if (!carrito) return 0;
+    const items = Array.isArray(carrito) ? carrito : Object.values(carrito);
+    return items.reduce((acc, p) => {
+      const subtotal =
+        typeof p?.total === 'number'
+          ? p.total
+          : (typeof p?.precioVenta === 'number' && typeof p?.cantidad === 'number'
+              ? p.precioVenta * p.cantidad
+              : 0);
+      return acc + subtotal;
+    }, 0);
+  } catch {
+    return 0;
+  }
+}
 
 /**
  * Procesa una venta de 'Pago en efectivo' directamente a 'ventasCerradas',
@@ -58,43 +76,44 @@ async function procesarVentaEfectivoACerrada(carrito, medioPago) {
     }
 }
 
-/**
- * Procesa una venta que va a cuentasActivas (Consumo en local / Anotar en cuaderno).
- */
+
 async function procesarVentaCliente(carrito, cliente, claseVenta) {
     const cuentaRef = doc(db, "cuentasActivas", cliente);
 
     await runTransaction(db, async (transaction) => {
         const cuentaDoc = await transaction.get(cuentaRef);
 
-        const productosCuenta = cuentaDoc.exists() ? cuentaDoc.data().productos : {};
-        let totalCuenta = cuentaDoc.exists() ? cuentaDoc.data().total : 0;
-
-        for (const idProducto in carrito) {
-            const itemCarrito = carrito[idProducto];
-            if (productosCuenta[idProducto]) {
-                productosCuenta[idProducto].cantidad += itemCarrito.cantidad;
-                productosCuenta[idProducto].total += itemCarrito.total;
-            } else {
-                productosCuenta[idProducto] = itemCarrito;
-            }
-        }
-
-        totalCuenta += Object.values(carrito).reduce((acc, item) => acc + item.total, 0);
-
-        if (cuentaDoc.exists()) {
-            transaction.update(cuentaRef, {
-                productos: productosCuenta,
-                total: totalCuenta,
-                ultimaActualizacion: serverTimestamp()
-            });
-        } else {
+        if (!cuentaDoc.exists()) {
+            // Crear nueva cuenta
             transaction.set(cuentaRef, {
                 cliente: cliente,
+                productos: carrito,
                 tipo: claseVenta,
-                productos: productosCuenta,
-                total: totalCuenta,
-                fechaApertura: serverTimestamp()
+                total: calcularTotal(carrito),
+                fechaApertura: serverTimestamp(),
+                idTurno: localStorage.getItem("idTurno") // 🔹 agregado
+            });
+        } else {
+            // Actualizar cuenta existente
+            const cuentaData = cuentaDoc.data();
+            const productosActualizados = { ...cuentaData.productos };
+
+            for (const [idProducto, datosProducto] of Object.entries(carrito)) {
+                if (productosActualizados[idProducto]) {
+                    productosActualizados[idProducto].cantidad += datosProducto.cantidad;
+                    productosActualizados[idProducto].total += datosProducto.total;
+                } else {
+                    productosActualizados[idProducto] = datosProducto;
+                }
+            }
+
+            const nuevoTotal = Object.values(productosActualizados).reduce((acc, p) => acc + p.total, 0);
+
+            transaction.update(cuentaRef, {
+                productos: productosActualizados,
+                total: nuevoTotal,
+                fechaUltimaModificacion: serverTimestamp(),
+                idTurno: localStorage.getItem("idTurno") // 🔹 agregado
             });
         }
     });

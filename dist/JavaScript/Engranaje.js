@@ -9,22 +9,13 @@ import { db } from './Conexion.js';
 import { cargarDetalleCuenta } from "./Cuentas.js";
 import { exportarInventarioExcel, importarInventarioDesdeExcel } from "./Inventario.js";
 // IMPORTACIONES Firebase Firestore
-import {doc, getDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import {doc, getDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot, updateDoc} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
-observarSesion((user) => {
-    if (user) {
-        console.log("✅ Sesión activa detectada:", user.email);
-        container.style.display = 'none';
-        loginForm.style.display = 'none';
-        container1.style.display = 'block';
-        cargarInventario("");
-        renderCarrito();
-        cargarCuentasActivas();
-    } else {
-        console.log("⚠️ No hay sesión activa");
-    }
-});
 
+function obtenerTurnoActivoId() {
+    return localStorage.getItem("idTurno") || null;
+}
 
 function normalizarNombre(nombre) {
     return nombre
@@ -143,13 +134,13 @@ async function cargarResumenTurno() {
 
         contenedor.innerHTML = `
             <ul class="list-group">
-                <li class="list-group-item">Bebidas <b>ALCOHOLICAS</b>:<BR> ${formatoCOP.format(totalBebidasAlcohol)}</li><BR>
-                <li class="list-group-item">Venta de <b>TABACO</b>:<BR> ${formatoCOP.format(totalProductosTabaco)}</li><BR>
-                <li class="list-group-item">Pagos recibidos en <b>NEQUI</b>: ${formatoCOP.format(totalNequi)}</li><BR>
-                <li class="list-group-item">Pagos recibidos en <b>DAVIPLATA</b>: ${formatoCOP.format(totalDaviplata)}</li><BR>
-                <li class="list-group-item">Pagos recibidos en <b>EFECTIVO</b>: ${formatoCOP.format(totalEfectivo)}</li><BR>
-                <li class="list-group-item active">TOTAL VENTAS <b>HASTA AHORA</b>: ${formatoCOP.format(totalGeneral)}</li><BR>
-                <li class="list-group-item">Pago del 10% por Turno: ${formatoCOP.format(diezPorciento)}</li><BR>
+                <li class="list-group-item">Bebidas <b>ALCOHOLICAS</b>:<BR> ${formatoCOP.format(totalBebidasAlcohol)}</li>
+                <li class="list-group-item">Venta de <b>TABACO</b>:<BR> ${formatoCOP.format(totalProductosTabaco)}</li>
+                <li class="list-group-item">Pagos recibidos en <b>NEQUI</b>:<BR> ${formatoCOP.format(totalNequi)}</li>
+                <li class="list-group-item">Pagos recibidos en <b>DAVIPLATA</b>:<BR> ${formatoCOP.format(totalDaviplata)}</li>
+                <li class="list-group-item">Pagos recibidos en <b>EFECTIVO</b>:<BR> ${formatoCOP.format(totalEfectivo)}</li><BR>
+                <li class="list-group-item active">TOTAL VENTAS <b>HASTA AHORA</b>:<BR><b> ${formatoCOP.format(totalGeneral)}</b></li>
+                <li class="list-group-item">Pago del 10% por Turno:<BR> <b>${formatoCOP.format(diezPorciento)}</b></li>
             </ul>
         `;
     } catch (error) {
@@ -158,6 +149,57 @@ async function cargarResumenTurno() {
     }
 }
 
+async function marcarCuentasPasadasEnCuaderno() {
+    const turnoActual = localStorage.getItem("turnoActual");
+    const q = collection(db, "cuentasActivas");
+    const querySnapshot = await getDocs(q);
+
+    for (const docu of querySnapshot.docs) {
+        const cuenta = docu.data();
+        if (cuenta.idTurno !== turnoActual && cuenta.tipo !== "En cuaderno") {
+            await updateDoc(doc(db, "cuentasActivas", docu.id), { tipo: "En cuaderno" });
+        }
+    }
+}
+
+
+//  --- Crear/enganchaar botón en container2 para pendientes de turnos anteriores ---
+//(function crearBotonPendientes() {
+//    const container2 = document.getElementById('container2');
+//    if (!container2) return;
+
+    // Si ya existe, no lo duplicamos
+//    if (document.getElementById('btnPendientesTurnosAnteriores')) return;
+
+//    const btn = document.createElement('button');
+//    btn.id = 'btnPendientesTurnosAnteriores';
+//    btn.type = 'button';
+//    btn.className = 'btn btn-warning';
+//    btn.style.minWidth = 'auto';
+//    btn.style.padding = '8px 12px';
+//    btn.style.marginBottom = '10px';
+//    btn.innerHTML = `(<span id="badgePendientesTurnos" style="font-weight:700; margin-left:8px">0</span> cuentas pendientes)`;
+
+    // Insertarlo arriba de las cuentas activas
+//    const referencia = document.getElementById('cuentasActivasTurno');
+//    if (referencia) container2.insertBefore(btn, referencia);
+//    else container2.appendChild(btn);
+
+    // Listener para abrir container6
+//    btn.addEventListener('click', () => {
+//        mostrarContainer('container6');
+//        cargarCuentasPendientes();
+//    });
+
+    // Mantener en tiempo real la cuenta usando onSnapshot — reutiliza la consulta que ya usas
+//    const qPendientes = query(collection(db, "cuentasActivas"), where("tipo", "==", "En cuaderno"));
+//    onSnapshot(qPendientes, (snap) => {
+//        const badge = document.getElementById('badgePendientesTurnos');
+//        if (badge) badge.textContent = String(snap.size || 0);
+        // actualizar nota existente también
+//        verificarCuentasPendientes?.();
+//    }, (err) => console.error('listener pendientes error', err));
+//})();
 
 /** 📌 Función para cambiar entre contenedores */
 function mostrarContainer(idMostrar) {
@@ -173,12 +215,18 @@ function mostrarContainer(idMostrar) {
     }
     if (idMostrar === "container2") {
         cargarCuentasActivas();
+        // 🔔 NUEVO: refrescar nota de pendientes
+        verificarCuentasPendientes();
     }
     if (idMostrar === "container4") {
         cargarResumenTurno();
     }
     if (idMostrar === "container5") {
         cargarHistorialTurnos();
+    }
+    // 🔔 NUEVO: al abrir container6, cargar cuentas pendientes
+    if (idMostrar === "container6") {
+        cargarCuentasPendientes();
     }
 }
 
@@ -233,7 +281,6 @@ async function cargarHistorialTurnos() {
         contenedor.innerHTML = `<p>Error: ${err.message}</p>`;
     }
 }
-
 /** Funcion Ver Detalles de Turno */
 async function verResumenTurno(idTurno) {
     const contenedor = document.getElementById("historialTurnosContainer");
@@ -290,14 +337,20 @@ function mostrarDetalleCuenta(clienteId) {
     cargarDetalleCuenta(clienteId);
 }
 
-/** 📌 Función para cargar cuentas activas */
 function cargarCuentasActivas() {
-    const q = query(collection(db, "cuentasActivas"));
     const container = document.getElementById('cuentasActivasTurno');
+    if (!container) return;
 
-    if (!container) {
+    // ⬇️ obtenemos el idTurno del localStorage
+    const idTurno = obtenerTurnoActivoId();
+    if (!idTurno) {
+        container.innerHTML = "<p>No hay turno activo.</p>";
         return;
     }
+
+    // ⬇️ declaramos explícitamente la colección
+    const cuentasActivasCol = collection(db, "cuentasActivas");
+    const q = query(cuentasActivasCol, where("idTurno", "==", idTurno));
 
     onSnapshot(q, (querySnapshot) => {
         let htmlContent = '';
@@ -330,6 +383,81 @@ function cargarCuentasActivas() {
     });
 }
 
+/* 🔔 NUEVO: Nota en container 2 con cantidad de "En cuaderno" y apertura de container6 */
+function verificarCuentasPendientes() {
+    const nota = document.getElementById("notaCuentasPendientes");
+    if (!nota) return;
+    const q = query(collection(db, "cuentasActivas"), where("tipo", "==", "En cuaderno"));
+
+    onSnapshot(q, (querySnapshot) => {
+        const cantidad = querySnapshot.size;
+        if (cantidad > 0) {
+            nota.style.display = "block";
+            nota.innerHTML = `📌 Tienes <b>${cantidad}</b> Cuentas Anotadas en el Cuaderno, Toca Aquí para verlas.`;
+            nota.onclick = () => {
+                mostrarContainer("container6");
+                cargarCuentasPendientes();
+            };
+        } else {
+            nota.style.display = "none";
+            nota.onclick = null;
+        }
+    });
+}
+
+/* 🔔 Lista en container6: 
+   - cuentas "En cuaderno" de turnos anteriores
+   - cuentas "En cuaderno" del turno actual
+*/
+function cargarCuentasPendientes() {
+    const container = document.getElementById("cuentasPendientesContainer");
+    if (!container) return;
+
+    const turnoActual = localStorage.getItem("turnoActual");
+
+    const q = query(collection(db, "cuentasActivas"), where("tipo", "==", "En cuaderno"));
+    onSnapshot(q, (querySnapshot) => {
+        if (querySnapshot.empty) {
+            container.innerHTML = "<p>No hay cuentas pendientes.</p>";
+            return;
+        }
+
+        let html = '<div class="list-group">';
+
+        querySnapshot.forEach((docu) => {
+            const cuenta = docu.data();
+            const clienteId = docu.id;
+            const totalFormateado = new Intl.NumberFormat("es-CO", {
+                style: "currency",
+                currency: "COP",
+            }).format(cuenta.total);
+
+            // Distinción visual: si es turno actual o anterior
+            const turnoTexto = (cuenta.idTurno === turnoActual) 
+                ? "Turno actual" 
+                : `Turno anterior (${cuenta.idTurno || "Desconocido"})`;
+
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center" 
+                     onclick="mostrarDetalleCuenta('${clienteId}')">
+                    <div>
+                        <h6 class="mb-0">${cuenta.cliente || "Cliente sin nombre"}</h6>
+                        <small class="text-muted">${turnoTexto}</small>
+                    </div>
+                    <span class="badge bg-danger rounded-pill fs-6">
+                        ${totalFormateado}
+                    </span>
+                </div>
+            `;
+        });
+
+        html += "</div>";
+        container.innerHTML = html;
+    });
+}
+
+
+
 /** 📌 Eventos al cargar la página */
 document.addEventListener("DOMContentLoaded", function () {
     const emailInput = document.getElementById("emailinicio");
@@ -338,11 +466,42 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnIniciarSesion = document.getElementById("btnIniciarSesion");
     const container = document.getElementById("container");
     const container1 = document.getElementById("container1");
+    const container2 = document.getElementById("container2");
     const loginForm = document.getElementById("loginForm");
     const loginButton = document.getElementById("loginButton");
     const closeButton = document.getElementById("closeButton");
     const campoBusqueda1 = document.getElementById("campoBusqueda1");
 
+    const auth = getAuth();
+    // Si usas tu propia función observarSesion, deja la llamada; de lo contrario usa onAuthStateChanged
+    if (typeof observarSesion === 'function') {
+        observarSesion((user) => {
+            if (user) {
+                console.log("✅ Sesión activa detectada:", user.email);
+                if (container) container.style.display = 'none';
+                if (loginForm) loginForm.style.display = 'none';
+                if (container2) container2.style.display = 'block';
+                cargarInventario("");
+                renderCarrito();
+                cargarCuentasActivas();
+                verificarCuentasPendientes();
+                mostrarContainer("container2");
+
+            } else {
+                console.log("⚠️ No hay sesión activa");
+            }
+        });
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            console.log("✅ Sesión activa detectada:", user.email);
+            await marcarCuentasPasadasEnCuaderno();
+            cargarCuentasActivas();
+            cargarCuentasPendientes();
+            verificarCuentasPendientes();
+        }
+    });
     if (localStorage.getItem("recordar") === "true") {
         emailInput.value = localStorage.getItem("email") || "";
         recordarCheckbox.checked = true;
@@ -378,10 +537,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
             container.style.display = 'none';
             loginForm.style.display = 'none';
-            container1.style.display = 'block';
+            container2.style.display = 'block';
             cargarInventario("");
             renderCarrito();
-            cargarCuentasActivas();
+      await marcarCuentasPasadasEnCuaderno();
+            cargarCuentasActivas();            // 🔔 NUEVO
+            verificarCuentasPendientes();
+            mostrarContainer("container2");
         } catch (error) {
             alert("Error al iniciar sesión: " + error.message);
         }
@@ -403,6 +565,7 @@ window.renderCarrito = renderCarrito;
 window.realizarVenta = () => realizarVenta(window.carrito);
 window.verResumenTurno = verResumenTurno;
 window.cargarHistorialTurnos = cargarHistorialTurnos;
+window.marcarCuentasPasadasEnCuaderno = marcarCuentasPasadasEnCuaderno;
 window.mostrarContainer = mostrarContainer;
 window.cargarResumenTurno = cargarResumenTurno;
 window.cerrarSesion = cerrarSesion;
