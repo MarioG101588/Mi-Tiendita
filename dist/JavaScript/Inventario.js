@@ -17,6 +17,8 @@ export async function cargarInventario(filtro = "") {
         const snapshot = await getDocs(inventarioRef);
 
         let html = `
+        <div class="pantalla-horizontal">
+  <div class="tabla-inventario">
             <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
             <table class="table table-striped table-bordered inventario-fija">
                 <thead>
@@ -28,6 +30,8 @@ export async function cargarInventario(filtro = "") {
                     </tr>
                 </thead>
                 <tbody>
+                </div>
+                </div>
         `;
 
         let hayResultados = false;

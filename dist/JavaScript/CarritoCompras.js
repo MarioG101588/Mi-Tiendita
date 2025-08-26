@@ -73,6 +73,8 @@ export function renderCarrito() {
     if (!divCarrito) return;
 
     let html = `
+    <div class="pantalla-horizontal">
+  <div class="tabla-carrito">
         <table class="table table-sm table-bordered">
             <thead>
                 <tr>
@@ -83,6 +85,8 @@ export function renderCarrito() {
                 </tr>
             </thead>
             <tbody>
+            </div>
+</div>
     `;
 
     let hayItems = false;
