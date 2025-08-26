@@ -1,7 +1,8 @@
 // JavaScript/main.js
 
 // Importaciones de módulos locales
-import { iniciarSesion, cerrarSesionConConfirmacion, observarSesion } from "./Autenticacion.js";
+import { iniciarSesion, cerrarSesionConConfirmacion } from "./Autenticacion.js";
+import { signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import { cargarInventario } from "./Inventario.js";
 import { agregarAlCarrito, aumentarCantidad, disminuirCantidad, quitarDelCarrito, renderCarrito } from "./CarritoCompras.js";
 import { realizarVenta } from "./VentasApp.js";
@@ -9,9 +10,12 @@ import { db } from './Conexion.js';
 import { cargarDetalleCuenta } from "./Cuentas.js";
 import { exportarInventarioExcel, importarInventarioDesdeExcel } from "./Inventario.js";
 // IMPORTACIONES Firebase Firestore
-import {doc, getDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot, updateDoc} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import { auth } from "./Conexion.js";
+import { doc, getDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot, updateDoc } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
+// --- ADAPTACIÓN PARA CIERRE GLOBAL ---
+let unsubscribeTurnoListener = null;
 
 function obtenerTurnoActivoId() {
     return localStorage.getItem("idTurno") || null;
@@ -20,12 +24,28 @@ function obtenerTurnoActivoId() {
 function normalizarNombre(nombre) {
     return nombre
         .toLowerCase()
-        .normalize("NFD")                // separa tildes de las letras
-        .replace(/[\u0300-\u036f]/g, "") // elimina las tildes
-        .replace(/\s+/g, " ")            // colapsa espacios múltiples
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
         .trim();
 }
-/** 📌 Función para cargar resumen del turno activo */
+
+function observarEstadoTurno(idTurno) {
+    if (!idTurno) return null;
+    const turnoRef = doc(db, "turnos", idTurno);
+    const unsubscribe = onSnapshot(turnoRef, async (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        if (data.estado && data.estado.toLowerCase() === "cerrado") {
+            console.warn("⛔ El turno ha sido Cerrado. Cerrando sesión global...");
+            await signOut(auth);
+            alert("El turno fue Cerrado. Tu sesión ha finalizado.");
+        }
+    });
+    return unsubscribe;
+}
+
+/** 📌 Función para cargar resumen del turno Activo */
 async function cargarResumenTurno() {
     const contenedor = document.getElementById("resumenTurnoDatos");
     contenedor.innerHTML = "<p>Cargando...</p>";
@@ -49,26 +69,26 @@ async function cargarResumenTurno() {
         let idTurno = null;
         // 🔧 corregido: antes usaba dbResumen (no definido)
         const turnosRef = collection(db, "turnos");
-        console.log("📌 Consultando turnos activos en colección 'turnos'...");
+        console.log("📌 Consultando turnos Activos en colección 'turnos'...");
         const qTurno = query(
             turnosRef,
-            where("estado", "==", "activo"),
+            where("estado", "==", "Activo"),
             orderBy("fechaInicio", "desc"),
             limit(1)
         );
         const snapTurno = await getDocs(qTurno);
-        console.log("📌 Snap turnos activos:", snapTurno.size);
+        console.log("📌 Snap turnos Activos:", snapTurno.size);
 
         if (!snapTurno.empty) {
             const docData = snapTurno.docs[0].data();
-            console.log("📌 Datos turno activo encontrado:", docData);
+            console.log("📌 Datos turno Activo encontrado:", docData);
             idTurno = docData.idTurno || snapTurno.docs[0].id;
             console.log("📌 ID turno elegido:", idTurno);
         }
 
         if (!idTurno) {
-            console.warn("⚠️ No hay turno activo.");
-            contenedor.innerHTML = "<p>No hay turno activo.</p>";
+            console.warn("⚠️ No hay turno Activo.");
+            contenedor.innerHTML = "<p>No hay turno Activo.</p>";
             return;
         }
 
@@ -149,57 +169,20 @@ async function cargarResumenTurno() {
     }
 }
 
-async function marcarCuentasPasadasEnCuaderno() {
-    const turnoActual = localStorage.getItem("turnoActual");
-    const q = collection(db, "cuentasActivas");
-    const querySnapshot = await getDocs(q);
+async function marcarCuentasPasadasEnCuaderno(idTurnoActual) {
+  if (!idTurnoActual) return;
 
-    for (const docu of querySnapshot.docs) {
-        const cuenta = docu.data();
-        if (cuenta.idTurno !== turnoActual && cuenta.tipo !== "En cuaderno") {
-            await updateDoc(doc(db, "cuentasActivas", docu.id), { tipo: "En cuaderno" });
-        }
+  const snap = await getDocs(collection(db, "cuentasActivas"));
+  for (const d of snap.docs) {
+    const c = d.data();
+
+    if (!c.idTurno || c.idTurno === idTurnoActual) continue;
+
+    if ((c.tipo || "").toLowerCase() !== "consumo local" && c.tipo !== "En cuaderno") {
+      await updateDoc(doc(db, "cuentasActivas", d.id), { tipo: "En cuaderno" });
     }
+  }
 }
-
-
-//  --- Crear/enganchaar botón en container2 para pendientes de turnos anteriores ---
-//(function crearBotonPendientes() {
-//    const container2 = document.getElementById('container2');
-//    if (!container2) return;
-
-    // Si ya existe, no lo duplicamos
-//    if (document.getElementById('btnPendientesTurnosAnteriores')) return;
-
-//    const btn = document.createElement('button');
-//    btn.id = 'btnPendientesTurnosAnteriores';
-//    btn.type = 'button';
-//    btn.className = 'btn btn-warning';
-//    btn.style.minWidth = 'auto';
-//    btn.style.padding = '8px 12px';
-//    btn.style.marginBottom = '10px';
-//    btn.innerHTML = `(<span id="badgePendientesTurnos" style="font-weight:700; margin-left:8px">0</span> cuentas pendientes)`;
-
-    // Insertarlo arriba de las cuentas activas
-//    const referencia = document.getElementById('cuentasActivasTurno');
-//    if (referencia) container2.insertBefore(btn, referencia);
-//    else container2.appendChild(btn);
-
-    // Listener para abrir container6
-//    btn.addEventListener('click', () => {
-//        mostrarContainer('container6');
-//        cargarCuentasPendientes();
-//    });
-
-    // Mantener en tiempo real la cuenta usando onSnapshot — reutiliza la consulta que ya usas
-//    const qPendientes = query(collection(db, "cuentasActivas"), where("tipo", "==", "En cuaderno"));
-//    onSnapshot(qPendientes, (snap) => {
-//        const badge = document.getElementById('badgePendientesTurnos');
-//        if (badge) badge.textContent = String(snap.size || 0);
-        // actualizar nota existente también
-//        verificarCuentasPendientes?.();
-//    }, (err) => console.error('listener pendientes error', err));
-//})();
 
 /** 📌 Función para cambiar entre contenedores */
 function mostrarContainer(idMostrar) {
@@ -215,7 +198,6 @@ function mostrarContainer(idMostrar) {
     }
     if (idMostrar === "container2") {
         cargarCuentasActivas();
-        // 🔔 NUEVO: refrescar nota de pendientes
         verificarCuentasPendientes();
     }
     if (idMostrar === "container4") {
@@ -224,7 +206,6 @@ function mostrarContainer(idMostrar) {
     if (idMostrar === "container5") {
         cargarHistorialTurnos();
     }
-    // 🔔 NUEVO: al abrir container6, cargar cuentas pendientes
     if (idMostrar === "container6") {
         cargarCuentasPendientes();
     }
@@ -238,11 +219,11 @@ async function cargarHistorialTurnos() {
     try {
         // 🔧 corregido: antes consultaba ventasCerradas
         const turnosRef = collection(db, "turnos");
-        const q = query(turnosRef, where("estado", "==", "cerrado"), orderBy("fechaFin", "desc"));
+        const q = query(turnosRef, where("estado", "==", "Cerrado"), orderBy("fechaFin", "desc"));
         const snap = await getDocs(q);
 
         if (snap.empty) {
-            contenedor.innerHTML = "<p>No hay turnos cerrados.</p>";
+            contenedor.innerHTML = "<p>No hay turnos Cerrados.</p>";
             return;
         }
 
@@ -315,20 +296,10 @@ async function verResumenTurno(idTurno) {
         contenedor.innerHTML = `<p>Error: ${err.message}</p>`;
     }
 }
-/** 📌 Función para cerrar sesión */
+// JavaScript/Engranaje.js - CÓDIGO CORREGIDO Y FINAL
+
 async function cerrarSesion() {
-    const confirmacion = await cerrarSesionConConfirmacion();
-
-    if (!confirmacion) return; // El usuario canceló
-
-    // Solo si se cerró la sesión, actualiza la interfaz
-    document.querySelectorAll('.container, .container1, .container2, .container3, .container4, .container5').forEach(el => {
-        el.style.display = 'none';
-    });
-
-    document.getElementById('container').style.display = 'block';
-    document.getElementById('loginButton').style.display = 'inline-block';
-    document.getElementById('loginForm').style.display = 'none';
+    await cerrarSesionConConfirmacion();
 }
 
 /** 📌 Función para mostrar detalle de una cuenta */
@@ -344,7 +315,7 @@ function cargarCuentasActivas() {
     // ⬇️ obtenemos el idTurno del localStorage
     const idTurno = obtenerTurnoActivoId();
     if (!idTurno) {
-        container.innerHTML = "<p>No hay turno activo.</p>";
+        container.innerHTML = "<p>No hay turno Activo.</p>";
         return;
     }
 
@@ -456,52 +427,49 @@ function cargarCuentasPendientes() {
     });
 }
 
-
-
-/** 📌 Eventos al cargar la página */
+// --- ADAPTACIÓN PARA CIERRE GLOBAL ---
 document.addEventListener("DOMContentLoaded", function () {
     const emailInput = document.getElementById("emailinicio");
     const passwordInput = document.getElementById("passwordinicio");
     const recordarCheckbox = document.getElementById("recordarDatos");
     const btnIniciarSesion = document.getElementById("btnIniciarSesion");
-    const container = document.getElementById("container");
-    const container1 = document.getElementById("container1");
-    const container2 = document.getElementById("container2");
     const loginForm = document.getElementById("loginForm");
     const loginButton = document.getElementById("loginButton");
     const closeButton = document.getElementById("closeButton");
     const campoBusqueda1 = document.getElementById("campoBusqueda1");
-
     const auth = getAuth();
-    // Si usas tu propia función observarSesion, deja la llamada; de lo contrario usa onAuthStateChanged
-    if (typeof observarSesion === 'function') {
-        observarSesion((user) => {
-            if (user) {
-                console.log("✅ Sesión activa detectada:", user.email);
-                if (container) container.style.display = 'none';
-                if (loginForm) loginForm.style.display = 'none';
-                if (container2) container2.style.display = 'block';
-                cargarInventario("");
-                renderCarrito();
+
+    // --- ADAPTACIÓN PARA CIERRE GLOBAL ---
+    onAuthStateChanged(auth, (user) => {
+        if (unsubscribeTurnoListener) {
+            unsubscribeTurnoListener();
+            unsubscribeTurnoListener = null;
+        }
+
+        if (user) {
+            const idTurno = obtenerTurnoActivoId();
+            if (idTurno) {
+                console.log(`Usuario ${user.email} autenticado con turno ${idTurno}.`);
+                unsubscribeTurnoListener = observarEstadoTurno(idTurno);
+                mostrarContainer("container2");
                 cargarCuentasActivas();
                 verificarCuentasPendientes();
-                mostrarContainer("container2");
-
             } else {
-                console.log("⚠️ No hay sesión activa");
+                // Caso anómalo: Autenticado pero sin turno. Limpiamos.
+                console.warn(`Usuario ${user.email} autenticado pero sin turno. Cerrando sesión.`);
+                signOut(auth);
             }
-        });
-    }
-
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            console.log("✅ Sesión activa detectada:", user.email);
-            await marcarCuentasPasadasEnCuaderno();
-            cargarCuentasActivas();
-            cargarCuentasPendientes();
-            verificarCuentasPendientes();
+        } else {
+            // Usuario no autenticado: limpiar turno y actualizar UI
+            localStorage.removeItem("idTurno");
+            document.querySelectorAll('.container, .container1, .container2, .container3, .container4, .container5, .container6')
+                .forEach(el => el.style.display = 'none');
+            document.getElementById('container').style.display = 'block';
+            document.getElementById('loginButton').style.display = 'inline-block';
+            document.getElementById('loginForm').style.display = 'none';
         }
     });
+
     if (localStorage.getItem("recordar") === "true") {
         emailInput.value = localStorage.getItem("email") || "";
         recordarCheckbox.checked = true;
@@ -527,25 +495,12 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        try {
-            const usuario = await iniciarSesion(email, password, recordar);
+        const idTurno = await iniciarSesion(email, password, recordar);
 
-            if (!usuario) { // 🚫 Si no hay usuario válido, detener flujo
-                alert("Correo o contraseña incorrectos.");
-                return;
-            }
-
-            container.style.display = 'none';
-            loginForm.style.display = 'none';
-            container2.style.display = 'block';
-            cargarInventario("");
-            renderCarrito();
-      await marcarCuentasPasadasEnCuaderno();
-            cargarCuentasActivas();            // 🔔 NUEVO
-            verificarCuentasPendientes();
-            mostrarContainer("container2");
-        } catch (error) {
-            alert("Error al iniciar sesión: " + error.message);
+        if (idTurno) {
+            console.log(`Proceso de login completado para el turno: ${idTurno}`);
+        } else {
+            console.error("El proceso de inicio de sesión falló.");
         }
     });
 
@@ -571,10 +526,8 @@ window.cargarResumenTurno = cargarResumenTurno;
 window.cerrarSesion = cerrarSesion;
 window.mostrarDetalleCuenta = mostrarDetalleCuenta;
 document.getElementById("btnExportarInventario").addEventListener("click", exportarInventarioExcel);
-document.getElementById("importFile") .addEventListener("change", (e) => {
-        
-    if 
-    (e.target.files.length > 0) {
-            importarInventarioDesdeExcel(e.target.files[0]);
-        }
-    });
+document.getElementById("importFile").addEventListener("change", (e) => {
+    if (e.target.files.length > 0) {
+        importarInventarioDesdeExcel(e.target.files[0]);
+    }
+});

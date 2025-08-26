@@ -10,31 +10,47 @@ const db = getFirestore(app);
 setPersistence(auth, browserLocalPersistence).catch(console.error);
 
 /**
+ * Observador de sesión: actualiza la UI y limpia localStorage al cerrar sesión.
+ */
+export function observarSesion(callback) {
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      // Usuario no autenticado: limpiar turno y actualizar UI
+      localStorage.removeItem("idTurno");
+      document.querySelectorAll('.container, .container1, .container2, .container3, .container4, .container5, .container6')
+        .forEach(el => el.style.display = 'none');
+      if (document.getElementById('container')) {
+        document.getElementById('container').style.display = 'block';
+      }
+      if (document.getElementById('loginButton')) {
+        document.getElementById('loginButton').style.display = 'inline-block';
+      }
+      if (document.getElementById('loginForm')) {
+        document.getElementById('loginForm').style.display = 'none';
+      }
+    }
+    if (callback) callback(user);
+  });
+}
+
+/**
  * Inicia sesión, verifica el estado del usuario en Firebase y crea un turno si es necesario.
  * Las notificaciones se manejan exclusivamente con SweetAlert2.
  * @param {string} email - Correo electrónico del usuario.
  * @param {string} password - Contraseña del usuario.
  * @param {boolean} recordar - Opción para guardar las credenciales.
- * @returns {Promise<boolean>} - Retorna true si el inicio de sesión fue exitoso, de lo contrario false.
+ * @returns {Promise<string|null>} - Retorna el idTurno si el inicio de sesión fue exitoso, de lo contrario null.
  */
-// ✅ Exportar observador
-export function observarSesion(callback) {
-  onAuthStateChanged(auth, (user) => {
-    callback(user);
-  });
-}
 export async function iniciarSesion(email, password, recordar) {
-      // 1. Validación inicial de campos
     if (!email?.trim() || !password?.trim()) {
         await Swal.fire({
             icon: "warning",
             title: "Campos incompletos",
             text: "Por favor, ingresa tu correo y contraseña."
         });
-        return false; // Detiene la ejecución si los campos están vacíos
+        return null;
     }
 
-    // 2. Modal de carga mientras se procesa la solicitud
     Swal.fire({
         title: 'Iniciando sesión...',
         text: 'Por favor, espera un momento.',
@@ -45,49 +61,38 @@ export async function iniciarSesion(email, password, recordar) {
     });
 
     try {
-        // 3. Configuración de persistencia de la sesión
         await setPersistence(auth, browserLocalPersistence);
-        
-        // 4. Intento de autenticación con Firebase
-        const cred = await signInWithEmailAndPassword(auth, email, password);        
+        const cred = await signInWithEmailAndPassword(auth, email, password);
         const user = cred.user;
 
-        // 5. VERIFICACIÓN CRÍTICA: El usuario debe tener el email confirmado
         if (!user.emailVerified) {
-            await signOut(auth); // Cerramos la sesión inmediatamente
-            Swal.close(); // Cerramos el modal de carga
-            await Swal.fire({
-                icon: 'error',
-                title: 'Verificación requerida',
-                text: 'Tu cuenta de correo no ha sido verificada. Por favor, revisa tu bandeja de entrada y confirma tu cuenta antes de iniciar sesión.',
-            });
-            return false; // Bloqueamos el acceso
-        }
-        
-        // ✨ INICIO DE LA MODIFICACIÓN ✨
-        // 6. Obtener datos (nombre y rol) desde la colección "usuarios"
-        const usuarioRef = doc(db, "usuarios", user.email);
-        const usuarioSnap = await getDoc(usuarioRef);
-
-        if (!usuarioSnap.exists()) {
-            await signOut(auth); // Si está autenticado pero no tiene perfil, lo sacamos.
+            await signOut(auth);
             Swal.close();
             await Swal.fire({
                 icon: 'error',
-                title: 'Perfil no encontrado',
-                text: 'No hemos podido encontrar los datos de tu perfil. Contacta al administrador.'
+                title: 'Verificación requerida',
+                text: 'Tu cuenta de correo no ha sido verificada. Por favor, revisa tu bandeja de entrada.'
             });
-            return false; // Detenemos el proceso
+            return null;
         }
 
+const usuarioRef = doc(db, "usuarios", email);
+    const usuarioSnap = await getDoc(usuarioRef);
+
+    if (usuarioSnap.exists()) {
+        const data = usuarioSnap.data();
+        if (data.sesionActiva) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Sesión activa',
+                text: 'Este usuario ya tiene una sesión activa en otro dispositivo.'
+            });
+            return null;
+        }
+    }        
         const { nombre, role } = usuarioSnap.data();
-        const usuarioConcatenado = `${nombre}${role}`; // Se unen nombre y rol. Ej: "anaarizaadmin"
-        // ✨ FIN DE LA MODIFICACIÓN ✨
+        const usuarioConcatenado = `${nombre}${role}`;
 
-        // Si el usuario está verificado, procedemos
-        Swal.close();
-
-        // 7. Manejo de la opción "Recordar"
         if (recordar) {
             localStorage.setItem("recordar", "true");
             localStorage.setItem("email", email);
@@ -96,86 +101,69 @@ export async function iniciarSesion(email, password, recordar) {
             localStorage.removeItem("email");
         }
 
-        // 8. Búsqueda de un turno activo en Firestore (con el valor concatenado)
+        // Buscar turno activo
         const q = query(
             collection(db, "turnos"),
-            where("usuario", "==", email), // <-- ¡CAMBIO IMPORTANTE!
-            where("estado", "==", "activo")
+            where("usuario", "==", email),
+            where("estado", "==", "Activo")
         );
         const querySnapshot = await getDocs(q);
+        
+        let idTurno;
 
         if (!querySnapshot.empty) {
             const turnoExistente = querySnapshot.docs[0].data();
-            localStorage.setItem("idTurno", turnoExistente.idTurno);
+            idTurno = turnoExistente.idTurno;
             await Swal.fire({
                 icon: 'info',
-                title: 'Turno ya activo',
-                text: `Se encontró el turno activo: ${turnoExistente.idTurno}`
+                title: 'Turno ya Activo',
+                text: `Se encontró el turno Activo: ${idTurno}`
             });
         } else {
-            // 9. Creación de un nuevo turno si no hay uno activo
-            const idTurno = `${usuarioConcatenado}_${Date.now()}`; // ✅ más seguro que fecha formateada
-            const fechaInicio = serverTimestamp(); // ✅ sin parámetros
-
+            idTurno = `${usuarioConcatenado}_${Date.now()}`;
+            const fechaInicio = serverTimestamp();
             await setDoc(doc(db, "turnos", idTurno), {
                 idTurno,
-                usuario: email, // <-- ¡CAMBIO IMPORTANTE!
+                usuario: email,
                 fechaInicio,
                 fechaFin: null,
-                estado: "activo"
+                estado: "Activo"
             });
-onAuthStateChanged
-            localStorage.setItem("idTurno", idTurno);
             await Swal.fire({
                 icon: 'success',
                 title: '¡Bienvenido!',
                 text: 'Turno iniciado correctamente.'
+                
             });
-        }
+                const sesionToken = Date.now().toString() + Math.random().toString(36).substring(2);
+    await updateDoc(usuarioRef, {
+        sesionActiva: true,
+        sesionToken
+    });
 
-        return true; // Inicio de sesión exitoso
+        }
+        
+        localStorage.setItem("idTurno", idTurno);
+        Swal.close();
+        return idTurno;
 
     } catch (error) {
-        Swal.close(); // Cierra el modal de carga en caso de error
-        
-        // 10. Manejo de errores específicos de Firebase Auth
+        Swal.close();
         let tituloError = "Error al iniciar sesión";
         let mensajeError = "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.";
-
-        switch (error.code) {
-            case 'auth/user-not-found':
-            case 'auth/wrong-password':
-            case 'auth/invalid-credential':
-                tituloError = "Credenciales incorrectas";
-                mensajeError = "El correo electrónico o la contraseña no son correctos. Por favor, verifica tus datos.";
-                break;
-            case 'auth/too-many-requests':
-                tituloError = "Demasiados intentos";
-                mensajeError = "El acceso a esta cuenta ha sido temporalmente deshabilitado debido a muchos intentos fallidos. Puedes restaurarlo restableciendo tu contraseña o intentarlo más tarde.";
-                break;
-            case 'auth/network-request-failed':
-                tituloError = "Error de red";
-                mensajeError = "No se pudo conectar con el servidor. Revisa tu conexión a internet.";
-                break;
-            default:
-                // Para otros errores, se puede mostrar el mensaje genérico o el de Firebase
-                mensajeError = error.message;
-                console.error("Error no controlado en login:", error);
-                break;
-        }
-
         await Swal.fire(tituloError, mensajeError, "error");
-        return false; // Inicio de sesión fallido
+        return null;
     }
 }
 
 /**
- * Cierra la sesión del usuario en Firebase y finaliza el turno activo en Firestore.
+ * Cierra la sesión del usuario en Firebase y finaliza el turno Activo en Firestore.
+ * El cierre global lo ejecuta el listener de sesión (onAuthStateChanged).
  */
 export async function cerrarSesionConConfirmacion() {
     const confirmacion = await Swal.fire({
         title: "¿Cerrar sesión?",
-        text: "Esto cerrará el turno actual y no podrás modificarlo después. ¿Deseas continuar?",
+        text: "Esto cerrará el turno actual y finalizará la sesión en todos los dispositivos.",
         icon: "warning",
         showCancelButton: true,
         confirmButtonText: "Sí, cerrar sesión",
@@ -183,24 +171,36 @@ export async function cerrarSesionConConfirmacion() {
     });
 
     if (!confirmacion.isConfirmed) {
-        return false; // El usuario canceló la acción
+        return false;
     }
+
     const idTurno = localStorage.getItem("idTurno");
-    if (idTurno) {
-        const fechaFin = serverTimestamp(); // ✅ sin parámetros
-        await updateDoc(doc(db, "turnos", idTurno), {
-            fechaFin,
-            estado: "cerrado"
-        });
-        localStorage.removeItem("idTurno");
+    const email = auth.currentUser?.email;
+
+    if (idTurno && email) {
+        try {
+            const fechaFin = serverTimestamp();
+            const turnoRef = doc(db, "turnos", idTurno);
+            const usuarioRef = doc(db, "usuarios", email);
+
+
+            await updateDoc(turnoRef, usuarioRef, {
+                fechaFin,
+                estado: "Cerrado",
+                sesionActiva: false,
+                sesionToken: ""
+            });
+            // El listener de sesión se encargará de signOut y limpiar localStorage.
+            await signOut(auth);
+            return true;
+
+        } catch (error) {
+            console.error("Error al actualizar el turno:", error);
+            await Swal.fire('Error', 'No se pudo actualizar el estado del turno.', 'error');
+            return false;
+        }
+    } else {
+        await signOut(auth);
+        return true;
     }
-
-    await signOut(auth);
-
-    await Swal.fire({
-        icon: 'success',
-        title: 'Sesión cerrada',
-        text: 'Has cerrado sesión exitosamente.'
-    });
-    return true;
 }

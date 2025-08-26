@@ -27,11 +27,11 @@ function calcularTotal(carrito) {
  * usando el medio de pago elegido.
  */
 async function procesarVentaEfectivoACerrada(carrito, medioPago) {
-    // 1. Buscar el turno activo
+    // 1. Buscar el turno Activo
     let idTurno = localStorage.getItem("idTurno");
     if (!idTurno) {
         const turnosRef = collection(db, "turnos");
-        const q = query(turnosRef, where("estado", "==", "activo"), orderBy("fechaInicio", "desc"), limit(1));
+        const q = query(turnosRef, where("estado", "==", "Activo"), orderBy("fechaInicio", "desc"), limit(1));
         const snap = await getDocs(q);
         if (!snap.empty) {
             idTurno = snap.docs[0].id;
@@ -39,7 +39,7 @@ async function procesarVentaEfectivoACerrada(carrito, medioPago) {
         }
     }
     if (!idTurno) {
-        throw new Error("No se encontró un turno activo. Por favor, inicie un turno para registrar la venta.");
+        throw new Error("No se encontró un turno Activo. Por favor, inicie un turno para registrar la venta.");
     }
 
     // 2. Preparar productos
@@ -132,10 +132,10 @@ export async function realizarVenta(carrito) {
         title: 'Finalizar Venta',
         html:
             '<input id="swal-input-cliente" class="swal2-input" placeholder="Nombre del Cliente (opcional)">' +
-            '<select id="swal-select-clase-venta" class="swal2-select" style="width: auto;">' +
+            '<select id="swal-select-clase-venta" class="swal2-select" style="width: "Consumo en el local";">' +
+            '<option value="Pago en efectivo" selected>Pago en efectivo</option>' +
             '<option value="Consumo en el local">Consumo en el local</option>' +
             '<option value="En Cuaderno">Anotar en el Cuaderno</option>' +
-            '<option value="Pago en efectivo" selected>Pago en efectivo</option>' +
 
             '</select>',
         focusConfirm: false,
