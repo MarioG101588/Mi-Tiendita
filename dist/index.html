@@ -32,7 +32,13 @@
 <div class="container1" id="container1" style="display:none;">
     <h2 class="titulo-superior">Nueva Venta</h2>
         <div class="buscador-container">
-        <input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar...">
+        <!--<input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar...">-->
+<div class="buscador-container" style="position:relative;">
+  <input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar...">
+  <button id="btnVozBuscar" style="position:absolute; right:2vw; top:50%; transform:translateY(-50%); background:#4f8cff; color:#fff; border:none; border-radius:50%; width:2.5vw; height:2.5vw; font-size:1.2vw;">
+    🎤
+  </button>
+</div>
     </div>
     <div id="resultadoBusqueda1" class="resultado-busqueda"></div>
     <!-- ADAPTACIÓN: Vista horizontal para Inventario y Carrito -->

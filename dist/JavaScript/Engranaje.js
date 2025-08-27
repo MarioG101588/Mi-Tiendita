@@ -526,8 +526,10 @@ window.cargarResumenTurno = cargarResumenTurno;
 window.cerrarSesion = cerrarSesion;
 window.mostrarDetalleCuenta = mostrarDetalleCuenta;
 document.getElementById("btnExportarInventario").addEventListener("click", exportarInventarioExcel);
-document.getElementById("importFile").addEventListener("change", (e) => {
-    if (e.target.files.length > 0) {
-        importarInventarioDesdeExcel(e.target.files[0]);
-    }
-});
+document.getElementById("importFile") .addEventListener("change", (e) => {
+        
+    if 
+    (e.target.files.length > 0) {
+            importarInventarioDesdeExcel(e.target.files[0]);
+        }
+    });
