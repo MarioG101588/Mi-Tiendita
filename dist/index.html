@@ -29,16 +29,12 @@
                 <button id="closeButton" class="btn btn-secondary">Cerrar</button></div>
         </div>
     </div>
-    
 <div class="container1" id="container1" style="display:none;">
-    <h1 class="titulo-superior">Nueva Venta</h1>
+    <h2 class="titulo-superior">Nueva Venta</h2>
         <div class="buscador-container">
         <input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar...">
     </div>
     <div id="resultadoBusqueda1" class="resultado-busqueda"></div>
-    <div class="botones">
-    <button onclick="mostrarContainer('container2')" class="btn-orange">Volver a inicio</button>
-    </div>
     <!-- ADAPTACIÓN: Vista horizontal para Inventario y Carrito -->
     <div class="pantalla-horizontal">
         <div id="inventarioContainer" class="tabla-inventario">
@@ -48,8 +44,12 @@
             <!-- Carrito de compras se renderiza aquí por JS -->
         </div>
     </div>
+    <div class="botones">
+
     <button id="btnExportarInventario" class="btn btn-success">📥 Exportar Inventario</button>
     <input type="file" id="importFile" class="form-control" style="display:inline-block; width:auto;" /></div>
+    <button onclick="mostrarContainer('container2')" class="btn-orange">Volver a inicio</button>
+</div>
 
 <div class="container2" id="container2" style="display:none;">
         <h1 class="titulo-superior">Cigarreria el Arrendajo Azul y algo Mas</h1><br>
