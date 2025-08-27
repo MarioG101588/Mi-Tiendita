@@ -29,13 +29,13 @@ h1, h3 {
   text-align: center;
   margin-top: 1vw;
   margin-bottom: 2vw;
-  font-size: 2.5vw;
+  font-size: 2.2vw;
 }
 
 /* Botones */
 button, .btn {
-  font-size: 1.5vw;
-  padding: 1vw 2vw;
+  font-size: 1.2vw;
+  padding: 0.7vw 1.5vw;
   border-radius: 8px;
   margin: 0.5vw;
   cursor: pointer;
@@ -67,8 +67,8 @@ input[type="text"],
 input[type="password"],
 input[type="email"],
 input[type="file"] {
-  font-size: 1.5vw;
-  padding: 1vw;
+  font-size: 1.2vw;
+  padding: 0.7vw;
   margin: 1vw 0;
   width: 60vw;
   border-radius: 6px;
@@ -79,7 +79,7 @@ input[type="file"] {
 }
 
 label {
-  font-size: 1.3vw;
+  font-size: 1vw;
   margin-bottom: 0.5vw;
   display: block;
   text-align: left;
@@ -107,17 +107,17 @@ label {
     box-shadow: 0 4px 24px rgba(80,140,255,0.10);
   }
   h1, h3 {
-    font-size: 3vw;
+    font-size: 2.5vw;
   }
   button, .btn {
-    font-size: 2vw;
-    padding: 1vw 3vw;
+    font-size: 1.7vw;
+    padding: 1vw 2vw;
   }
   input[type="text"],
   input[type="password"],
   input[type="email"],
   input[type="file"] {
-    font-size: 2vw;
+    font-size: 1.7vw;
     width: 50vw;
   }
   .pantalla-horizontal {
@@ -207,6 +207,69 @@ label {
   }
 }
 
+/* Responsive para pantallas pequeñas y móviles */
+@media (max-width: 600px) {
+  h1, h3 {
+    font-size: 5vw;
+    margin-top: 3vw;
+    margin-bottom: 4vw;
+  }
+  button, .btn {
+    font-size: 4vw;
+    padding: 2vw 4vw;
+    margin: 1vw;
+  }
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="file"] {
+    font-size: 4vw;
+    width: 90vw;
+    padding: 2vw;
+  }
+  label {
+    font-size: 3vw;
+  }
+  .container,
+  .container1,
+  .container2,
+  .container3,
+  .container4,
+  .container5,
+  .container6 {
+    max-width: 98vw;
+    min-height: 60vh;
+    padding: 2vw 2vw;
+    border-radius: 12px;
+  }
+  .pantalla-horizontal {
+    flex-direction: column;
+    gap: 2vw;
+    min-height: 60vh;
+  }
+  .tabla-inventario, .tabla-carrito {
+    min-width: 95vw;
+    max-width: 98vw;
+    min-height: 40vh;
+    padding: 2vw 1vw;
+    border-radius: 12px;
+    font-size: 3vw;
+  }
+  table {
+    font-size: 3vw;
+  }
+  th, td {
+    padding: 1vw 1vw;
+  }
+  .cantidad-container {
+    gap: 1vw;
+  }
+  .btn-cantidad, .btn-quitar {
+    font-size: 3vw;
+    padding: 1vw 2vw;
+  }
+}
+
 /* Responsive para pantallas pequeñas en landscape */
 @media (max-width: 900px) and (orientation: landscape) {
   .container,
@@ -247,4 +310,5 @@ label {
 
 /* Ocultar scroll horizontal */
 body {
-  overflow-x: hidden;}
+  overflow-x: hidden;
+}
