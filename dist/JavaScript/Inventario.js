@@ -8,17 +8,19 @@ const db = getFirestore(app);
 
 // ================== CARGAR INVENTARIO ==================
 export async function cargarInventario(filtro = "") {
+    // ADAPTACIÓN: Renderizar inventario en el contenedor horizontal si existe
+    const inventarioContainer = document.getElementById("inventarioContainer");
     const resultadoDiv = document.getElementById("resultadoBusqueda1");
-    if (!resultadoDiv) return;
-    resultadoDiv.innerHTML = "Cargando...";
+
+    let renderTarget = inventarioContainer || resultadoDiv;
+    if (!renderTarget) return;
+    renderTarget.innerHTML = "Cargando...";
 
     try {
         const inventarioRef = collection(db, "inventario");
         const snapshot = await getDocs(inventarioRef);
 
         let html = `
-        <div class="pantalla-horizontal">
-  <div class="tabla-inventario">
             <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
             <table class="table table-striped table-bordered inventario-fija">
                 <thead>
@@ -30,8 +32,6 @@ export async function cargarInventario(filtro = "") {
                     </tr>
                 </thead>
                 <tbody>
-                </div>
-                </div>
         `;
 
         let hayResultados = false;
@@ -57,9 +57,9 @@ export async function cargarInventario(filtro = "") {
             </table>
             </div>
         `;
-        resultadoDiv.innerHTML = hayResultados ? html : "No hay resultados.";
+        renderTarget.innerHTML = hayResultados ? html : "No hay resultados.";
     } catch (error) {
-        resultadoDiv.innerHTML = "Error al cargar inventario.";
+        renderTarget.innerHTML = "Error al cargar inventario.";
         console.error(error);
     }
 }

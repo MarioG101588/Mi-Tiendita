@@ -65,28 +65,26 @@ function formatoCOP(valor) {
 }
 
 /**
- * Renderiza la tabla del carrito en #carritoVenta con los botones de cantidad
- * alineados horizontalmente ( - [n] + ).
+ * Renderiza la tabla del carrito en #carritoContainer si existe, 
+ * si no, en #carritoVenta (compatibilidad con versiones anteriores).
  */
 export function renderCarrito() {
-    const divCarrito = document.getElementById('carritoVenta');
+    // ADAPTACIÓN: Renderizar en el contenedor horizontal si existe
+    const carritoContainer = document.getElementById('carritoContainer');
+    const divCarrito = carritoContainer || document.getElementById('carritoVenta');
     if (!divCarrito) return;
 
     let html = `
-    <div class="pantalla-horizontal">
-  <div class="tabla-carrito">
         <table class="table table-sm table-bordered">
             <thead>
                 <tr>
                     <th>Producto</th>
-                        <th class="col-cantidad">Cantidad</th>
+                    <th class="col-cantidad">Cantidad</th>
                     <th>Precio Total</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
-            </div>
-</div>
     `;
 
     let hayItems = false;
@@ -100,13 +98,13 @@ export function renderCarrito() {
         html += `
             <tr>
                 <td>${item.nombre}</td>
-<td class="col-cantidad">
-    <div class="cantidad-container">
-        <button class="btn-cantidad" aria-label="Disminuir" onclick="window.disminuirCantidad('${id}')">-</button>
-        <span class="cantidad-num" aria-live="polite">${item.cantidad}</span>
-        <button class="btn-cantidad" aria-label="Aumentar" onclick="window.aumentarCantidad('${id}')">+</button>
-    </div>
-</td>
+                <td class="col-cantidad">
+                    <div class="cantidad-container">
+                        <button class="btn-cantidad" aria-label="Disminuir" onclick="window.disminuirCantidad('${id}')">-</button>
+                        <span class="cantidad-num" aria-live="polite">${item.cantidad}</span>
+                        <button class="btn-cantidad" aria-label="Aumentar" onclick="window.aumentarCantidad('${id}')">+</button>
+                    </div>
+                </td>
                 <td>${formatoCOP(item.total)}</td>
                 <td>
                     <button class="btn-cantidad btn-quitar" onclick="window.quitarDelCarrito('${id}')">Quitar</button>

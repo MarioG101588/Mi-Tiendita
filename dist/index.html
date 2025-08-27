@@ -6,6 +6,7 @@
     <title>Inicio de Sesión</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
     <link rel="stylesheet" href="Css/estilo.css">
+    <link rel="stylesheet" href="Css/estilo-landscape.css">
 </head>
 <body>
     <div class="container" id="container">
@@ -30,17 +31,24 @@
     </div>
     
 <div class="container1" id="container1" style="display:none;">
-    <div id="carritoVenta"></div><br>
-    <h1 class="titulo-superior">Nueva Venta</h1><br>
-
-    <div class="buscador-container">
+    <h1 class="titulo-superior">Nueva Venta</h1>
+        <div class="buscador-container">
         <input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar...">
-    </div><br>
+    </div>
     <div id="resultadoBusqueda1" class="resultado-busqueda"></div>
     <div class="botones">
     <button onclick="mostrarContainer('container2')" class="btn-orange">Volver a inicio</button>
     </div>
-    <br><br><br><br>
+    <!-- ADAPTACIÓN: Vista horizontal para Inventario y Carrito -->
+    <div class="pantalla-horizontal">
+        <div id="inventarioContainer" class="tabla-inventario">
+            <!-- Inventario se renderiza aquí por JS -->
+        </div>
+        <div id="carritoContainer" class="tabla-carrito">
+            <!-- Carrito de compras se renderiza aquí por JS -->
+        </div>
+    </div>
+    <br>
     <div class="botones">
     <button id="btnExportarInventario" class="btn btn-success">📥 Exportar Inventario</button>
     <input type="file" id="importFile" class="form-control" style="display:inline-block; width:auto;" /></div>
@@ -88,6 +96,3 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script type="module" src="JavaScript/Engranaje.js"></script>
     <script type="module" src="JavaScript/Cuentas.js"></script>
-
-</body>
-</html>

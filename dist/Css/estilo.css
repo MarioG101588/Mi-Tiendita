@@ -17,8 +17,8 @@ body {
   max-width: 90vw;
   min-height: 60vh;
   margin: 2vh auto;
-  background: #fff;
-  border-radius: 16px;
+  background: #f7faff;
+  border-radius: 18px;
   box-shadow: 0 2px 16px rgba(0,0,0,0.08);
   padding: 2vw 3vw;
   display: block;
@@ -39,18 +39,27 @@ button, .btn {
   border-radius: 8px;
   margin: 0.5vw;
   cursor: pointer;
+  border: none;
+  background: #4f8cff;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(80,140,255,0.10);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+button:hover, .btn:hover {
+  background: #38c6ff;
+  box-shadow: 0 4px 16px rgba(80,140,255,0.18);
 }
 
 .btn-orange {
   background: #ff9800;
   color: #fff;
-  border: none;
 }
 
 .btn-success {
   background: #4caf50;
   color: #fff;
-  border: none;
 }
 
 /* Formularios */
@@ -79,7 +88,7 @@ label {
 /* Landscape: orientación horizontal */
 @media (orientation: landscape) {
   body {
-    background: #e3eafc;
+    background: linear-gradient(90deg, #e3eafc 0%, #f7faff 100%);
   }
   .container,
   .container1,
@@ -88,11 +97,14 @@ label {
   .container4,
   .container5,
   .container6 {
-    max-width: 80vw;
-    min-height: 70vh;
-    padding: 2vw 5vw;
+    max-width: 85vw;
+    min-height: 75vh;
+    padding: 2vw 3vw;
     margin-top: 2vh;
     margin-bottom: 2vh;
+    background: linear-gradient(135deg, #e0f7fa 60%, #f7faff 100%);
+    border-radius: 22px;
+    box-shadow: 0 4px 24px rgba(80,140,255,0.10);
   }
   h1, h3 {
     font-size: 3vw;
@@ -107,6 +119,91 @@ label {
   input[type="file"] {
     font-size: 2vw;
     width: 50vw;
+  }
+  .pantalla-horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 2vw;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    min-height: 70vh;
+    margin-top: 2vw;
+  }
+  .tabla-inventario, .tabla-carrito {
+    min-width: 36vw;
+    max-width: 42vw;
+    min-height: 60vh;
+    background: linear-gradient(135deg, #e3fcec 80%, #e0f7fa 100%);
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(80,140,255,0.10);
+    padding: 2vw 1vw;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .tabla-carrito {
+    background: linear-gradient(135deg, #fffde7 80%, #e0f7fa 100%);
+    border: 2px solid #ffe082;
+  }
+  table {
+    width: 98%;
+    font-size: 1vw;
+    border-collapse: collapse;
+    margin-bottom: 1vw;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(80,140,255,0.07);
+  }
+  th, td {
+    padding: 0.7vw 1vw;
+    text-align: center;
+    border-bottom: 1px solid #e3eafc;
+  }
+  th {
+    background: #e3eafc;
+    color: #2a3a5e;
+    font-weight: 600;
+  }
+  .cantidad-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5vw;
+  }
+  .btn-cantidad, .btn-quitar {
+    background: #4f8cff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.3vw 1vw;
+    font-size: 1vw;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-cantidad:hover, .btn-quitar:hover {
+    background: #38c6ff;
+  }
+  .botones {
+    display: flex;
+    justify-content: center;
+    gap: 1vw;
+    margin-top: 1vw;
+  }
+  .btn-success {
+    background: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.7vw 2vw;
+    font-size: 1.1vw;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(80,140,255,0.10);
+  }
+  .btn-success:hover {
+    background: #388e3c;
   }
 }
 
@@ -137,50 +234,17 @@ label {
     font-size: 3vw;
     width: 80vw;
   }
+  .pantalla-horizontal {
+    flex-direction: column;
+    gap: 2vw;
+  }
+  .tabla-inventario, .tabla-carrito {
+    min-width: 90vw;
+    max-width: 98vw;
+    align-items: stretch;
+  }
 }
 
 /* Ocultar scroll horizontal */
 body {
-  overflow-x: hidden;
-}
-@media (orientation: landscape) {
-  html, body {
-    height: 100vh;
-    width: 100vw;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-  }
-  .pantalla-horizontal {
-    display: flex;
-    flex-direction: row;
-    height: 100vh;
-    width: 100vw;
-    gap: 2vw;
-    align-items: stretch;
-    justify-content: center;
-  }
-  .tabla-inventario, .tabla-carrito {
-    flex: 1;
-    height: 95vh;
-    overflow-y: auto;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(80,140,255,0.08);
-    padding: 1vw;
-    margin: 0;
-  }
-  table {
-    width: 100%;
-    font-size: 1vw;
-    border-collapse: collapse;
-  }
-  th, td {
-    padding: 0.5vw 0.7vw;
-    border-bottom: 1px solid #e3eafc;
-  }
-  th {
-    background: #e3eafc;
-    color: #2a3a5e;
-  }
-}
+  overflow-x: hidden;}
