@@ -174,28 +174,34 @@ export async function cerrarSesionConConfirmacion() {
     const idTurno = localStorage.getItem("idTurno");
     const email = auth.currentUser?.email;
 
-    if (idTurno && email) {
-        try {
-            const fechaFin = serverTimestamp();
-            const turnoRef = doc(db, "turnos", idTurno);
-            // const usuarioRef = doc(db, "usuarios", email); // No se usa aquí
+if (idTurno && email) {
+    try {
+        const fechaFin = serverTimestamp();
+        const turnoRef = doc(db, "turnos", idTurno);
+        const usuarioRef = doc(db, "usuarios", email);
 
-            await updateDoc(turnoRef, {
-                fechaFin,
-                estado: "Cerrado",
-                sesionActiva: false,
-                sesionToken: ""
-            });
-            // El listener de sesión se encargará de signOut y limpiar localStorage.
-            await signOut(auth);
-            return true;
+        await updateDoc(turnoRef, {
+            fechaFin,
+            estado: "Cerrado",
+            sesionActiva: false,
+            sesionToken: ""
+        });
+        // ACTUALIZA sesionActiva del usuario a false
+        await updateDoc(usuarioRef, {
+            sesionActiva: false,
+            sesionToken: ""
+        });
+        await signOut(auth);
+        return true;
 
-        } catch (error) {
-            console.error("Error al actualizar el turno:", error);
-            await Swal.fire('Error', 'No se pudo actualizar el estado del turno.', 'error');
-            return false;
-        }
-    } else {
+    } catch (error) {
+        console.error("Error al actualizar el turno:", error);
+        await Swal.fire('Error', 'No se pudo actualizar el estado del turno.', 'error');
+        return false;
+    }
+}
+
+else {
         await signOut(auth);
         return true;
     }
