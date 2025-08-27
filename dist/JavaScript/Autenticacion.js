@@ -181,10 +181,9 @@ export async function cerrarSesionConConfirmacion() {
         try {
             const fechaFin = serverTimestamp();
             const turnoRef = doc(db, "turnos", idTurno);
-            const usuarioRef = doc(db, "usuarios", email);
+            // const usuarioRef = doc(db, "usuarios", email); // No se usa aquí
 
-
-            await updateDoc(turnoRef, usuarioRef, {
+            await updateDoc(turnoRef, {
                 fechaFin,
                 estado: "Cerrado",
                 sesionActiva: false,
