@@ -111,39 +111,36 @@ const usuarioRef = doc(db, "usuarios", email);
         
         let idTurno;
 
-        if (!querySnapshot.empty) {
-            const turnoExistente = querySnapshot.docs[0].data();
-            idTurno = turnoExistente.idTurno;
-            await Swal.fire({
-                icon: 'info',
-                title: 'Turno ya Activo',
-                text: `Se encontró el turno Activo: ${idTurno}`
-            });
-        } else {
-            idTurno = `${usuarioConcatenado}_${Date.now()}`;
-            const fechaInicio = serverTimestamp();
-            await setDoc(doc(db, "turnos", idTurno), {
-                idTurno,
-                usuario: email,
-                fechaInicio,
-                fechaFin: null,
-                estado: "Activo"
-            });
-            await Swal.fire({
-                icon: 'success',
-                title: '¡Bienvenido!',
-                text: 'Turno iniciado correctamente.'
-                
-            });
-                const sesionToken = Date.now().toString() + Math.random().toString(36).substring(2);
+if (!querySnapshot.empty) {
+    // Guarda el ID real del documento, no el campo interno
+    idTurno = querySnapshot.docs[0].id;
+    await Swal.fire({
+        icon: 'info',
+        title: 'Turno ya Activo',
+        text: `Se encontró el turno Activo: ${idTurno}`
+    });
+} else {
+    idTurno = `${usuarioConcatenado}_${Date.now()}`;
+    const fechaInicio = serverTimestamp();
+    await setDoc(doc(db, "turnos", idTurno), {
+        idTurno,
+        usuario: email,
+        fechaInicio,
+        fechaFin: null,
+        estado: "Activo"
+    });
+    await Swal.fire({
+        icon: 'success',
+        title: '¡Bienvenido!',
+        text: 'Turno iniciado correctamente.'
+    });
+    const sesionToken = Date.now().toString() + Math.random().toString(36).substring(2);
     await updateDoc(usuarioRef, {
         sesionActiva: true,
         sesionToken
     });
-
-        }
-        
-        localStorage.setItem("idTurno", idTurno);
+}
+localStorage.setItem("idTurno", idTurno);
         Swal.close();
         return idTurno;
 
