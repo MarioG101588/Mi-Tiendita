@@ -1,0 +1,2024 @@
+HTML
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link rel="stylesheet" href="Css/estilo.css">
+    <link rel="stylesheet" href="Css/estilo-landscape.css">
+</head>
+<body>
+    <div class="container" id="container">
+<br><br><br><br><br><br>
+    <h1>Inicio de Sesión</h1>
+    <div class="botones">
+    <button id="loginButton">Vamos..</button></div>
+        <div id="loginForm" style="display: none; margin-top: 20px;">
+            <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="emailinicio" placeholder="name@example.com">
+                <label for="emailinicio">Correo electronico</label></div>
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control" id="passwordinicio" placeholder="Password">
+                <label for="passwordinicio">Contraseña</label></div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="recordarDatos">
+                <label class="form-check-label" for="recordarDatos">Recordar datos</label></div>
+            <div class="botones">
+                <button id="btnIniciarSesion" class="btn btn-primary" style="margin-right:10px;">Siguiente</button>
+                <button id="closeButton" class="btn btn-secondary">Cerrar</button></div>
+        </div>
+    </div>
+<div class="container1" id="container1" style="display:none;">
+    <h2 class="titulo-superior">Nueva Venta</h2>
+        <div class="buscador-container">
+        <!--<input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar...">-->
+<div class="buscador-container" style="position:relative;">
+  <input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar...">
+  <button id="btnVozBuscar" style="position:absolute; right:2vw; top:50%; transform:translateY(-50%); background:#4f8cff; color:#fff; border:none; border-radius:50%; width:2.5vw; height:2.5vw; font-size:1.2vw;">
+    🎤
+  </button>
+</div>
+    </div>
+    <div id="resultadoBusqueda1" class="resultado-busqueda"></div>
+    <!-- ADAPTACIÓN: Vista horizontal para Inventario y Carrito -->
+    <div class="pantalla-horizontal">
+        <div id="inventarioContainer" class="tabla-inventario">
+            <!-- Inventario se renderiza aquí por JS -->
+        </div>
+        <div id="carritoContainer" class="tabla-carrito">
+            <!-- Carrito de compras se renderiza aquí por JS -->
+        </div>
+    </div>
+    <div class="botones">
+
+    <button id="btnExportarInventario" class="btn btn-success">📥 Exportar Inventario</button>
+    <input type="file" id="importFile" class="form-control" style="display:inline-block; width:auto;" /></div>
+    <button onclick="mostrarContainer('container2')" class="btn-orange">Volver a inicio</button>
+</div>
+
+<div class="container2" id="container2" style="display:none;">
+        <h1 class="titulo-superior">Cigarreria el Arrendajo Azul y algo Mas</h1><br>
+
+    <h3 class="titulo-superior">Cuentas Pendientes</h3>
+    <!-- 🔔 NUEVO: Nota clickable con cantidad de "En cuaderno" -->
+    <div id="notaCuentasPendientes" class="alert alert-warning mt-2" style="display:none; cursor:pointer;"></div>
+    <div id="cuentasActivasTurno" class="mt-1 mb-2"></div>
+    <div class="botones">
+    <button onclick="mostrarContainer('container1')">Nueva Venta</button>
+    <button onclick="mostrarContainer('container4')" class="btn btn-info" style="margin-left:10px;">Total Turno</button></div>
+
+</div>
+<div class="container3" id="container3" style="display:none;">
+        <div id="detalleCuentaContainer"></div>
+</div>
+    <div class="container4" id="container4" style="display:none;">
+    <h1 class="titulo-superior">Resumen de Turno</h1>
+    <div id="resumenTurnoDatos" class="mt-3"></div>
+    <div class="botones">
+    <button onclick="mostrarContainer('container2')" class="btn btn-secondary mt-3">Volver</button>
+    <button onclick="cerrarSesion()" class="btn btn-danger" style="margin-left:10px;">Cerrar sesión</button>
+    <button onclick="mostrarContainer('container5')" class="btn btn-info mt-3">Ver turnos anteriores</button></div>
+</div>
+<div class="container5" id="container5" style="display:none;">
+    <h1 class="titulo-superior">Historial de Turnos</h1>
+    <div id="historialTurnosContainer" class="mt-3"></div>
+       <div class="botones">
+        <button onclick="mostrarContainer('container4')" class="btn btn-secondary mt-3">Volver</button></div>
+</div>
+
+<!-- 🔔 NUEVO: Container 6 para cuentas "En cuaderno" -->
+<div class="container" id="container6" style="display:none;">
+  <h3>Cuentas pendientes por cobrar</h3>
+  <div id="cuentasPendientesContainer"></div>
+  <div class="botones">
+    <button class="btn btn-secondary mt-3" onclick="mostrarContainer('container2')">⬅ Volver</button>
+  </div>
+</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script type="module" src="JavaScript/Engranaje.js"></script>
+    <script type="module" src="JavaScript/Cuentas.js"></script>
+
+
+
+
+
+
+CSS
+
+/* Estilos generales */
+body {
+  background: #f4f4f4;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Contenedores principales */
+.container,
+.container1,
+.container2,
+.container3,
+.container4,
+.container5,
+.container6 {
+  max-width: 80vw;
+  min-height: 50vh;
+  margin: 2vh auto;
+  background: #f7faff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(80,140,255,0.10);
+  padding: 1vw 2vw;
+  display: block;
+}
+
+/* Títulos */
+h1, h3 {
+  text-align: center;
+  margin-top: 0.5vw;
+  margin-bottom: 1vw;
+  font-size: 1.3vw;
+}
+
+/* Botones */
+button, .btn {
+  font-size: 0.9vw;
+  padding: 0.4vw 1vw;
+  border-radius: 6px;
+  margin: 0.3vw;
+  cursor: pointer;
+  border: none;
+  background: #4f8cff;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(80,140,255,0.10);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+button:hover, .btn:hover {
+  background: #38c6ff;
+  box-shadow: 0 4px 16px rgba(80,140,255,0.18);
+}
+
+.btn-orange {
+  background: #ff9800;
+  color: #fff;
+}
+
+.btn-success {
+  background: #4caf50;
+  color: #fff;
+}
+
+/* Formularios */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="file"] {
+  font-size: 1vw;
+  padding: 0.5vw;
+  margin: 0.7vw 0;
+  width: 40vw;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+label {
+  font-size: 0.9vw;
+  margin-bottom: 0.3vw;
+  display: block;
+  text-align: left;
+}
+
+/* Landscape PC: sin scroll vertical, tablas compactas */
+@media (min-width: 901px) and (orientation: landscape) {
+  .pantalla-horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 1vw;
+    justify-content: center;
+    align-items: center;
+    width: 75vw;
+    height: 63vh;
+    margin-top: 1vw;
+  }
+  .tabla-inventario, .tabla-carrito {
+    flex: 1;
+    max-width: 35vw;
+    min-width: 30vw;
+    height: 65vh;
+    background: linear-gradient(135deg, #e3fcec 80%, #e0f7fa 100%);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(80,140,255,0.10);
+    padding: 0.7vw 0.3vw;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .tabla-carrito {
+    background: linear-gradient(135deg, #fffde7 80%, #e0f7fa 100%);
+    border: 2px solid #ffe082;
+  }
+  table {
+    width: 96%;
+    font-size: 0.8vw;
+    border-collapse: collapse;
+    margin-bottom: 0.3vw;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(80,140,255,0.07);
+    max-height: 55vh;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  thead, tfoot {
+    font-size: 0.9vw;
+  }
+  tbody {
+    display: block;
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+  thead, tfoot, tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+  th, td {
+    padding: 0.3vw 0.3vw;
+    text-align: center;
+    border-bottom: 1px solid #e3eafc;
+    word-break: break-word;
+  }
+  th {
+    background: #e3eafc;
+    color: #2a3a5e;
+    font-weight: 600;
+    font-size: 0.9vw;
+  }
+  .cantidad-container {
+    gap: 0.2vw;
+    justify-content: center;
+  }
+  .btn-cantidad, .btn-quitar {
+    font-size: 0.7vw;
+    padding: 0.1vw 0.5vw;
+  }
+}
+
+/* Móvil: tablas y contenedores compactos, scroll mínimo */
+@media (max-width: 900px) {
+  .pantalla-horizontal {
+    flex-direction: column;
+    gap: 1vw;
+    min-height: 40vh;
+    height: auto;
+    align-items: center;
+    justify-content: center;
+  }
+  .tabla-inventario, .tabla-carrito {
+    min-width: 90vw;
+    max-width: 98vw;
+    min-height: 20vh;
+    max-height: 28vh;
+    padding: 0.7vw 0.3vw;
+    border-radius: 10px;
+    font-size: 2vw;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  table {
+    font-size: 1.7vw;
+    max-height: 22vh;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  tbody {
+    display: block;
+    max-height: 14vh;
+    overflow-y: auto;
+  }
+  thead, tfoot, tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+  th, td {
+    padding: 0.4vw 0.4vw;
+    font-size: 1.5vw;
+  }
+  .cantidad-container {
+    gap: 0.5vw;
+    justify-content: center;
+  }
+  .btn-cantidad, .btn-quitar {
+    font-size: 1.2vw;
+    padding: 0.3vw 1vw;
+  }
+}
+
+/* Ocultar scroll horizontal */
+body {
+  overflow-x: hidden;
+}
+
+
+
+
+
+
+JS ENGRANAJE
+
+// JavaScript/main.js
+
+// Importaciones de módulos locales
+import { iniciarSesion, cerrarSesionConConfirmacion } from "./Autenticacion.js";
+import { signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { cargarInventario } from "./Inventario.js";
+import { agregarAlCarrito, aumentarCantidad, disminuirCantidad, quitarDelCarrito, renderCarrito } from "./CarritoCompras.js";
+import { realizarVenta } from "./VentasApp.js";
+import { db } from './Conexion.js';
+import { cargarDetalleCuenta } from "./Cuentas.js";
+import { exportarInventarioExcel, importarInventarioDesdeExcel } from "./Inventario.js";
+// IMPORTACIONES Firebase Firestore
+import { auth } from "./Conexion.js";
+import { doc, getDoc, getDocs, collection, query, where, orderBy, limit, onSnapshot, updateDoc } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+// --- ADAPTACIÓN PARA CIERRE GLOBAL ---
+let unsubscribeTurnoListener = null;
+
+function obtenerTurnoActivoId() {
+    return localStorage.getItem("idTurno") || null;
+}
+
+function normalizarNombre(nombre) {
+    return nombre
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function observarEstadoTurno(idTurno) {
+    if (!idTurno) return null;
+    const turnoRef = doc(db, "turnos", idTurno);
+    const unsubscribe = onSnapshot(turnoRef, async (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        if (data.estado && data.estado.toLowerCase() === "cerrado") {
+            console.warn("⛔ El turno ha sido Cerrado. Cerrando sesión global...");
+            await signOut(auth);
+            alert("El turno fue Cerrado. Tu sesión ha finalizado.");
+        }
+    });
+    return unsubscribe;
+}
+
+/** 📌 Función para cargar resumen del turno Activo */
+async function cargarResumenTurno() {
+    const contenedor = document.getElementById("resumenTurnoDatos");
+    contenedor.innerHTML = "<p>Cargando...</p>";
+
+    // 🔹 Listas normalizadas en minúsculas
+    const bebidasConAlcohol = [        "aguila litro", "aguila 330", "aguila light 330", "andina dorada 750",
+        "andina 330", "andina light 330", "club colombia 330", "club colombia 850",
+        "corona 355 sixpack", "corona 355", "coronita 210 sixpack", "coronita 210",
+        "costena 330", "costena 750", "lata aguila 330", "nectar caja litro",
+        "nectar caja cuarto", "poker litro", "poker 330 lata sixpack", "poker 330",
+        "poker lata 330", "ron v. caldas cuarto"
+].map(normalizarNombre);
+    const productosDeTabaco = [        "l&m media", "l&m unidad", "lucky media", "lucky unidad", "malboro media",
+        "malboro unidad", "rothman blanco unidad", "rothman blanco media",
+        "rothman azul unidad", "rothman azul media"
+].map(normalizarNombre);
+
+    const formatoCOP = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' });
+
+    try {
+        let idTurno = null;
+        // 🔧 corregido: antes usaba dbResumen (no definido)
+        const turnosRef = collection(db, "turnos");
+        console.log("📌 Consultando turnos Activos en colección 'turnos'...");
+        const qTurno = query(
+            turnosRef,
+            where("estado", "==", "Activo"),
+            orderBy("fechaInicio", "desc"),
+            limit(1)
+        );
+        const snapTurno = await getDocs(qTurno);
+        console.log("📌 Snap turnos Activos:", snapTurno.size);
+
+        if (!snapTurno.empty) {
+            const docData = snapTurno.docs[0].data();
+            console.log("📌 Datos turno Activo encontrado:", docData);
+            idTurno = docData.idTurno || snapTurno.docs[0].id;
+            console.log("📌 ID turno elegido:", idTurno);
+        }
+
+        if (!idTurno) {
+            console.warn("⚠️ No hay turno Activo.");
+            contenedor.innerHTML = "<p>No hay turno Activo.</p>";
+            return;
+        }
+
+        // 🔧 corregido: antes usaba dbResumen
+        console.log(`📌 Buscando documento en ventasCerradas con ID turno: ${idTurno}`);
+        const cuentaRef = doc(db, "ventasCerradas", idTurno);
+        const cuentaSnap = await getDoc(cuentaRef);
+
+        if (!cuentaSnap.exists()) {
+            console.warn("⚠️ Documento no encontrado en ventasCerradas:", idTurno);
+            contenedor.innerHTML = "<p>No hay datos en ventasCerradas para este turno.</p>";
+            return;
+        }
+
+        const datos = cuentaSnap.data();
+        console.log("📌 Datos obtenidos de ventasCerradas:", datos);
+        const clientes = Array.isArray(datos.clientes) ? datos.clientes : [];
+        console.log("📌 Clientes en ventasCerradas:", clientes.length);
+
+        let totalEfectivo = 0, totalNequi = 0, totalDaviplata = 0;
+        let totalBebidasAlcohol = 0;
+        let totalProductosTabaco = 0;
+
+        clientes.forEach(v => {
+            if (!v || typeof v !== "object") return;
+            console.log("➡️ Procesando venta:", v);
+
+            const total = Number(v.total) || 0;
+            const tipo = (v.tipoVenta || "").toLowerCase();
+
+            if (tipo.includes("efectivo")) totalEfectivo += total;
+            if (tipo.includes("nequi")) totalNequi += total;
+            if (tipo.includes("daviplata")) totalDaviplata += total;
+
+            if (Array.isArray(v.productos)) {
+                v.productos.forEach(p => {
+                    if (!p || !p.nombreProducto) return;
+
+                    const productoNombre = normalizarNombre(p.nombreProducto);
+                    const productoTotal = (Number(p.precioVenta) || 0) * (Number(p.cantidad) || 0);
+
+                    console.log(`   ➡️ Producto detectado: ${productoNombre}, Total: ${productoTotal}`);
+
+                    if (bebidasConAlcohol.includes(productoNombre)) {
+                        totalBebidasAlcohol += productoTotal;
+                    }
+
+                    if (productosDeTabaco.includes(productoNombre)) {
+                        totalProductosTabaco += productoTotal;
+                    }
+                });
+            }
+        });
+
+        const totalGeneral = totalEfectivo + totalNequi + totalDaviplata;
+        const diezPorciento = totalGeneral * 0.10;
+
+        console.log("✅ Totales calculados:", {
+            totalEfectivo, totalNequi, totalDaviplata,
+            totalBebidasAlcohol, totalProductosTabaco,
+            totalGeneral, diezPorciento
+        });
+
+        contenedor.innerHTML = `
+            <ul class="list-group">
+                <li class="list-group-item">Bebidas <b>ALCOHOLICAS</b>:<BR> ${formatoCOP.format(totalBebidasAlcohol)}</li>
+                <li class="list-group-item">Venta de <b>TABACO</b>:<BR> ${formatoCOP.format(totalProductosTabaco)}</li>
+                <li class="list-group-item">Pagos recibidos en <b>NEQUI</b>:<BR> ${formatoCOP.format(totalNequi)}</li>
+                <li class="list-group-item">Pagos recibidos en <b>DAVIPLATA</b>:<BR> ${formatoCOP.format(totalDaviplata)}</li>
+                <li class="list-group-item">Pagos recibidos en <b>EFECTIVO</b>:<BR> ${formatoCOP.format(totalEfectivo)}</li><BR>
+                <li class="list-group-item active">TOTAL VENTAS <b>HASTA AHORA</b>:<BR><b> ${formatoCOP.format(totalGeneral)}</b></li>
+                <li class="list-group-item">Pago del 10% por Turno:<BR> <b>${formatoCOP.format(diezPorciento)}</b></li>
+            </ul>
+        `;
+    } catch (error) {
+        console.error("❌ Error detallado al cargar resumen:", error);
+        contenedor.innerHTML = `<p>Error al cargar resumen: ${error.message}</p>`;
+    }
+}
+
+async function marcarCuentasPasadasEnCuaderno(idTurnoActual) {
+  if (!idTurnoActual) return;
+
+  const snap = await getDocs(collection(db, "cuentasActivas"));
+  for (const d of snap.docs) {
+    const c = d.data();
+
+    if (!c.idTurno || c.idTurno === idTurnoActual) continue;
+
+    if ((c.tipo || "").toLowerCase() !== "consumo local" && c.tipo !== "En cuaderno") {
+      await updateDoc(doc(db, "cuentasActivas", d.id), { tipo: "En cuaderno" });
+    }
+  }
+}
+
+/** 📌 Función para cambiar entre contenedores */
+function mostrarContainer(idMostrar) {
+    document.querySelectorAll('.container, .container1, .container2, .container3, .container4, .container5').forEach(el => {
+        el.style.display = 'none';
+    });
+
+    document.getElementById(idMostrar).style.display = 'block';
+
+    if (idMostrar === "container1") {
+        cargarInventario("");
+        renderCarrito();
+    }
+    if (idMostrar === "container2") {
+        cargarCuentasActivas();
+        verificarCuentasPendientes();
+    }
+    if (idMostrar === "container4") {
+        cargarResumenTurno();
+    }
+    if (idMostrar === "container5") {
+        cargarHistorialTurnos();
+    }
+    if (idMostrar === "container6") {
+        cargarCuentasPendientes();
+    }
+}
+
+/** Funcion para Cargar Historial de Turnos */
+async function cargarHistorialTurnos() {
+    const contenedor = document.getElementById("historialTurnosContainer");
+    contenedor.innerHTML = "<p>Cargando historial...</p>";
+
+    try {
+        // 🔧 corregido: antes consultaba ventasCerradas
+        const turnosRef = collection(db, "turnos");
+        const q = query(turnosRef, where("estado", "==", "Cerrado"), orderBy("fechaFin", "desc"));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+            contenedor.innerHTML = "<p>No hay turnos Cerrados.</p>";
+            return;
+        }
+
+        let html = '<div class="list-group">';
+        for (const docSnap of snap.docs) {
+            const datosTurno = docSnap.data();
+            const idTurno = docSnap.id;
+
+            // 🔹 fechas de inicio y fin
+            const fechaInicio = datosTurno.fechaInicio?.toDate?.().toLocaleString("es-CO") || "Sin fecha";
+            const fechaFin = datosTurno.fechaFin?.toDate?.().toLocaleString("es-CO") || "Sin fecha";
+
+            // buscar total en ventasCerradas
+            const cuentaRef = doc(db, "ventasCerradas", idTurno);
+            const cuentaSnap = await getDoc(cuentaRef);
+            let total = 0;
+            if (cuentaSnap.exists()) {
+                const datos = cuentaSnap.data();
+                total = datos?.clientes?.reduce((acc, c) => acc + (c.total || 0), 0) || 0;
+            }
+            const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(total);
+
+            html += `
+                <div class="list-group-item">
+                    <h6>Turno: ${idTurno}</h6>
+                    <p>Fecha inicio: ${fechaInicio}</p>
+                    <p>Fecha cierre: ${fechaFin}</p>
+                    <p>Total: ${totalFormateado}</p>
+                    <button class="btn btn-sm btn-primary" onclick="verResumenTurno('${idTurno}')">Ver detalle</button>
+                </div>
+            `;
+        }
+        html += '</div>';
+        contenedor.innerHTML = html;
+    } catch (err) {
+        contenedor.innerHTML = `<p>Error: ${err.message}</p>`;
+    }
+}
+/** Funcion Ver Detalles de Turno */
+async function verResumenTurno(idTurno) {
+    const contenedor = document.getElementById("historialTurnosContainer");
+    contenedor.innerHTML = "<p>Cargando resumen...</p>";
+
+    try {
+        const cuentaRef = doc(db, "ventasCerradas", idTurno);
+        const cuentaSnap = await getDoc(cuentaRef);
+
+        if (!cuentaSnap.exists()) {
+            contenedor.innerHTML = "<p>No hay datos para este turno.</p>";
+            return;
+        }
+
+        const datos = cuentaSnap.data();
+        const clientes = datos.clientes || [];
+        let html = `<h3>Resumen del turno ${idTurno}</h3><ul class="list-group">`;
+
+        clientes.forEach((c, i) => {
+            html += `
+                <li class="list-group-item">
+                    <strong>Cliente:</strong> ${c.cliente}<br>
+                    <strong>Tipo:</strong> ${c.tipoVenta}<br>
+                    <strong>Total:</strong> ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(c.total)}
+                </li>
+            `;
+        });
+
+        html += "</ul>";
+        contenedor.innerHTML = html;
+    } catch (err) {
+        contenedor.innerHTML = `<p>Error: ${err.message}</p>`;
+    }
+}
+// JavaScript/Engranaje.js - CÓDIGO CORREGIDO Y FINAL
+
+async function cerrarSesion() {
+    await cerrarSesionConConfirmacion();
+}
+
+/** 📌 Función para mostrar detalle de una cuenta */
+function mostrarDetalleCuenta(clienteId) {
+    mostrarContainer('container3');
+    cargarDetalleCuenta(clienteId);
+}
+
+function cargarCuentasActivas() {
+    const container = document.getElementById('cuentasActivasTurno');
+    if (!container) return;
+
+    // ⬇️ obtenemos el idTurno del localStorage
+    const idTurno = obtenerTurnoActivoId();
+    if (!idTurno) {
+        container.innerHTML = "<p>No hay turno Activo.</p>";
+        return;
+    }
+
+    // ⬇️ declaramos explícitamente la colección
+    const cuentasActivasCol = collection(db, "cuentasActivas");
+    const q = query(cuentasActivasCol, where("idTurno", "==", idTurno));
+
+    onSnapshot(q, (querySnapshot) => {
+        let htmlContent = '';
+
+        if (querySnapshot.empty) {
+            htmlContent = "<p>No hay cuentas activas en este momento.</p>";
+        } else {
+            htmlContent = '<div class="list-group">';
+            querySnapshot.forEach((doc) => {
+                const cuenta = doc.data();
+                const clienteId = doc.id;
+                const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(cuenta.total);
+
+                htmlContent += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center" 
+                         onclick="mostrarDetalleCuenta('${clienteId}')"> 
+                         <div>
+                            <h6 class="mb-0">${cuenta.cliente}</h6>
+                            <small class="text-muted">${cuenta.tipo}</small>
+                        </div>
+                        <span class="badge bg-success rounded-pill fs-6">
+                            ${totalFormateado}
+                        </span>
+                    </div>
+                `;
+            });
+            htmlContent += '</div>';
+        }
+        container.innerHTML = htmlContent;
+    });
+}
+
+/* 🔔 NUEVO: Nota en container 2 con cantidad de "En cuaderno" y apertura de container6 */
+function verificarCuentasPendientes() {
+    const nota = document.getElementById("notaCuentasPendientes");
+    if (!nota) return;
+    const q = query(collection(db, "cuentasActivas"), where("tipo", "==", "En cuaderno"));
+
+    onSnapshot(q, (querySnapshot) => {
+        const cantidad = querySnapshot.size;
+        if (cantidad > 0) {
+            nota.style.display = "block";
+            nota.innerHTML = `📌 Tienes <b>${cantidad}</b> Cuentas Anotadas en el Cuaderno, Toca Aquí para verlas.`;
+            nota.onclick = () => {
+                mostrarContainer("container6");
+                cargarCuentasPendientes();
+            };
+        } else {
+            nota.style.display = "none";
+            nota.onclick = null;
+        }
+    });
+}
+
+/* 🔔 Lista en container6: 
+   - cuentas "En cuaderno" de turnos anteriores
+   - cuentas "En cuaderno" del turno actual
+*/
+function cargarCuentasPendientes() {
+    const container = document.getElementById("cuentasPendientesContainer");
+    if (!container) return;
+
+    const turnoActual = localStorage.getItem("turnoActual");
+
+    const q = query(collection(db, "cuentasActivas"), where("tipo", "==", "En cuaderno"));
+    onSnapshot(q, (querySnapshot) => {
+        if (querySnapshot.empty) {
+            container.innerHTML = "<p>No hay cuentas pendientes.</p>";
+            return;
+        }
+
+        let html = '<div class="list-group">';
+
+        querySnapshot.forEach((docu) => {
+            const cuenta = docu.data();
+            const clienteId = docu.id;
+            const totalFormateado = new Intl.NumberFormat("es-CO", {
+                style: "currency",
+                currency: "COP",
+            }).format(cuenta.total);
+
+            // Distinción visual: si es turno actual o anterior
+            const turnoTexto = (cuenta.idTurno === turnoActual) 
+                ? "Turno actual" 
+                : `Turno anterior (${cuenta.idTurno || "Desconocido"})`;
+
+            html += `
+                <div class="list-group-item d-flex justify-content-between align-items-center" 
+                     onclick="mostrarDetalleCuenta('${clienteId}')">
+                    <div>
+                        <h6 class="mb-0">${cuenta.cliente || "Cliente sin nombre"}</h6>
+                        <small class="text-muted">${turnoTexto}</small>
+                    </div>
+                    <span class="badge bg-danger rounded-pill fs-6">
+                        ${totalFormateado}
+                    </span>
+                </div>
+            `;
+        });
+
+        html += "</div>";
+        container.innerHTML = html;
+    });
+}
+
+// --- ADAPTACIÓN PARA CIERRE GLOBAL ---
+document.addEventListener("DOMContentLoaded", function () {
+    const emailInput = document.getElementById("emailinicio");
+    const passwordInput = document.getElementById("passwordinicio");
+    const recordarCheckbox = document.getElementById("recordarDatos");
+    const btnIniciarSesion = document.getElementById("btnIniciarSesion");
+    const loginForm = document.getElementById("loginForm");
+    const loginButton = document.getElementById("loginButton");
+    const closeButton = document.getElementById("closeButton");
+    const campoBusqueda1 = document.getElementById("campoBusqueda1");
+    const auth = getAuth();
+
+    // --- ADAPTACIÓN PARA CIERRE GLOBAL ---
+    onAuthStateChanged(auth, (user) => {
+        if (unsubscribeTurnoListener) {
+            unsubscribeTurnoListener();
+            unsubscribeTurnoListener = null;
+        }
+
+        if (user) {
+            const idTurno = obtenerTurnoActivoId();
+            if (idTurno) {
+                console.log(`Usuario ${user.email} autenticado con turno ${idTurno}.`);
+                unsubscribeTurnoListener = observarEstadoTurno(idTurno);
+                mostrarContainer("container2");
+                cargarCuentasActivas();
+                verificarCuentasPendientes();
+            } else {
+                // Caso anómalo: Autenticado pero sin turno. Limpiamos.
+                console.warn(`Usuario ${user.email} autenticado pero sin turno. Cerrando sesión.`);
+                signOut(auth);
+            }
+        } else {
+            // Usuario no autenticado: limpiar turno y actualizar UI
+            localStorage.removeItem("idTurno");
+            document.querySelectorAll('.container, .container1, .container2, .container3, .container4, .container5, .container6')
+                .forEach(el => el.style.display = 'none');
+            document.getElementById('container').style.display = 'block';
+            document.getElementById('loginButton').style.display = 'inline-block';
+            document.getElementById('loginForm').style.display = 'none';
+        }
+    });
+
+    if (localStorage.getItem("recordar") === "true") {
+        emailInput.value = localStorage.getItem("email") || "";
+        recordarCheckbox.checked = true;
+    }
+
+    loginButton.addEventListener('click', () => {
+        loginForm.style.display = 'block';
+        loginButton.style.display = 'none';
+    });
+
+    closeButton.addEventListener('click', () => {
+        loginForm.style.display = 'none';
+        loginButton.style.display = 'inline-block';
+    });
+
+    btnIniciarSesion.addEventListener("click", async () => {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        const recordar = recordarCheckbox.checked;
+
+        if (!email || !password) {
+            alert("Por favor, completa todos los campos.");
+            return;
+        }
+
+        const idTurno = await iniciarSesion(email, password, recordar);
+
+        if (idTurno) {
+            console.log(`Proceso de login completado para el turno: ${idTurno}`);
+        } else {
+            console.error("El proceso de inicio de sesión falló.");
+        }
+    });
+
+    if (campoBusqueda1) {
+        campoBusqueda1.addEventListener("input", function() {
+            cargarInventario(this.value);
+        });
+    }
+});
+
+/** 📌 Exportar funciones al ámbito global */
+window.agregarAlCarrito = agregarAlCarrito;
+window.aumentarCantidad = aumentarCantidad;
+window.disminuirCantidad = disminuirCantidad;
+window.quitarDelCarrito = quitarDelCarrito;
+window.renderCarrito = renderCarrito;
+window.realizarVenta = () => realizarVenta(window.carrito);
+window.verResumenTurno = verResumenTurno;
+window.cargarHistorialTurnos = cargarHistorialTurnos;
+window.marcarCuentasPasadasEnCuaderno = marcarCuentasPasadasEnCuaderno;
+window.mostrarContainer = mostrarContainer;
+window.cargarResumenTurno = cargarResumenTurno;
+window.cerrarSesion = cerrarSesion;
+window.mostrarDetalleCuenta = mostrarDetalleCuenta;
+document.getElementById("btnExportarInventario").addEventListener("click", exportarInventarioExcel);
+document.getElementById("importFile") .addEventListener("change", (e) => {
+        
+    if 
+    (e.target.files.length > 0) {
+            importarInventarioDesdeExcel(e.target.files[0]);
+        }
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+JS CONEXION
+
+// JavaScript/Conexion.js
+// Configuración y conexión a Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+// Importa todo lo necesario de Firestore
+import { 
+    getFirestore, 
+    collection,
+    increment, 
+    doc, 
+    addDoc, 
+    setDoc, 
+    getDoc, 
+    updateDoc,
+    arrayUnion, 
+    runTransaction, 
+    serverTimestamp,
+    deleteDoc // <--- ¡Asegúrate de importar deleteDoc aquí!
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCygT0WyAVlV_AvlOXSPyQht6KlpALPZ10",
+    authDomain: "poss25.firebaseapp.com",
+    projectId: "poss25",
+    storageBucket: "poss25.appspot.com",
+    messagingSenderId: "797163205747",
+    appId: "1:797163205747:web:7455fe43c4683c59aee606"
+};
+
+// Inicializar Firebase y exportar instancias
+export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+
+// Exporta las funciones de Firestore para usarlas en otros módulos
+export { 
+    collection, 
+    doc,
+    increment, 
+    addDoc, 
+    setDoc, 
+    getDoc, 
+    updateDoc,
+    arrayUnion, 
+    runTransaction, 
+    serverTimestamp,
+    deleteDoc // <--- Y exporta deleteDoc aquí
+};
+
+
+
+
+
+JS AUTENTTICACION
+
+import {getAuth,  signInWithEmailAndPassword, signOut, setPersistence, onAuthStateChanged, browserLocalPersistence} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import {getFirestore,serverTimestamp, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { app } from "./Conexion.js"; // Asegúrate que la ruta a tu archivo de conexión sea correcta.
+import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
+
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Configurar persistencia
+setPersistence(auth, browserLocalPersistence).catch(console.error);
+
+/**
+ * Observador de sesión: actualiza la UI y limpia localStorage al cerrar sesión.
+ */
+export function observarSesion(callback) {
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      // Usuario no autenticado: limpiar turno y actualizar UI
+      localStorage.removeItem("idTurno");
+      document.querySelectorAll('.container, .container1, .container2, .container3, .container4, .container5, .container6')
+        .forEach(el => el.style.display = 'none');
+      if (document.getElementById('container')) {
+        document.getElementById('container').style.display = 'block';
+      }
+      if (document.getElementById('loginButton')) {
+        document.getElementById('loginButton').style.display = 'inline-block';
+      }
+      if (document.getElementById('loginForm')) {
+        document.getElementById('loginForm').style.display = 'none';
+      }
+    }
+    if (callback) callback(user);
+  });
+}
+
+/**
+ * Inicia sesión, verifica el estado del usuario en Firebase y crea un turno si es necesario.
+ * Las notificaciones se manejan exclusivamente con SweetAlert2.
+ * @param {string} email - Correo electrónico del usuario.
+ * @param {string} password - Contraseña del usuario.
+ * @param {boolean} recordar - Opción para guardar las credenciales.
+ * @returns {Promise<string|null>} - Retorna el idTurno si el inicio de sesión fue exitoso, de lo contrario null.
+ */
+export async function iniciarSesion(email, password, recordar) {
+    if (!email?.trim() || !password?.trim()) {
+        await Swal.fire({
+            icon: "warning",
+            title: "Campos incompletos",
+            text: "Por favor, ingresa tu correo y contraseña."
+        });
+        return null;
+    }
+
+    Swal.fire({
+        title: 'Iniciando sesión...',
+        text: 'Por favor, espera un momento.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+        await setPersistence(auth, browserLocalPersistence);
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        const user = cred.user;
+
+        if (!user.emailVerified) {
+            await signOut(auth);
+            Swal.close();
+            await Swal.fire({
+                icon: 'error',
+                title: 'Verificación requerida',
+                text: 'Tu cuenta de correo no ha sido verificada. Por favor, revisa tu bandeja de entrada.'
+            });
+            return null;
+        }
+
+const usuarioRef = doc(db, "usuarios", email);
+    const usuarioSnap = await getDoc(usuarioRef);
+
+    if (usuarioSnap.exists()) {
+        const data = usuarioSnap.data();
+        if (data.sesionActiva) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Sesión activa',
+                text: 'Este usuario ya tiene una sesión activa en otro dispositivo.'
+            });
+            return null;
+        }
+    }        
+        const { nombre, role } = usuarioSnap.data();
+        const usuarioConcatenado = `${nombre}${role}`;
+
+        if (recordar) {
+            localStorage.setItem("recordar", "true");
+            localStorage.setItem("email", email);
+        } else {
+            localStorage.removeItem("recordar");
+            localStorage.removeItem("email");
+        }
+
+        // Buscar turno activo
+        const q = query(
+            collection(db, "turnos"),
+            where("usuario", "==", email),
+            where("estado", "==", "Activo")
+        );
+        const querySnapshot = await getDocs(q);
+        
+        let idTurno;
+
+if (!querySnapshot.empty) {
+    // Guarda el ID real del documento, no el campo interno
+    idTurno = querySnapshot.docs[0].id;
+    await Swal.fire({
+        icon: 'info',
+        title: 'Turno ya Activo',
+        text: `Se encontró el turno Activo: ${idTurno}`
+    });
+} else {
+    idTurno = `${usuarioConcatenado}_${Date.now()}`;
+    const fechaInicio = serverTimestamp();
+    await setDoc(doc(db, "turnos", idTurno), {
+        idTurno,
+        usuario: email,
+        fechaInicio,
+        fechaFin: null,
+        estado: "Activo"
+    });
+    await Swal.fire({
+        icon: 'success',
+        title: '¡Bienvenido!',
+        text: 'Turno iniciado correctamente.'
+    });
+    const sesionToken = Date.now().toString() + Math.random().toString(36).substring(2);
+    await updateDoc(usuarioRef, {
+        sesionActiva: true,
+        sesionToken
+    });
+}
+localStorage.setItem("idTurno", idTurno);
+        Swal.close();
+        return idTurno;
+
+    } catch (error) {
+        Swal.close();
+        let tituloError = "Error al iniciar sesión";
+        let mensajeError = "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.";
+        await Swal.fire(tituloError, mensajeError, "error");
+        return null;
+    }
+}
+
+/**
+ * Cierra la sesión del usuario en Firebase y finaliza el turno Activo en Firestore.
+ * El cierre global lo ejecuta el listener de sesión (onAuthStateChanged).
+ */
+export async function cerrarSesionConConfirmacion() {
+    const confirmacion = await Swal.fire({
+        title: "¿Cerrar sesión?",
+        text: "Esto cerrará el turno actual y finalizará la sesión en todos los dispositivos.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, cerrar sesión",
+        cancelButtonText: "Cancelar"
+    });
+
+   if (!confirmacion.isConfirmed) {
+        return false;
+    }
+
+    const idTurno = localStorage.getItem("idTurno");
+    const email = auth.currentUser?.email;
+
+    if (idTurno && email) {
+        try {
+            const fechaFin = serverTimestamp();
+            const turnoRef = doc(db, "turnos", idTurno);
+            const usuarioRef = doc(db, "usuarios", email);
+
+            // 1. Actualiza el turno
+            await updateDoc(turnoRef, {
+                fechaFin,
+                estado: "Cerrado"
+            });
+
+            // 2. Actualiza el usuario
+            await updateDoc(usuarioRef, {
+                sesionActiva: false,
+                sesionToken: ""
+            });
+
+            // 3. SOLO DESPUÉS de que todo se haya actualizado, cierra la sesión
+            await signOut(auth);
+            return true;
+
+        } catch (error) {
+            console.error("Error al cerrar sesión y actualizar datos:", error);
+            await Swal.fire('Error', 'No se pudo finalizar el turno correctamente.', 'error');
+            // Si hay un error, no cierres la sesión para que el usuario pueda reintentar
+            return false;
+        }
+    } else {
+        // Si no hay turno o email, simplemente cierra la sesión
+        await signOut(auth);
+        return true;
+    }
+}
+
+
+
+
+
+
+JS INVENTARIO
+
+// JavaScript/inventario.js
+import {getFirestore, collection, getDocs, setDoc, doc, deleteDoc} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { app } from "./Conexion.js";
+// Librería para Excel
+import * as XLSX from "https://cdn.sheetjs.com/xlsx-latest/package/xlsx.mjs";
+
+const db = getFirestore(app);
+
+// ================== CARGAR INVENTARIO ==================
+export async function cargarInventario(filtro = "") {
+    // ADAPTACIÓN: Renderizar inventario en el contenedor horizontal si existe
+    const inventarioContainer = document.getElementById("inventarioContainer");
+    const resultadoDiv = document.getElementById("resultadoBusqueda1");
+
+    let renderTarget = inventarioContainer || resultadoDiv;
+    if (!renderTarget) return;
+    renderTarget.innerHTML = "Cargando...";
+
+    try {
+        const inventarioRef = collection(db, "inventario");
+        const snapshot = await getDocs(inventarioRef);
+
+        let html = `
+            <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+            <table class="table table-striped table-bordered inventario-fija">
+                <thead>
+                    <tr>
+                        <th>PRODUCTOS</th>
+                        <th>PRECIO</th>
+                        <th>CANTIDAD</th>
+                        <th>VENCE</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        let hayResultados = false;
+        const filtroLower = filtro.trim().toLowerCase();
+
+        snapshot.forEach(docSnap => {
+            if (!filtroLower || docSnap.id.toLowerCase().includes(filtroLower)) {
+                const data = docSnap.data();
+                hayResultados = true;
+                html += `
+                    <tr style="cursor:pointer" onclick="window.agregarAlCarrito('${docSnap.id}', ${data.precioVenta})">
+                        <td>${docSnap.id}</td>
+                        <td>${data.precioVenta ?? "-"}</td>
+                        <td>${data.cantidad ?? "-"}</td>
+                        <td>${data.fechaVencimiento || "-"}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        html += `
+                </tbody>
+            </table>
+            </div>
+        `;
+        renderTarget.innerHTML = hayResultados ? html : "No hay resultados.";
+    } catch (error) {
+        renderTarget.innerHTML = "Error al cargar inventario.";
+        console.error(error);
+    }
+}
+
+// ================== EXPORTAR A EXCEL ==================
+export async function exportarInventarioExcel() {
+    try {
+        const inventarioRef = collection(db, "inventario");
+        const snapshot = await getDocs(inventarioRef);
+
+        const data = [];
+        snapshot.forEach(docSnap => {
+            const item = docSnap.data();
+            data.push({
+                Producto: docSnap.id,
+                PrecioVenta: item.precioVenta ?? "",
+                Cantidad: item.cantidad ?? "",
+                FechaVencimiento: item.fechaVencimiento ?? ""
+            });
+        });
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+
+        XLSX.writeFile(wb, "inventario.xlsx");
+        alert("Inventario exportado correctamente.");
+    } catch (error) {
+        console.error("Error exportando inventario:", error);
+    }
+}
+
+// ================== IMPORTAR DESDE EXCEL (BORRAR Y REESCRIBIR) ==================
+export async function importarInventarioDesdeExcel(file) {
+    try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+            // Validación: que haya filas y columnas correctas
+            if (!jsonData.length) {
+                alert("El archivo Excel está vacío.");
+                return;
+            }
+
+            const columnasValidas = ["Producto", "PrecioVenta", "Cantidad"];
+            const primeraFila = Object.keys(jsonData[0]);
+            const faltantes = columnasValidas.filter(col => !primeraFila.includes(col));
+            if (faltantes.length) {
+                alert(`Faltan columnas obligatorias en el Excel: ${faltantes.join(", ")}`);
+                return;
+            }
+
+            // Si pasa las validaciones → ahora sí borrar inventario
+            const inventarioRef = collection(db, "inventario");
+            const snapshot = await getDocs(inventarioRef);
+            await Promise.all(snapshot.docs.map(docSnap => 
+                deleteDoc(doc(db, "inventario", docSnap.id))
+            ));
+
+            // Insertar nuevos registros
+            await Promise.all(jsonData.map(row => {
+                const productoId = row.Producto?.toString().trim();
+                if (!productoId) return null;
+                return setDoc(doc(db, "inventario", productoId), {
+                    precioVenta: Number(row.PrecioVenta) || 0,
+                    cantidad: Number(row.Cantidad) || 0,
+                    fechaVencimiento: row.FechaVencimiento?.toString() || ""
+                });
+            }));
+
+            alert("Inventario sobrescrito correctamente.");
+            cargarInventario();
+        };
+
+        reader.readAsArrayBuffer(file);
+    } catch (error) {
+        console.error("Error importando inventario:", error);
+        alert("Ocurrió un error al importar. No se modificó el inventario.");
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+JS VENTASAPP
+
+import {getFirestore, doc, getDoc, setDoc, collection,query, where, orderBy, limit, getDocs, updateDoc, arrayUnion,runTransaction, serverTimestamp} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { app } from "./Conexion.js";
+import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
+import { inicializarBuscadorVoz } from './BuscadorVoz.js';
+import { cargarInventario } from './Inventario.js';
+
+inicializarBuscadorVoz('campoBusqueda1', 'btnVozBuscar', cargarInventario);
+const db = getFirestore(app);
+// ✅ Utilidad mínima para este archivo (solo añadida, no reemplaza nada)
+function calcularTotal(carrito) {
+  try {
+    if (!carrito) return 0;
+    const items = Array.isArray(carrito) ? carrito : Object.values(carrito);
+    return items.reduce((acc, p) => {
+      const subtotal =
+        typeof p?.total === 'number'
+          ? p.total
+          : (typeof p?.precioVenta === 'number' && typeof p?.cantidad === 'number'
+              ? p.precioVenta * p.cantidad
+              : 0);
+      return acc + subtotal;
+    }, 0);
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Procesa una venta de 'Pago en efectivo' directamente a 'ventasCerradas',
+ * usando el medio de pago elegido.
+ */
+async function procesarVentaEfectivoACerrada(carrito, medioPago) {
+    // 1. Buscar el turno Activo
+    let idTurno = localStorage.getItem("idTurno");
+    if (!idTurno) {
+        const turnosRef = collection(db, "turnos");
+        const q = query(turnosRef, where("estado", "==", "Activo"), orderBy("fechaInicio", "desc"), limit(1));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+            idTurno = snap.docs[0].id;
+            localStorage.setItem("idTurno", idTurno);
+        }
+    }
+    if (!idTurno) {
+        throw new Error("No se encontró un turno Activo. Por favor, inicie un turno para registrar la venta.");
+    }
+
+    // 2. Preparar productos
+    const productosArray = Object.values(carrito).map(p => ({
+        nombreProducto: String(p?.nombre ?? 'sin nombre'),
+        precioVenta: Number(p?.precioVenta ?? 0),
+        cantidad: Number(p?.cantidad ?? 0)
+    }));
+
+    // 3. Calcular total
+    const totalCalculado = Object.values(carrito).reduce((acc, item) => acc + item.total, 0);
+    // 4. Construir objeto venta
+    const horaVenta = new Date().toLocaleTimeString('es-CO', { hour12: false });
+    const clienteObj = {
+        cliente: 'Cliente Ocasional',
+        tipoVenta: medioPago, // Medio de pago elegido
+        horaVenta,
+        total: totalCalculado,
+        productos: productosArray
+    };
+
+    if (!clienteObj.productos.length) {
+        throw new Error("No hay productos en el carrito para registrar.");
+    }
+
+    // 5. Guardar en ventasCerradas
+    const turnoRef = doc(db, "ventasCerradas", idTurno);
+    const turnoSnap = await getDoc(turnoRef);
+
+    if (!turnoSnap.exists()) {
+        await setDoc(turnoRef, { clientes: [clienteObj] });
+    } else {
+        await updateDoc(turnoRef, { clientes: arrayUnion(clienteObj) });
+    }
+}
+
+
+async function procesarVentaCliente(carrito, cliente, claseVenta) {
+    const cuentaRef = doc(db, "cuentasActivas", cliente);
+
+    await runTransaction(db, async (transaction) => {
+        const cuentaDoc = await transaction.get(cuentaRef);
+
+        if (!cuentaDoc.exists()) {
+            // Crear nueva cuenta
+            transaction.set(cuentaRef, {
+                cliente: cliente,
+                productos: carrito,
+                tipo: claseVenta,
+                total: calcularTotal(carrito),
+                fechaApertura: serverTimestamp(),
+                idTurno: localStorage.getItem("idTurno") // 🔹 agregado
+            });
+        } else {
+            // Actualizar cuenta existente
+            const cuentaData = cuentaDoc.data();
+            const productosActualizados = { ...cuentaData.productos };
+
+            for (const [idProducto, datosProducto] of Object.entries(carrito)) {
+                if (productosActualizados[idProducto]) {
+                    productosActualizados[idProducto].cantidad += datosProducto.cantidad;
+                    productosActualizados[idProducto].total += datosProducto.total;
+                } else {
+                    productosActualizados[idProducto] = datosProducto;
+                }
+            }
+
+            const nuevoTotal = Object.values(productosActualizados).reduce((acc, p) => acc + p.total, 0);
+
+            transaction.update(cuentaRef, {
+                productos: productosActualizados,
+                total: nuevoTotal,
+                fechaUltimaModificacion: serverTimestamp(),
+                idTurno: localStorage.getItem("idTurno") // 🔹 agregado
+            });
+        }
+    });
+}
+
+/**
+ * Función principal de venta
+ */
+export async function realizarVenta(carrito) {
+    if (Object.keys(carrito).length === 0) {
+        Swal.fire('Carrito vacío', 'No hay productos para vender.', 'warning');
+        return;
+    }
+
+    const { value: formValues } = await Swal.fire({
+        title: 'Finalizar Venta',
+        html:
+            '<input id="swal-input-cliente" class="swal2-input" placeholder="Nombre del Cliente (opcional)">' +
+            '<select id="swal-select-clase-venta" class="swal2-select" style="width: "Consumo en el local";">' +
+            '<option value="Pago en efectivo" selected>Pago en efectivo</option>' +
+            '<option value="Consumo en el local">Consumo en el local</option>' +
+            '<option value="En Cuaderno">Anotar en el Cuaderno</option>' +
+
+            '</select>',
+        focusConfirm: false,
+        preConfirm: () => {
+            const claseVenta = document.getElementById('swal-select-clase-venta').value;
+            const cliente = document.getElementById('swal-input-cliente').value.trim();
+
+            if ((claseVenta === 'En Cuaderno' || claseVenta === 'Consumo en el local') && !cliente) {
+                Swal.showValidationMessage('El nombre del cliente es obligatorio para esta opción');
+                return false;
+            }
+            return { cliente, claseVenta };
+        },
+        confirmButtonText: 'Confirmar Venta',
+        showCancelButton: true,
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (formValues) {
+        try {
+            let tipoVenta = formValues.claseVenta;
+
+            if (formValues.claseVenta === 'Pago en efectivo') {
+                // Preguntar medio de pago
+const { value: medioPago } = await Swal.fire({
+    title: 'Medio de pago',
+    input: 'select',
+    inputOptions: {
+        efectivo: 'Efectivo',
+        nequi: 'Nequi',
+        daviplata: 'Daviplata'
+    },
+    inputPlaceholder: 'Selecciona el medio de pago',
+    showCancelButton: true,
+    // --- AÑADE ESTO ---
+    didOpen: () => {
+        const select = Swal.getInput(); // Obtiene el input actual
+        if (select) {
+            select.style.width = 'auto'; // Ajusta el ancho al contenido
+            select.style.padding = '0.5em 1em'; // Añade un poco de padding para que se vea mejor
+        }
+    }
+    // --- FIN DE LA MODIFICACIÓN ---
+});
+                if (!medioPago) return; // Cancelado
+
+                tipoVenta = medioPago;
+
+                Swal.fire({
+                    title: 'Procesando...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                await procesarVentaEfectivoACerrada(carrito, tipoVenta);
+            } else {
+                Swal.fire({
+                    title: 'Procesando...',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                await procesarVentaCliente(carrito, formValues.cliente, tipoVenta);
+            }
+
+            window.carrito = {};
+            if (window.renderCarrito) window.renderCarrito();
+
+Swal.fire('¡Éxito!', 'La venta ha sido registrada correctamente.', 'success');
+
+// Limpiar búsqueda y volver a container2
+const campoBusqueda = document.getElementById("campoBusqueda1");
+if (campoBusqueda) campoBusqueda.value = "";
+
+window.mostrarContainer("container2");            
+
+        } catch (error) {
+            Swal.fire('Error', `Ocurrió un error al procesar la venta: ${error.message}`, 'error');
+            console.error("Error en realizarVenta:", error);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+JS CARRITOCOMPRAS
+
+// JavaScript/carrito.js
+// Manejo del carrito de compras: agregar, aumentar/disminuir, quitar y renderizar.
+// Deja disponible un objeto global por simplicidad en esta app.
+window.carrito = {};
+
+/**
+ * Agrega un producto al carrito o aumenta su cantidad.
+ * @param {string} id - ID/nombre del producto.
+ * @param {number} precioVenta - Precio unitario del producto.
+ */
+export function agregarAlCarrito(id, precioVenta) {
+    if (window.carrito[id]) {
+        window.carrito[id].cantidad += 1;
+        window.carrito[id].total = window.carrito[id].cantidad * window.carrito[id].precioVenta;
+    } else {
+        window.carrito[id] = {
+            nombre: id,
+            cantidad: 1,
+            precioVenta: Number(precioVenta) || 0,
+            total: Number(precioVenta) || 0
+        };
+    }
+    renderCarrito();
+}
+
+/**
+ * Aumenta la cantidad de un producto.
+ * @param {string} id
+ */
+export function aumentarCantidad(id) {
+    if (!window.carrito[id]) return;
+    window.carrito[id].cantidad += 1;
+    window.carrito[id].total = window.carrito[id].cantidad * window.carrito[id].precioVenta;
+    renderCarrito();
+}
+
+/**
+ * Disminuye la cantidad de un producto. Si llega a 0, lo elimina.
+ * @param {string} id
+ */
+export function disminuirCantidad(id) {
+    if (!window.carrito[id]) return;
+    window.carrito[id].cantidad -= 1;
+    if (window.carrito[id].cantidad <= 0) {
+        delete window.carrito[id];
+    } else {
+        window.carrito[id].total = window.carrito[id].cantidad * window.carrito[id].precioVenta;
+    }
+    renderCarrito();
+}
+
+/**
+ * Quita un producto del carrito.
+ * @param {string} id
+ */
+export function quitarDelCarrito(id) {
+    if (!window.carrito[id]) return;
+    delete window.carrito[id];
+    renderCarrito();
+}
+
+/** Formato de moneda COP */
+function formatoCOP(valor) {
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(valor) || 0);
+}
+
+/**
+ * Renderiza la tabla del carrito en #carritoContainer si existe, 
+ * si no, en #carritoVenta (compatibilidad con versiones anteriores).
+ */
+export function renderCarrito() {
+    // ADAPTACIÓN: Renderizar en el contenedor horizontal si existe
+    const carritoContainer = document.getElementById('carritoContainer');
+    const divCarrito = carritoContainer || document.getElementById('carritoVenta');
+    if (!divCarrito) return;
+
+    let html = `
+        <table class="table table-sm table-bordered">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th class="col-cantidad">Cantidad</th>
+                    <th>Precio Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    let hayItems = false;
+    let totalGeneral = 0;
+
+    for (const id in window.carrito) {
+        hayItems = true;
+        const item = window.carrito[id];
+        totalGeneral += item.total;
+
+        html += `
+            <tr>
+                <td>${item.nombre}</td>
+                <td class="col-cantidad">
+                    <div class="cantidad-container">
+                        <button class="btn-cantidad" aria-label="Disminuir" onclick="window.disminuirCantidad('${id}')">-</button>
+                        <span class="cantidad-num" aria-live="polite">${item.cantidad}</span>
+                        <button class="btn-cantidad" aria-label="Aumentar" onclick="window.aumentarCantidad('${id}')">+</button>
+                    </div>
+                </td>
+                <td>${formatoCOP(item.total)}</td>
+                <td>
+                    <button class="btn-cantidad btn-quitar" onclick="window.quitarDelCarrito('${id}')">Quitar</button>
+                </td>
+            </tr>
+        `;
+    }
+
+    html += `
+            </tbody>
+        </table>
+        <div style="text-align:right; font-weight:bold;">
+            Total general: ${formatoCOP(totalGeneral)}
+        </div>
+        <div class="botones" style="margin-top:10px;">
+            <button class="btn btn-success" onclick="window.realizarVenta()">Realizar venta</button>
+        </div>
+    `;
+
+    divCarrito.innerHTML = hayItems ? html : "No hay productos seleccionados.";
+}
+
+/* Exponer también en window por si el HTML los usa directamente antes de que main.js los asigne */
+window.agregarAlCarrito = agregarAlCarrito;
+window.aumentarCantidad = aumentarCantidad;
+window.disminuirCantidad = disminuirCantidad;
+window.quitarDelCarrito = quitarDelCarrito;
+window.renderCarrito = renderCarrito;
+
+
+
+
+
+
+
+
+
+JS CUENTAS
+
+import {getFirestore, doc, getDoc, setDoc, deleteDoc, deleteField, collection,query, where, orderBy, limit, getDocs, updateDoc, arrayUnion, serverTimestamp} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { app } from "./Conexion.js"; // debe exportar `app`
+import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
+
+const db = getFirestore(app);
+
+/**
+ * Carga detalle de una cuenta activa con fecha de apertura y última modificación
+ */
+export async function cargarDetalleCuenta(clienteId) {
+    const detalleContainer = document.getElementById('detalleCuentaContainer');
+    if (!detalleContainer) return;
+
+    Swal.fire({ title: 'Cargando detalles...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+        const cuentaRef = doc(db, "cuentasActivas", clienteId);
+        const cuentaDoc = await getDoc(cuentaRef);
+
+        if (!cuentaDoc.exists()) {
+            detalleContainer.innerHTML = `<p>La cuenta no fue encontrada.</p>`;
+            Swal.close();
+            return;
+        }
+
+        const cuenta = cuentaDoc.data();
+
+        // Crear fecha de apertura si no existe
+        if (!cuenta.fechaApertura) {
+            await updateDoc(cuentaRef, {
+                fechaApertura: serverTimestamp(),
+                fechaUltimaModificacion: serverTimestamp()
+            });
+            cuenta.fechaApertura = new Date();
+            cuenta.fechaUltimaModificacion = new Date();
+        }
+
+        let productosHtml = '';
+        let total = 0;
+
+        const productosObj = cuenta.productos || {};
+        for (const productoId in productosObj) {
+            const producto = productosObj[productoId] || {};
+            const subtotal = producto.total ?? 0;
+            total += subtotal;
+            const precioTotalFormateado = new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP'
+            }).format(subtotal);
+
+            productosHtml += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        ${producto.nombre || 'sin nombre'} (${producto.cantidad ?? 0} x ${producto.precioUnidad ?? 0})
+                    </div>
+                    <div>
+                        <span class="badge bg-primary rounded-pill me-2">${precioTotalFormateado}</span>
+                        <button class="btn btn-sm btn-outline-warning me-1" onclick="editarCantidadProducto('${clienteId}','${productoId}')">✏️</button>
+                    </div>
+                </li>
+            `;
+        }
+
+        const totalFormateado = new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP'
+        }).format(total);
+
+        const fechaAperturaFormateada = cuenta.fechaApertura?.toDate
+            ? cuenta.fechaApertura.toDate().toLocaleString('es-CO')
+            : cuenta.fechaApertura.toLocaleString('es-CO');
+
+        const fechaUltimaFormateada = cuenta.fechaUltimaModificacion?.toDate
+            ? cuenta.fechaUltimaModificacion.toDate().toLocaleString('es-CO')
+            : (cuenta.fechaUltimaModificacion
+                ? cuenta.fechaUltimaModificacion.toLocaleString('es-CO')
+                : '—');
+
+        detalleContainer.innerHTML = `
+            <h2>Cuenta de ${cuenta.cliente || 'sin nombre'}</h2>
+            <p><strong>Tipo:</strong> ${cuenta.tipo || '—'}</p>
+            <p><strong>Fecha apertura:</strong> ${fechaAperturaFormateada}</p>
+            <p><strong>Última modificación:</strong> ${fechaUltimaFormateada}</p>
+            <ul class="list-group mb-3">
+                ${productosHtml}
+            </ul>
+            <h4>Total: ${totalFormateado}</h4>
+            <div class="mt-3">
+                <div class="botones">
+                    <button class="btn btn-success me-2" onclick="cerrarCuenta('${clienteId}')">Pagar</button>
+                    <button class="btn btn-warning me-2" onclick="pagoAmericano('${clienteId}')">Pago Americano</button>
+                    <button class="btn btn-danger me-2" onclick="eliminarCuenta('${clienteId}')">Eliminar venta</button><br><br>
+                    <button class="btn btn-secondary" onclick="mostrarContainer('container2')">Volver</button>
+                </div>
+            </div>
+        `;
+       Swal.close();
+    } catch (error) {
+        Swal.fire('Error', `No se pudo cargar el detalle: ${error.message}`, 'error');
+        console.error("Error cargarDetalleCuenta:", error);
+    }
+}
+
+// ---------- FUNCIONES GLOBALES ----------
+
+window.editarCantidadProducto = async function (clienteId, productoId) {
+    try {
+        const cuentaRef = doc(db, "cuentasActivas", clienteId);
+        const cuentaDoc = await getDoc(cuentaRef);
+        if (!cuentaDoc.exists()) return Swal.fire("Error", "La cuenta no existe.", "error");
+
+        const cuenta = cuentaDoc.data();
+        const producto = cuenta.productos?.[productoId];
+        if (!producto) return Swal.fire("Error", "Producto no encontrado.", "error");
+
+        const { value: nuevaCantidad } = await Swal.fire({
+            title: `Editar cantidad - ${producto.nombre}`,
+            input: 'number',
+            inputValue: producto.cantidad ?? 0,
+            inputAttributes: { min: 0 },
+            showCancelButton: true
+        });
+        if (nuevaCantidad === undefined) return;
+
+        // 🔹 Calcular precio por unidad seguro
+        let precioUnidad = Number(producto.precioUnidad);
+        if (!precioUnidad || precioUnidad <= 0) {
+            const totalProducto = Number(producto.total) || 0;
+            const cantidadProducto = Number(producto.cantidad) || 1;
+            precioUnidad = totalProducto / cantidadProducto;
+        }
+
+        // 🔹 Si la nueva cantidad es 0, eliminar el producto
+        if (Number(nuevaCantidad) === 0) {
+            delete cuenta.productos[productoId];
+
+            // 🔹 Recalcular total de la cuenta sin ese producto
+            let nuevoTotalCuenta = 0;
+            for (const id in cuenta.productos) {
+                nuevoTotalCuenta += cuenta.productos[id].total ?? 0;
+            }
+
+            await updateDoc(cuentaRef, {
+                [`productos.${productoId}`]: deleteField(),
+                total: nuevoTotalCuenta,
+                fechaUltimaModificacion: serverTimestamp()
+            });
+
+            Swal.fire("Eliminado", "El producto fue eliminado de la cuenta.", "success");
+            cargarDetalleCuenta(clienteId);
+            return;
+        }
+
+        // 🔹 Si no es 0, actualizar normalmente
+        const nuevoTotalProducto = precioUnidad * nuevaCantidad;
+        cuenta.productos[productoId].cantidad = nuevaCantidad;
+        cuenta.productos[productoId].precioUnidad = precioUnidad;
+        cuenta.productos[productoId].total = nuevoTotalProducto;
+
+        // 🔹 Recalcular total general
+        let nuevoTotalCuenta = 0;
+        for (const id in cuenta.productos) {
+            nuevoTotalCuenta += cuenta.productos[id].total ?? 0;
+        }
+
+        await updateDoc(cuentaRef, {
+            [`productos.${productoId}.cantidad`]: nuevaCantidad,
+            [`productos.${productoId}.precioUnidad`]: precioUnidad,
+            [`productos.${productoId}.total`]: nuevoTotalProducto,
+            total: nuevoTotalCuenta,
+            fechaUltimaModificacion: serverTimestamp()
+        });
+
+        Swal.fire("Actualizado", "La cantidad y el total fueron modificados correctamente.", "success");
+        cargarDetalleCuenta(clienteId);
+    } catch (err) {
+        Swal.fire("Error", err.message, "error");
+    }
+};
+
+// Eliminar cuenta completa
+window.eliminarCuenta = async function (clienteId) {
+    try {
+        const confirm = await Swal.fire({
+            title: "¿Eliminar venta?",
+            text: "Esta acción borrará la cuenta completa de la colección cuentasActivas.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        await deleteDoc(doc(db, "cuentasActivas", clienteId));
+        Swal.fire("Eliminada", "La venta fue borrada.", "success");
+        if (typeof mostrarContainer === 'function') mostrarContainer('container2');
+    } catch (err) {
+        Swal.fire("Error", err.message, "error");
+    }
+};
+
+window.pagoAmericano = async function (clienteId) {
+    await cerrarCuenta(clienteId, true);
+};
+
+window.pagoEfectivo = async function (clienteId) {
+    await cerrarCuenta(clienteId, false);
+};
+
+window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
+    try {
+        Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        const cuentaRef = doc(db, "cuentasActivas", clienteId);
+        const cuentaDoc = await getDoc(cuentaRef);
+        if (!cuentaDoc.exists()) throw new Error("La cuenta no existe.");
+        const cuenta = cuentaDoc.data();
+
+        Swal.close();
+
+        if (esPagoAmericano) {
+            const { value: partes } = await Swal.fire({
+                title: '¿Dividir entre cuántas personas?',
+                input: 'number',
+                inputValue: 1,
+                inputAttributes: { min: 1 },
+                showCancelButton: true
+            });
+            if (!partes) return;
+
+            const montoPorPersona = (cuenta.total ?? 0) / partes;
+            await Swal.fire({
+                title: 'Monto por persona',
+                html: `<b>Total (en cuenta):</b> $${(cuenta.total ?? 0).toFixed(2)}<br>
+                       <b>Entre ${partes} personas:</b> $${montoPorPersona.toFixed(2)} cada uno`,
+                icon: 'info'
+            });
+        }
+
+        const { value: medioPago } = await Swal.fire({
+            title: 'Medio de pago',
+            input: 'select',
+            inputOptions: { efectivo: 'Efectivo', nequi: 'Nequi', daviplata: 'Daviplata' },
+            inputPlaceholder: 'Selecciona el medio de pago',
+            showCancelButton: true
+        });
+        if (!medioPago) return;
+
+        let idTurno = localStorage.getItem("idTurno");
+        if (!idTurno) {
+            const turnosRef = collection(db, "turnos");
+            const q = query(turnosRef, where("estado", "==", "activo"), orderBy("fechaInicio", "desc"), limit(1));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                idTurno = snap.docs[0].id;
+                localStorage.setItem("idTurno", idTurno);
+            }
+        }
+        if (!idTurno) throw new Error("No se encontró turno activo.");
+
+        const productosObj = cuenta.productos || {};
+        const productosArray = Object.values(productosObj).map(p => {
+            const cantidad = Number(p?.cantidad ?? p?.cantidadTotal ?? p?.qty ?? 0);
+            let precioVenta = Number(p?.precioUnidad ?? p?.precio ?? p?.precioVenta ?? (cantidad ? p?.total / cantidad : 0)) || 0;
+            return {
+                nombreProducto: String(p?.nombre ?? p?.nombreProducto ?? 'sin nombre'),
+                precioVenta,
+                cantidad
+            };
+        });
+
+        const totalCalculado = productosArray.reduce((acc, prod) => acc + (prod.precioVenta * prod.cantidad), 0);
+
+        const horaVenta = new Date().toLocaleTimeString('es-CO', { hour12: false });
+        const clienteNombreFinal = (medioPago.toLowerCase() === 'efectivo') ? 'Cliente Ocasional' : (cuenta.cliente || 'Desconocido');
+
+        const clienteObj = {
+            cliente: clienteNombreFinal,
+            tipoVenta: medioPago,
+            horaVenta,
+            total: totalCalculado,
+            productos: productosArray
+        };
+
+        if (!clienteObj.cliente || !clienteObj.tipoVenta || !clienteObj.productos.length) {
+            throw new Error("Datos incompletos para guardar la venta.");
+        }
+
+        const turnoRef = doc(db, "ventasCerradas", idTurno);
+        const turnoSnap = await getDoc(turnoRef);
+        if (!turnoSnap.exists()) {
+            await setDoc(turnoRef, { clientes: [clienteObj] });
+        } else {
+            await updateDoc(turnoRef, { clientes: arrayUnion(clienteObj) });
+        }
+
+        await deleteDoc(cuentaRef);
+
+        Swal.fire('¡Éxito!', 'La venta ha sido registrada.', 'success');
+        if (typeof mostrarContainer === 'function') mostrarContainer('container2');
+
+    } catch (error) {
+        Swal.fire('Error', `No se pudo cerrar la cuenta: ${error.message}`, 'error');
+        console.error("Error al cerrar la cuenta:", error);
+    }
+};

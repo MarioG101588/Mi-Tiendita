@@ -167,41 +167,43 @@ export async function cerrarSesionConConfirmacion() {
         cancelButtonText: "Cancelar"
     });
 
-    if (!confirmacion.isConfirmed) {
+   if (!confirmacion.isConfirmed) {
         return false;
     }
 
     const idTurno = localStorage.getItem("idTurno");
     const email = auth.currentUser?.email;
 
-if (idTurno && email) {
-    try {
-        const fechaFin = serverTimestamp();
-        const turnoRef = doc(db, "turnos", idTurno);
-        const usuarioRef = doc(db, "usuarios", email);
+    if (idTurno && email) {
+        try {
+            const fechaFin = serverTimestamp();
+            const turnoRef = doc(db, "turnos", idTurno);
+            const usuarioRef = doc(db, "usuarios", email);
 
-        await updateDoc(turnoRef, {
-            fechaFin,
-            estado: "Cerrado",
-            sesionActiva: false,
-            sesionToken: ""
-        });
-        // ACTUALIZA sesionActiva del usuario a false
-        await updateDoc(usuarioRef, {
-            sesionActiva: false,
-            sesionToken: ""
-        });
-        await signOut(auth);
-        return true;
+            // 1. Actualiza el turno
+            await updateDoc(turnoRef, {
+                fechaFin,
+                estado: "Cerrado"
+            });
 
-    } catch (error) {
-        console.error("Error al actualizar el turno:", error);
-        await Swal.fire('Error', 'No se pudo actualizar el estado del turno.', 'error');
-        return false;
-    }
-}
+            // 2. Actualiza el usuario
+            await updateDoc(usuarioRef, {
+                sesionActiva: false,
+                sesionToken: ""
+            });
 
-else {
+            // 3. SOLO DESPUÉS de que todo se haya actualizado, cierra la sesión
+            await signOut(auth);
+            return true;
+
+        } catch (error) {
+            console.error("Error al cerrar sesión y actualizar datos:", error);
+            await Swal.fire('Error', 'No se pudo finalizar el turno correctamente.', 'error');
+            // Si hay un error, no cierres la sesión para que el usuario pueda reintentar
+            return false;
+        }
+    } else {
+        // Si no hay turno o email, simplemente cierra la sesión
         await signOut(auth);
         return true;
     }
