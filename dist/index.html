@@ -3,99 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio de Sesión</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <title>POS Sistema</title>
     <link rel="stylesheet" href="Css/estilo.css">
-    <link rel="stylesheet" href="Css/estilo-landscape.css">
+    <!-- CORREGIDO: Comentar o remover favicon faltante -->
+    <!-- <link rel="icon" href="imagenes/logo.png" type="image/png"> -->
 </head>
 <body>
-    <div class="container" id="container">
-<br><br><br><br><br><br>
-    <h1>Inicio de Sesión</h1>
-    <div class="botones">
-    <button id="loginButton">Vamos..</button></div>
-        <div id="loginForm" style="display: none; margin-top: 20px;">
-            <div class="form-floating mb-3">
-                <input type="email" class="form-control" id="emailinicio" placeholder="name@example.com">
-                <label for="emailinicio">Correo electronico</label></div>
-            <div class="form-floating mb-3">
-                <input type="password" class="form-control" id="passwordinicio" placeholder="Password">
-                <label for="passwordinicio">Contraseña</label></div>
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="recordarDatos">
-                <label class="form-check-label" for="recordarDatos">Recordar datos</label></div>
-            <div class="botones">
-                <button id="btnIniciarSesion" class="btn btn-primary" style="margin-right:10px;">Siguiente</button>
-                <button id="closeButton" class="btn btn-secondary">Cerrar</button></div>
+    <!-- Vista de Login -->
+    <div class="container visible" id="container" role="main" aria-label="Vista de login">
+        <br><br><br><br><br><br>
+        
+        <form id="loginForm" class="hidden">
+            <label for="emailinicio">Correo:</label>
+            <input type="email" id="emailinicio" name="email" required>
+            
+            <label for="passwordinicio">Contraseña:</label>
+            <input type="password" id="passwordinicio" name="password" required>
+            
+            <label>
+                <input type="checkbox" id="recordarCheckbox"> Recordar credenciales
+            </label>
+            
+            <button type="button" id="btnIniciarSesion">Iniciar Sesión</button>
+            <button type="button" id="btnCancelar">Cancelar</button>
+        </form>
+        
+        <div id="botonesLogin">
+            <button id="loginButton" class="btn">Iniciar Sesión</button>
+            <button id="logoutButton" class="btn hidden">Cerrar Sesión</button>
         </div>
     </div>
-<div class="container1" id="container1" style="display:none;">
-    <h2 class="titulo-superior">Nueva Venta</h2>
+
+    <!-- Vista de Ventas/POS -->
+    <div class="container1 hidden" id="container1" role="main" aria-label="Vista de ventas" data-view="ventas">
         <div class="buscador-container">
-        <!--<input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar...">-->
-<div class="buscador-container" style="position:relative;">
-  <input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar...">
-  <button id="btnVozBuscar" style="position:absolute; right:2vw; top:50%; transform:translateY(-50%); background:#4f8cff; color:#fff; border:none; border-radius:50%; width:2.5vw; height:2.5vw; font-size:1.2vw;">
-    🎤
-  </button>
-</div>
-    </div>
-    <div id="resultadoBusqueda1" class="resultado-busqueda"></div>
-    <!-- ADAPTACIÓN: Vista horizontal para Inventario y Carrito -->
-    <div class="pantalla-horizontal">
-        <div id="inventarioContainer" class="tabla-inventario">
-            <!-- Inventario se renderiza aquí por JS -->
+            <input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar productos...">
+            <button id="btnVozBuscar" class="btn-voz-buscar" aria-label="Búsqueda por voz">🎤</button>
         </div>
-        <div id="carritoContainer" class="tabla-carrito">
-            <!-- Carrito de compras se renderiza aquí por JS -->
+        
+        <div class="pantalla-horizontal">
+            <div class="tabla-inventario">
+                <div id="inventarioContainer">Cargando inventario...</div>
+            </div>
+            
+            <div class="tabla-carrito">
+                <div id="carritoContainer">El carrito está vacío</div>
+                <div id="totalContainer">Total: $0</div>
+                <button id="btnFinalizarVenta" class="btn btn-success">Finalizar Venta</button>
+            </div>
+        </div>
+        
+        <div class="navigation-buttons">
+            <button class="nav-button btn" data-action="show-view" data-target="container2">Cuentas</button>
+            <button class="nav-button btn" data-action="show-view" data-target="container4">Resumen Turno</button>
+            <button class="nav-button btn" data-action="show-view" data-target="container5">Historial</button>
+            <button class="nav-button btn" data-action="show-view" data-target="container6">Cuentas Pendientes</button>
         </div>
     </div>
-    <div class="botones">
 
-    <button id="btnExportarInventario" class="btn btn-success">📥 Exportar Inventario</button>
-    <input type="file" id="importFile" class="form-control" style="display:inline-block; width:auto;" /></div>
-    <button onclick="mostrarContainer('container2')" class="btn-orange">Volver a inicio</button>
-</div>
+    <!-- Vista de Cuentas -->
+    <div class="container2 hidden" id="container2" role="main" aria-label="Vista de cuentas" data-view="cuentas">
+        <h1>Gestión de Cuentas</h1>
+        <div id="cuentasActivasTurno">Cargando cuentas activas...</div>
+        
+        <div class="navigation-buttons">
+            <button class="nav-button btn" data-action="show-view" data-target="container1">Ventas</button>
+            <button class="nav-button btn" data-action="show-view" data-target="container3">Detalle Cuenta</button>
+        </div>
+    </div>
 
-<div class="container2" id="container2" style="display:none;">
-        <h1 class="titulo-superior">Cigarreria el Arrendajo Azul y algo Mas</h1><br>
+    <!-- Vista de Detalle de Cuenta -->
+    <div class="container3 hidden" id="container3" role="main" aria-label="Vista detalle de cuenta" data-view="detalle-cuenta">
+        <h1>Detalle de Cuenta</h1>
+        <div id="detalleCuentaContainer">Seleccione una cuenta</div>
+        
+        <div class="navigation-buttons">
+            <button class="nav-button btn" data-action="show-view" data-target="container2">Volver a Cuentas</button>
+            <button id="btnPagarCuenta" class="btn btn-success">Pagar Cuenta</button>
+        </div>
+    </div>
 
-    <h3 class="titulo-superior">Cuentas Pendientes</h3>
-    <!-- 🔔 NUEVO: Nota clickable con cantidad de "En cuaderno" -->
-    <div id="notaCuentasPendientes" class="alert alert-warning mt-2" style="display:none; cursor:pointer;"></div>
-    <div id="cuentasActivasTurno" class="mt-1 mb-2"></div>
-    <div class="botones">
-    <button onclick="mostrarContainer('container1')">Nueva Venta</button>
-    <button onclick="mostrarContainer('container4')" class="btn btn-info" style="margin-left:10px;">Total Turno</button></div>
+    <!-- Vista de Resumen de Turno -->
+    <div class="container4 hidden" id="container4" role="main" aria-label="Vista resumen de turno" data-view="resumen-turno">
+        <h1>Resumen del Turno</h1>
+        <div id="resumenTurnoDatos">Cargando resumen del turno...</div>
+        
+        <div class="navigation-buttons">
+            <button class="nav-button btn" data-action="show-view" data-target="container1">Volver a Ventas</button>
+        </div>
+    </div>
 
-</div>
-<div class="container3" id="container3" style="display:none;">
-        <div id="detalleCuentaContainer"></div>
-</div>
-    <div class="container4" id="container4" style="display:none;">
-    <h1 class="titulo-superior">Resumen de Turno</h1>
-    <div id="resumenTurnoDatos" class="mt-3"></div>
-    <div class="botones">
-    <button onclick="mostrarContainer('container2')" class="btn btn-secondary mt-3">Volver</button>
-    <button onclick="cerrarSesion()" class="btn btn-danger" style="margin-left:10px;">Cerrar sesión</button>
-    <button onclick="mostrarContainer('container5')" class="btn btn-info mt-3">Ver turnos anteriores</button></div>
-</div>
-<div class="container5" id="container5" style="display:none;">
-    <h1 class="titulo-superior">Historial de Turnos</h1>
-    <div id="historialTurnosContainer" class="mt-3"></div>
-       <div class="botones">
-        <button onclick="mostrarContainer('container4')" class="btn btn-secondary mt-3">Volver</button></div>
-</div>
+    <!-- Vista de Historial de Turnos -->
+    <div class="container5 hidden" id="container5" role="main" aria-label="Vista historial de turnos" data-view="historial-turnos">
+        <h1>Historial de Turnos</h1>
+        <div id="historialTurnosContainer">Cargando historial...</div>
+        
+        <div class="navigation-buttons">
+            <button class="nav-button btn" data-action="show-view" data-target="container1">Volver a Ventas</button>
+        </div>
+    </div>
 
-<!-- 🔔 NUEVO: Container 6 para cuentas "En cuaderno" -->
-<div class="container" id="container6" style="display:none;">
-  <h3>Cuentas pendientes por cobrar</h3>
-  <div id="cuentasPendientesContainer"></div>
-  <div class="botones">
-    <button class="btn btn-secondary mt-3" onclick="mostrarContainer('container2')">⬅ Volver</button>
-  </div>
-</div>
+    <!-- Vista de Cuentas Pendientes -->
+    <div class="container6 hidden" id="container6" role="main" aria-label="Vista cuentas pendientes" data-view="cuentas-pendientes">
+        <h1>Cuentas Pendientes</h1>
+        <div id="cuentasPendientesContainer">Cargando cuentas pendientes...</div>
+        
+        <div class="navigation-buttons">
+            <button class="nav-button btn" data-action="show-view" data-target="container1">Volver a Ventas</button>
+            <button class="nav-button btn" data-action="show-view" data-target="container2">Gestión de Cuentas</button>
+        </div>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <!-- Punto único de entrada JavaScript -->
     <script type="module" src="JavaScript/Engranaje.js"></script>
-    <script type="module" src="JavaScript/Cuentas.js"></script>
+</body>
+</html>

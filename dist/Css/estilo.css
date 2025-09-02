@@ -1,224 +1,391 @@
-/* Estilos generales */
+/* Estados de visibilidad CORREGIDOS */
+.hidden {
+    display: none !important;
+}
+
+.visible {
+    display: block !important;
+}
+
+/* Estilos base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-  background: #f4f4f4;
-  font-family: 'Segoe UI', Arial, sans-serif;
-  margin: 0;
-  padding: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
 }
 
 /* Contenedores principales */
-.container,
-.container1,
-.container2,
-.container3,
-.container4,
-.container5,
-.container6 {
-  max-width: 80vw;
-  min-height: 50vh;
-  margin: 2vh auto;
-  background: #f7faff;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(80,140,255,0.10);
-  padding: 1vw 2vw;
-  display: block;
+.container, .container1, .container2, .container3, .container4, .container5, .container6 {
+    min-height: 100vh;
+    padding: 20px;
+    background: white;
+    margin: 0;
 }
 
-/* Títulos */
-h1, h3 {
-  text-align: center;
-  margin-top: 0.5vw;
-  margin-bottom: 1vw;
-  font-size: 1.3vw;
+/* Formulario de login */
+#loginForm {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #ddd;
+}
+
+#loginForm label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+#loginForm input {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+#loginForm input[type="checkbox"] {
+    width: auto;
+    margin-right: 0.5rem;
 }
 
 /* Botones */
-button, .btn {
-  font-size: 0.9vw;
-  padding: 0.4vw 1vw;
-  border-radius: 6px;
-  margin: 0.3vw;
-  cursor: pointer;
-  border: none;
-  background: #4f8cff;
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(80,140,255,0.10);
-  transition: background 0.2s, box-shadow 0.2s;
+.btn {
+    padding: 0.75rem 1.5rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin: 0.25rem;
+    transition: background-color 0.2s;
 }
 
-button:hover, .btn:hover {
-  background: #38c6ff;
-  box-shadow: 0 4px 16px rgba(80,140,255,0.18);
-}
-
-.btn-orange {
-  background: #ff9800;
-  color: #fff;
+.btn:hover {
+    background-color: #0056b3;
 }
 
 .btn-success {
-  background: #4caf50;
-  color: #fff;
+    background-color: #28a745;
 }
 
-/* Formularios */
-input[type="text"],
-input[type="password"],
-input[type="email"],
-input[type="file"] {
-  font-size: 1vw;
-  padding: 0.5vw;
-  margin: 0.7vw 0;
-  width: 40vw;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
+.btn-success:hover {
+    background-color: #218838;
 }
 
-label {
-  font-size: 0.9vw;
-  margin-bottom: 0.3vw;
-  display: block;
-  text-align: left;
-}
-
-/* Landscape PC: sin scroll vertical, tablas compactas */
-@media (min-width: 901px) and (orientation: landscape) {
-  .pantalla-horizontal {
-    display: flex;
-    flex-direction: row;
-    gap: 1vw;
-    justify-content: center;
-    align-items: center;
-    width: 75vw;
-    height: 63vh;
-    margin-top: 1vw;
-  }
-  .tabla-inventario, .tabla-carrito {
-    flex: 1;
-    max-width: 35vw;
-    min-width: 30vw;
-    height: 65vh;
-    background: linear-gradient(135deg, #e3fcec 80%, #e0f7fa 100%);
-    border-radius: 12px;
-    box-shadow: 0 2px 12px rgba(80,140,255,0.10);
-    padding: 0.7vw 0.3vw;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  .tabla-carrito {
-    background: linear-gradient(135deg, #fffde7 80%, #e0f7fa 100%);
-    border: 2px solid #ffe082;
-  }
-  table {
-    width: 96%;
-    font-size: 0.8vw;
-    border-collapse: collapse;
-    margin-bottom: 0.3vw;
-    background: #fff;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 1px 6px rgba(80,140,255,0.07);
-    max-height: 55vh;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  thead, tfoot {
-    font-size: 0.9vw;
-  }
-  tbody {
-    display: block;
-    max-height: 40vh;
-    overflow-y: auto;
-  }
-  thead, tfoot, tr {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-  }
-  th, td {
-    padding: 0.3vw 0.3vw;
+/* Botones de navegación */
+#botonesLogin {
     text-align: center;
-    border-bottom: 1px solid #e3eafc;
-    word-break: break-word;
-  }
-  th {
-    background: #e3eafc;
-    color: #2a3a5e;
-    font-weight: 600;
-    font-size: 0.9vw;
-  }
-  .cantidad-container {
-    gap: 0.2vw;
-    justify-content: center;
-  }
-  .btn-cantidad, .btn-quitar {
-    font-size: 0.7vw;
-    padding: 0.1vw 0.5vw;
-  }
+    margin-top: 2rem;
 }
 
-/* Móvil: tablas y contenedores compactos, scroll mínimo */
-@media (max-width: 900px) {
-  .pantalla-horizontal {
-    flex-direction: column;
-    gap: 1vw;
-    min-height: 40vh;
-    height: auto;
-    align-items: center;
+.navigation-buttons {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.95);
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
     justify-content: center;
-  }
-  .tabla-inventario, .tabla-carrito {
-    min-width: 90vw;
-    max-width: 98vw;
-    min-height: 20vh;
-    max-height: 28vh;
-    padding: 0.7vw 0.3vw;
-    border-radius: 10px;
-    font-size: 2vw;
-    overflow: hidden;
-    align-items: center;
-    justify-content: center;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  table {
-    font-size: 1.7vw;
-    max-height: 22vh;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  tbody {
-    display: block;
-    max-height: 14vh;
+}
+
+/* Buscador */
+.buscador-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    max-width: 600px;
+}
+
+.form-control {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.btn-voz-buscar {
+    padding: 0.75rem 1rem;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.btn-voz-buscar:hover {
+    background-color: #c82333;
+}
+
+/* Layout horizontal para ventas */
+.pantalla-horizontal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 80px; /* Espacio para navegación fija */
+}
+
+.tabla-inventario, .tabla-carrito {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #eee;
+}
+
+/* Productos Grid */
+.productos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    padding: 1rem 0;
+    max-height: 600px;
     overflow-y: auto;
-  }
-  thead, tfoot, tr {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
-  }
-  th, td {
-    padding: 0.4vw 0.4vw;
-    font-size: 1.5vw;
-  }
-  .cantidad-container {
-    gap: 0.5vw;
-    justify-content: center;
-  }
-  .btn-cantidad, .btn-quitar {
-    font-size: 1.2vw;
-    padding: 0.3vw 1vw;
-  }
 }
 
-/* Ocultar scroll horizontal */
-body {
-  overflow-x: hidden;
+.producto-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.producto-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.producto-card h4 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 1rem;
+}
+
+.producto-card .precio {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #28a745;
+    margin: 0.5rem 0;
+}
+
+.producto-card .stock {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0.25rem 0;
+}
+
+.producto-card .categoria {
+    color: #007bff;
+    font-size: 0.8rem;
+    margin: 0.25rem 0;
+    font-style: italic;
+}
+
+/* Carrito Items */
+.carrito-items {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin: 1rem 0;
+}
+
+.carrito-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 0.5rem;
+}
+
+.carrito-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.item-info h5 {
+    margin: 0 0 0.25rem 0;
+    color: #333;
+    font-size: 1rem;
+}
+
+.item-info p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.item-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.item-controls .cantidad {
+    min-width: 30px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.item-total {
+    font-weight: bold;
+    color: #28a745;
+    min-width: 80px;
+    text-align: right;
+}
+
+/* Resumen Total */
+.resumen-total {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+    border: 2px solid #28a745;
+    margin: 1rem 0;
+}
+
+.resumen-total div {
+    margin: 0.25rem 0;
+}
+
+.total-final {
+    font-size: 1.2rem;
+    border-top: 1px solid #28a745;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* Botones pequeños */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* Estados de error */
+.error {
+    color: #dc3545;
+    background: #f8d7da;
+    padding: 0.75rem;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .pantalla-horizontal {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .productos-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .carrito-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .item-controls {
+        align-self: center;
+    }
+    
+    .item-total {
+        align-self: flex-end;
+    }
+    
+    .navigation-buttons {
+        position: relative;
+        transform: none;
+        left: auto;
+        bottom: auto;
+        margin-top: 2rem;
+    }
+}
+
+/* Cuentas y tablas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+table th,
+table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+/* Estadísticas */
+.resumen-turno {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.estadisticas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+    text-align: center;
+    border-left: 4px solid #007bff;
+}
+
+.stat-card h5 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #28a745;
+    margin: 0;
 }

@@ -1,210 +1,309 @@
-import {getAuth,  signInWithEmailAndPassword, signOut, setPersistence, onAuthStateChanged, browserLocalPersistence} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-import {getFirestore,serverTimestamp, doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { app } from "./Conexion.js"; // Asegúrate que la ruta a tu archivo de conexión sea correcta.
-import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
+// === IMPORTACIONES REQUERIDAS ===
+import { 
+    getAuth, 
+    signInWithEmailAndPassword, 
+    signOut, 
+    onAuthStateChanged,
+    createUserWithEmailAndPassword 
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
+import { app } from "./Conexion.js";
+
+// === INICIALIZACIÓN DE SERVICIOS ===
 const auth = getAuth(app);
-const db = getFirestore(app);
 
-// Configurar persistencia
-setPersistence(auth, browserLocalPersistence).catch(console.error);
+// === ESTADO INTERNO DEL MÓDULO ===
+let currentUser = null;
+let authStateListeners = new Set();
+let authReadyPromise = null;
+let authReady = false; // CORREGIDO: Cambiar nombre de variable
+
+// === CONSTANTES DE CONFIGURACIÓN ===
+const STORAGE_KEYS = {
+    REMEMBER_EMAIL: 'pos_remember_email',
+    REMEMBER_FLAG: 'pos_remember_credentials',
+    TURNO_ID: 'pos_current_turno_id',
+    USER_DATA: 'pos_user_data'
+};
+
+const ERRORES_AUTH = {
+    USER_NOT_FOUND: 'auth/user-not-found',
+    WRONG_PASSWORD: 'auth/wrong-password', 
+    TOO_MANY_REQUESTS: 'auth/too-many-requests',
+    NETWORK_ERROR: 'auth/network-request-failed',
+    INVALID_EMAIL: 'auth/invalid-email',
+    USER_DISABLED: 'auth/user-disabled',
+    WEAK_PASSWORD: 'auth/weak-password',
+    EMAIL_ALREADY_IN_USE: 'auth/email-already-in-use'
+};
+
+const MENSAJES_ERROR = {
+    [ERRORES_AUTH.USER_NOT_FOUND]: 'Usuario no encontrado',
+    [ERRORES_AUTH.WRONG_PASSWORD]: 'Contraseña incorrecta',
+    [ERRORES_AUTH.TOO_MANY_REQUESTS]: 'Demasiados intentos fallidos. Intenta más tarde',
+    [ERRORES_AUTH.NETWORK_ERROR]: 'Error de conexión. Verifica tu internet',
+    [ERRORES_AUTH.INVALID_EMAIL]: 'Formato de email inválido',
+    [ERRORES_AUTH.USER_DISABLED]: 'Esta cuenta ha sido deshabilitada',
+    [ERRORES_AUTH.WEAK_PASSWORD]: 'La contraseña debe tener al menos 6 caracteres',
+    [ERRORES_AUTH.EMAIL_ALREADY_IN_USE]: 'Este email ya está registrado'
+};
+
+// === FUNCIONES DE VALIDACIÓN ===
+function validarEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function validarPassword(password) {
+    return password && password.length >= 6;
+}
+
+// === FUNCIONES PRINCIPALES ===
 
 /**
- * Observador de sesión: actualiza la UI y limpia localStorage al cerrar sesión.
+ * Inicializa el sistema de autenticación
+ * @returns {Promise<Object>} Resultado de la inicialización
+ */
+export function inicializarAuth() {
+    if (authReadyPromise) return authReadyPromise;
+    
+    authReadyPromise = new Promise((resolve) => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            
+            if (!authReady) {
+                authReady = true; // CORREGIDO: Usar variable corregida
+                console.log('🔐 Sistema de autenticación inicializado');
+                resolve({
+                    success: true,
+                    user: user,
+                    message: 'Autenticación inicializada'
+                });
+            }
+            
+            // Notificar a todos los listeners
+            authStateListeners.forEach(listener => {
+                try {
+                    listener(user);
+                } catch (error) {
+                    console.error('Error en listener de auth:', error);
+                }
+            });
+        });
+        
+        // Timeout de seguridad
+        setTimeout(() => {
+            if (!authReady) {
+                authReady = true; // CORREGIDO: Usar variable corregida
+                console.warn('⚠️ Timeout en inicialización de auth');
+                resolve({
+                    success: false,
+                    message: 'Timeout en inicialización'
+                });
+            }
+        }, 10000);
+    });
+    
+    return authReadyPromise;
+}
+
+/**
+ * Inicia sesión con email y contraseña
+ * @param {string} email - Email del usuario
+ * @param {string} password - Contraseña del usuario
+ * @param {boolean} recordar - Si debe recordar las credenciales
+ * @returns {Promise<Object>} Resultado de la operación
+ */
+export async function iniciarSesion(email, password, recordar = false) {
+    try {
+        // Validar parámetros
+        if (!validarEmail(email)) {
+            throw {
+                code: ERRORES_AUTH.INVALID_EMAIL,
+                message: MENSAJES_ERROR[ERRORES_AUTH.INVALID_EMAIL]
+            };
+        }
+        
+        if (!validarPassword(password)) {
+            throw {
+                code: ERRORES_AUTH.WEAK_PASSWORD,
+                message: 'La contraseña es requerida'
+            };
+        }
+        
+        console.log('🔐 Iniciando sesión...');
+        
+        // Intentar iniciar sesión
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // Gestionar credenciales recordadas
+        if (recordar) {
+            localStorage.setItem(STORAGE_KEYS.REMEMBER_EMAIL, email);
+            localStorage.setItem(STORAGE_KEYS.REMEMBER_FLAG, 'true');
+        } else {
+            localStorage.removeItem(STORAGE_KEYS.REMEMBER_EMAIL);
+            localStorage.removeItem(STORAGE_KEYS.REMEMBER_FLAG);
+        }
+        
+        // Generar ID de turno
+        const turnoId = `turno_${Date.now()}_${user.uid.substring(0, 8)}`;
+        localStorage.setItem(STORAGE_KEYS.TURNO_ID, turnoId);
+        
+        // Guardar datos del usuario
+        const userData = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            lastLogin: new Date().toISOString()
+        };
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
+        
+        currentUser = user;
+        
+        console.log('✅ Sesión iniciada correctamente');
+        
+        return {
+            success: true,
+            user: {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName
+            },
+            turnoId,
+            message: 'Sesión iniciada correctamente'
+        };
+        
+    } catch (error) {
+        console.error('❌ Error iniciando sesión:', error);
+        
+        const errorCode = error.code || 'unknown';
+        const errorMessage = MENSAJES_ERROR[errorCode] || error.message || 'Error desconocido al iniciar sesión';
+        
+        throw {
+            code: errorCode,
+            message: errorMessage,
+            originalError: error
+        };
+    }
+}
+
+/**
+ * Cierra la sesión actual
+ * @returns {Promise<Object>} Resultado de la operación
+ */
+export async function cerrarSesion() {
+    try {
+        console.log('🔐 Cerrando sesión...');
+        
+        await signOut(auth);
+        
+        // Limpiar datos locales (excepto credenciales recordadas)
+        const recordarCredenciales = localStorage.getItem(STORAGE_KEYS.REMEMBER_FLAG) === 'true';
+        
+        localStorage.removeItem(STORAGE_KEYS.TURNO_ID);
+        localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+        
+        if (!recordarCredenciales) {
+            localStorage.removeItem(STORAGE_KEYS.REMEMBER_EMAIL);
+        }
+        
+        currentUser = null;
+        
+        console.log('✅ Sesión cerrada correctamente');
+        
+        return {
+            success: true,
+            message: 'Sesión cerrada correctamente'
+        };
+        
+    } catch (error) {
+        console.error('❌ Error cerrando sesión:', error);
+        
+        throw {
+            code: 'auth/signout-error',
+            message: 'Error al cerrar sesión',
+            originalError: error
+        };
+    }
+}
+
+/**
+ * Observa cambios en el estado de autenticación
+ * @param {Function} callback - Función a ejecutar cuando cambie el estado
+ * @returns {Function} Función para cancelar la observación
  */
 export function observarSesion(callback) {
-  onAuthStateChanged(auth, (user) => {
-    if (!user) {
-      // Usuario no autenticado: limpiar turno y actualizar UI
-      localStorage.removeItem("idTurno");
-      document.querySelectorAll('.container, .container1, .container2, .container3, .container4, .container5, .container6')
-        .forEach(el => el.style.display = 'none');
-      if (document.getElementById('container')) {
-        document.getElementById('container').style.display = 'block';
-      }
-      if (document.getElementById('loginButton')) {
-        document.getElementById('loginButton').style.display = 'inline-block';
-      }
-      if (document.getElementById('loginForm')) {
-        document.getElementById('loginForm').style.display = 'none';
-      }
+    if (typeof callback !== 'function') {
+        throw new Error('El callback debe ser una función');
     }
-    if (callback) callback(user);
-  });
+    
+    authStateListeners.add(callback);
+    
+    // Si ya está inicializado, llamar callback inmediatamente
+    if (authReady) {
+        setTimeout(() => callback(currentUser), 0);
+    }
+    
+    // Retornar función para desuscribirse
+    return () => {
+        authStateListeners.delete(callback);
+    };
 }
 
 /**
- * Inicia sesión, verifica el estado del usuario en Firebase y crea un turno si es necesario.
- * Las notificaciones se manejan exclusivamente con SweetAlert2.
- * @param {string} email - Correo electrónico del usuario.
- * @param {string} password - Contraseña del usuario.
- * @param {boolean} recordar - Opción para guardar las credenciales.
- * @returns {Promise<string|null>} - Retorna el idTurno si el inicio de sesión fue exitoso, de lo contrario null.
+ * Obtiene el usuario currente
+ * @returns {Object|null} Usuario actual o null
  */
-export async function iniciarSesion(email, password, recordar) {
-    if (!email?.trim() || !password?.trim()) {
-        await Swal.fire({
-            icon: "warning",
-            title: "Campos incompletos",
-            text: "Por favor, ingresa tu correo y contraseña."
-        });
-        return null;
-    }
-
-    Swal.fire({
-        title: 'Iniciando sesión...',
-        text: 'Por favor, espera un momento.',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-
-    try {
-        await setPersistence(auth, browserLocalPersistence);
-        const cred = await signInWithEmailAndPassword(auth, email, password);
-        const user = cred.user;
-
-        if (!user.emailVerified) {
-            await signOut(auth);
-            Swal.close();
-            await Swal.fire({
-                icon: 'error',
-                title: 'Verificación requerida',
-                text: 'Tu cuenta de correo no ha sido verificada. Por favor, revisa tu bandeja de entrada.'
-            });
-            return null;
-        }
-
-const usuarioRef = doc(db, "usuarios", email);
-    const usuarioSnap = await getDoc(usuarioRef);
-
-    if (usuarioSnap.exists()) {
-        const data = usuarioSnap.data();
-        if (data.sesionActiva) {
-            await Swal.fire({
-                icon: 'error',
-                title: 'Sesión activa',
-                text: 'Este usuario ya tiene una sesión activa en otro dispositivo.'
-            });
-            return null;
-        }
-    }        
-        const { nombre, role } = usuarioSnap.data();
-        const usuarioConcatenado = `${nombre}${role}`;
-
-        if (recordar) {
-            localStorage.setItem("recordar", "true");
-            localStorage.setItem("email", email);
-        } else {
-            localStorage.removeItem("recordar");
-            localStorage.removeItem("email");
-        }
-
-        // Buscar turno activo
-        const q = query(
-            collection(db, "turnos"),
-            where("usuario", "==", email),
-            where("estado", "==", "Activo")
-        );
-        const querySnapshot = await getDocs(q);
-        
-        let idTurno;
-
-if (!querySnapshot.empty) {
-    // Guarda el ID real del documento, no el campo interno
-    idTurno = querySnapshot.docs[0].id;
-    await Swal.fire({
-        icon: 'info',
-        title: 'Turno ya Activo',
-        text: `Se encontró el turno Activo: ${idTurno}`
-    });
-} else {
-    idTurno = `${usuarioConcatenado}_${Date.now()}`;
-    const fechaInicio = serverTimestamp();
-    await setDoc(doc(db, "turnos", idTurno), {
-        idTurno,
-        usuario: email,
-        fechaInicio,
-        fechaFin: null,
-        estado: "Activo"
-    });
-    await Swal.fire({
-        icon: 'success',
-        title: '¡Bienvenido!',
-        text: 'Turno iniciado correctamente.'
-    });
-    const sesionToken = Date.now().toString() + Math.random().toString(36).substring(2);
-    await updateDoc(usuarioRef, {
-        sesionActiva: true,
-        sesionToken
-    });
-}
-localStorage.setItem("idTurno", idTurno);
-        Swal.close();
-        return idTurno;
-
-    } catch (error) {
-        Swal.close();
-        let tituloError = "Error al iniciar sesión";
-        let mensajeError = "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.";
-        await Swal.fire(tituloError, mensajeError, "error");
-        return null;
-    }
+export function getCurrentUser() {
+    return currentUser;
 }
 
 /**
- * Cierra la sesión del usuario en Firebase y finaliza el turno Activo en Firestore.
- * El cierre global lo ejecuta el listener de sesión (onAuthStateChanged).
+ * Obtiene el ID del turno actual
+ * @returns {string|null} ID del turno actual
  */
-export async function cerrarSesionConConfirmacion() {
-    const confirmacion = await Swal.fire({
-        title: "¿Cerrar sesión?",
-        text: "Esto cerrará el turno actual y finalizará la sesión en todos los dispositivos.",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Sí, cerrar sesión",
-        cancelButtonText: "Cancelar"
-    });
-
-   if (!confirmacion.isConfirmed) {
-        return false;
-    }
-
-    const idTurno = localStorage.getItem("idTurno");
-    const email = auth.currentUser?.email;
-
-    if (idTurno && email) {
-        try {
-            const fechaFin = serverTimestamp();
-            const turnoRef = doc(db, "turnos", idTurno);
-            const usuarioRef = doc(db, "usuarios", email);
-
-            // 1. Actualiza el turno
-            await updateDoc(turnoRef, {
-                fechaFin,
-                estado: "Cerrado"
-            });
-
-            // 2. Actualiza el usuario
-            await updateDoc(usuarioRef, {
-                sesionActiva: false,
-                sesionToken: ""
-            });
-
-            // 3. SOLO DESPUÉS de que todo se haya actualizado, cierra la sesión
-            await signOut(auth);
-            return true;
-
-        } catch (error) {
-            console.error("Error al cerrar sesión y actualizar datos:", error);
-            await Swal.fire('Error', 'No se pudo finalizar el turno correctamente.', 'error');
-            // Si hay un error, no cierres la sesión para que el usuario pueda reintentar
-            return false;
-        }
-    } else {
-        // Si no hay turno o email, simplemente cierra la sesión
-        await signOut(auth);
-        return true;
-    }
+export function getCurrentTurnoId() {
+    return localStorage.getItem(STORAGE_KEYS.TURNO_ID);
 }
+
+/**
+ * Verifica si hay un usuario autenticado
+ * @returns {boolean} True si hay usuario autenticado
+ */
+export function estaAutenticado() {
+    return !!currentUser;
+}
+
+/**
+ * Obtiene las credenciales recordadas
+ * @returns {Object} Credenciales recordadas
+ */
+export function getRememberedCredentials() {
+    const recordar = localStorage.getItem(STORAGE_KEYS.REMEMBER_FLAG) === 'true';
+    const email = recordar ? localStorage.getItem(STORAGE_KEYS.REMEMBER_EMAIL) : '';
+    
+    return {
+        recordar,
+        email: email || ''
+    };
+}
+
+/**
+ * Espera a que la autenticación esté lista
+ * @returns {Promise<boolean>} True cuando esté lista
+ */
+export function esperarAuth() {
+    if (authReady) return Promise.resolve(true);
+    return inicializarAuth().then(() => true);
+}
+
+// === INICIALIZACIÓN AUTOMÁTICA ===
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        inicializarAuth();
+    });
+}
+
+// === EXPORTACIONES DE CONSTANTES ===
+export { ERRORES_AUTH, MENSAJES_ERROR };
