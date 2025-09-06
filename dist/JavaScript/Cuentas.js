@@ -42,11 +42,66 @@ export async function cargarDetalleCuenta(clienteId) {
 
             productosHtml += `
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    ${producto.nombre || 'sin nombre'} (${producto.cantidad ?? 0} x ${producto.precioUnidad ?? 0})
+                    <div>
+                        ${producto.nombre || 'sin nombre'}
+                        <span style="margin-left:10px;">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="window.disminuirCantidadCuenta('${clienteId}','${productoId}')">-</button>
+                            <span style="margin:0 8px;">${producto.cantidad ?? 0}</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="window.aumentarCantidadCuenta('${clienteId}','${productoId}')">+</button>
+                        </span>
+                        <span style="margin-left:10px;">x ${producto.precioUnidad ?? 0}</span>
+                    </div>
                     <span class="badge bg-primary rounded-pill">${precioTotalFormateado}</span>
                 </li>
             `;
         }
+// --- FUNCIONES PARA EDITAR CANTIDAD DE PRODUCTOS EN CUENTAS ACTIVAS ---
+
+async function modificarCantidadProductoCuenta(clienteId, productoId, operacion) {
+    try {
+        const cuentaRef = doc(db, "cuentasActivas", clienteId);
+        const cuentaDoc = await getDoc(cuentaRef);
+        if (!cuentaDoc.exists()) return;
+        const cuenta = cuentaDoc.data();
+        const productos = { ...cuenta.productos };
+        const producto = productos[productoId];
+        if (!producto) return;
+
+        if (operacion === 'aumentar') {
+            producto.cantidad += 1;
+        } else if (operacion === 'disminuir') {
+            producto.cantidad -= 1;
+            if (producto.cantidad <= 0) {
+                delete productos[productoId];
+            }
+        }
+        // Recalcular total del producto y total general
+        if (productos[productoId]) {
+            producto.total = producto.cantidad * (producto.precioUnidad ?? producto.precioVenta ?? 0);
+            productos[productoId] = producto;
+        }
+        let totalCuenta = 0;
+        for (const pid in productos) {
+            totalCuenta += productos[pid].total ?? 0;
+        }
+        await updateDoc(cuentaRef, {
+            productos,
+            total: totalCuenta
+        });
+        // Recargar detalle
+        await cargarDetalleCuenta(clienteId);
+    } catch (error) {
+        Swal.fire('Error', 'No se pudo modificar la cantidad: ' + error.message, 'error');
+    }
+}
+
+// Exponer funciones globales para los botones
+window.aumentarCantidadCuenta = function(clienteId, productoId) {
+    modificarCantidadProductoCuenta(clienteId, productoId, 'aumentar');
+};
+window.disminuirCantidadCuenta = function(clienteId, productoId) {
+    modificarCantidadProductoCuenta(clienteId, productoId, 'disminuir');
+};
 
         const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(total);
 
@@ -60,9 +115,29 @@ export async function cargarDetalleCuenta(clienteId) {
             <div class="mt-3">
                 <button class="btn btn-success me-2" onclick="cerrarCuenta('${clienteId}')">Pagar</button>
                 <button class="btn btn-warning me-2" onclick="pagoAmericano('${clienteId}')">Pago Americano</button>
+                <button class="btn btn-danger me-2" onclick="window.borrarCuentaActiva('${clienteId}')">Borrar cuenta</button>
                 <button class="btn btn-secondary" onclick="mostrarContainer('container2')">Volver</button>
             </div>
         `;
+// --- BORRAR CUENTA ACTIVA ---
+window.borrarCuentaActiva = async function(clienteId) {
+    const confirm = await Swal.fire({
+        title: '¿Borrar cuenta?',
+        text: '¿Seguro que deseas eliminar esta cuenta? Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, borrar',
+        cancelButtonText: 'Cancelar'
+    });
+    if (!confirm.isConfirmed) return;
+    try {
+        await deleteDoc(doc(db, "cuentasActivas", clienteId));
+        Swal.fire('Eliminada', 'La cuenta ha sido eliminada.', 'success');
+        if (typeof mostrarContainer === 'function') mostrarContainer('container2');
+    } catch (error) {
+        Swal.fire('Error', 'No se pudo eliminar la cuenta: ' + error.message, 'error');
+    }
+};
 
         Swal.close();
     } catch (error) {

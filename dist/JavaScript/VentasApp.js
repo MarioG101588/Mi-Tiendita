@@ -15,6 +15,7 @@ const db = getFirestore(app);
  */
 async function procesarVentaEfectivoACerrada(carrito) {
     // 1. El medio de pago se asume como 'Efectivo'.
+
     const medioPago = 'Efectivo';
 
     // 2. Buscar el turno activo para asociar la venta.
@@ -35,7 +36,7 @@ async function procesarVentaEfectivoACerrada(carrito) {
     // 3. Preparar el array de productos desde el carrito.
     const productosArray = Object.values(carrito).map(p => ({
         nombreProducto: String(p?.nombre ?? 'sin nombre'),
-        precioVenta: Number(p?.precioUnidad ?? 0),
+        precioVenta: Number(p?.precioVenta ?? 0),
         cantidad: Number(p?.cantidad ?? 0)
     }));
 
@@ -49,7 +50,8 @@ async function procesarVentaEfectivoACerrada(carrito) {
         tipoVenta: medioPago,
         horaVenta,
         total: totalCalculado,
-        productos: productosArray
+        productos: productosArray,
+        turno: idTurno
     };
 
     if (!clienteObj.productos.length) {
@@ -70,17 +72,17 @@ async function procesarVentaEfectivoACerrada(carrito) {
 
 /**
  * Procesa una venta y la agrega a una cuenta en la colección "cuentasActivas".
- * Este flujo se usa para 'Consumo en el local' y 'Anotar en cuaderno'.
+ * Este flujo se usa para 'Consumo en el local' y 'En cuaderno'.
  * @param {object} carrito - El carrito de compras actual.
  * @param {string} cliente - El nombre del cliente.
  * @param {string} claseVenta - El tipo de venta.
  */
 async function procesarVentaCliente(carrito, cliente, claseVenta) {
     const cuentaRef = doc(db, "cuentasActivas", cliente);
+    const idTurno = localStorage.getItem("idTurno") || null;
 
     await runTransaction(db, async (transaction) => {
         const cuentaDoc = await transaction.get(cuentaRef);
-        
         const productosCuenta = cuentaDoc.exists() ? cuentaDoc.data().productos : {};
         let totalCuenta = cuentaDoc.exists() ? cuentaDoc.data().total : 0;
 
@@ -100,7 +102,8 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
             transaction.update(cuentaRef, {
                 productos: productosCuenta,
                 total: totalCuenta,
-                ultimaActualizacion: serverTimestamp()
+                ultimaActualizacion: serverTimestamp(),
+                turno: idTurno
             });
         } else {
             transaction.set(cuentaRef, {
@@ -108,7 +111,8 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
                 tipo: claseVenta,
                 productos: productosCuenta,
                 total: totalCuenta,
-                fechaApertura: serverTimestamp()
+                fechaApertura: serverTimestamp(),
+                turno: idTurno
             });
         }
     });
@@ -131,14 +135,14 @@ export async function realizarVenta(carrito) {
             '<select id="swal-select-clase-venta" class="swal2-select">' +
             '<option value="Pago en efectivo" selected>Pago en efectivo</option>' +
             '<option value="Consumo en el local">Consumo en el local</option>' +
-            '<option value="Anotar en cuaderno">Anotar en cuaderno</option>' +
+            '<option value="En cuaderno">En cuaderno</option>' +
             '</select>',
         focusConfirm: false,
         preConfirm: () => {
             const claseVenta = document.getElementById('swal-select-clase-venta').value;
             const cliente = document.getElementById('swal-input-cliente').value.trim();
 
-            if ((claseVenta === 'Anotar en cuaderno' || claseVenta === 'Consumo en el local') && !cliente) {
+            if ((claseVenta === 'En cuaderno' || claseVenta === 'Consumo en el local') && !cliente) {
                 Swal.showValidationMessage('El nombre del cliente es obligatorio para esta opción');
                 return false;
             }
@@ -168,6 +172,11 @@ export async function realizarVenta(carrito) {
             window.carrito = {};
             if (window.renderCarrito) window.renderCarrito();
             Swal.fire('¡Éxito!', 'La venta ha sido registrada correctamente.', 'success');
+
+            // Redirigir a cuentas activas si la función global está disponible
+            if (typeof window.mostrarContainer === 'function') {
+                window.mostrarContainer('container2');
+            }
 
         } catch (error) {
             Swal.fire('Error', `Ocurrió un error al procesar la venta: ${error.message}`, 'error');

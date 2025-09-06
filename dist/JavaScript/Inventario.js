@@ -9,9 +9,19 @@ const db = getFirestore(app);
  * Carga y muestra el inventario de productos en la interfaz.
  * @param {string} filtro - Filtro de búsqueda para los productos.
  */
+
 export async function cargarInventario(filtro = "") {
     const resultadoDiv = document.getElementById("resultadoBusqueda1");
     if (!resultadoDiv) return;
+
+    // Mostrar u ocultar inventario según el filtro
+    if (!filtro.trim()) {
+        resultadoDiv.style.display = "none";
+        resultadoDiv.innerHTML = "";
+        return;
+    } else {
+        resultadoDiv.style.display = "block";
+    }
     resultadoDiv.innerHTML = "Cargando...";
 
     try {
@@ -55,9 +65,18 @@ export async function cargarInventario(filtro = "") {
             </table>
             </div>
         `;
-        resultadoDiv.innerHTML = hayResultados ? html : "No hay resultados.";
+    resultadoDiv.innerHTML = hayResultados ? html : "No hay resultados.";
     } catch (error) {
         resultadoDiv.innerHTML = "Error al cargar inventario.";
         console.error(error);
+    }
+}
+
+// Función para ocultar el inventario desde otros módulos
+export function ocultarInventario() {
+    const resultadoDiv = document.getElementById("resultadoBusqueda1");
+    if (resultadoDiv) {
+        resultadoDiv.style.display = "none";
+        resultadoDiv.innerHTML = "";
     }
 }

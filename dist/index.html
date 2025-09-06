@@ -1,3 +1,9 @@
+<div class="containerPendientes" id="containerPendientes" style="display:none;">
+    <h1 class="titulo-superior">Cuentas Pendientes Por Cobrar</h1>
+    <div id="cuentasPendientesTurno" class="mt-1 mb-2"></div>
+    <button onclick="mostrarContainer('container2')">Ir a Cuentas Activas</button>
+    <button onclick="cerrarSesion()" class="btn btn-danger" style="margin-left:10px;">Cerrar sesión</button>
+</div>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -30,21 +36,33 @@
 </div>
     </div>
 <div class="container1" id="container1" style="display:none;">
-    <h1 class="titulo-superior">Cigarreria el Arrendajo Azul y algo Mas</h1>
-    <div id="carritoVenta"></div>
-
+    <h1 class="titulo-superior">Ventas</h1>
+    <br>
     <div class="buscador-container">
         <input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar...">
     </div>
-    <div id="resultadoBusqueda1" class="resultado-busqueda"></div>
-    <button onclick="mostrarContainer('container2')">Ir a Informacion</button>
-    <button onclick="cerrarSesion()" class="btn btn-danger" style="margin-left:10px;">Cerrar sesión</button>
+    <br>
+    <div id="resultadoBusqueda1" class="resultado-busqueda" style="display:none;"></div>
+    <br>
+    <div id="carritoVenta"></div>
+    <br>
+    <button onclick="mostrarContainer('container2')">Ir a Cuentas En Turno</button>
+    <!--<button onclick="cerrarSesion()" class="btn btn-danger" style="margin-left:10px;">Cerrar sesión</button>
+    -->
 </div>
 <div class="container2" id="container2" style="display:none;">
-    <h1 class="titulo-superior">Cuentas Pendientes</h1>
+    <h1 class="titulo-superior">Cigarreria el Arrendajo Azul y algo Mas</h1>
+    <h2 class="titulo-superior">Cuentas En Turno</h2>
     <div id="cuentasActivasTurno" class="mt-1 mb-2"></div>
-    <button onclick="mostrarContainer('container1')">Ir a Inventario</button>
+    <button onclick="mostrarContainer('container1')">Nueva Venta</button>
+    <button onclick="mostrarContainer('containerResumenTurno')" class="btn btn-info" style="margin-left:10px;">Ver Resumen del Turno</button>
     <button onclick="cerrarSesion()" class="btn btn-danger" style="margin-left:10px;">Cerrar sesión</button>
+</div>
+
+<div class="containerResumenTurno" id="containerResumenTurno" style="display:none;">
+    <h1 class="titulo-superior">Resumen del Turno</h1>
+    <div id="resumenTurnoContent" class="mt-3 mb-3"></div>
+    <button onclick="mostrarContainer('container2')">Volver a Cuentas En Turno</button>
 </div>
 <div class="container3" id="container3" style="display:none;">
         <div id="detalleCuentaContainer">
