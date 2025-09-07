@@ -1,9 +1,9 @@
 // JavaScript/Conexion.js
 // Configuración y conexión a Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 // Importa todo lo necesario de Firestore
-import { 
+import {
     getFirestore, 
     collection,
     increment, 
@@ -15,7 +15,8 @@ import {
     arrayUnion, 
     runTransaction, 
     serverTimestamp,
-    deleteDoc // <--- ¡Asegúrate de importar deleteDoc aquí!
+    deleteDoc,
+    connectFirestoreEmulator
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -32,6 +33,20 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// Configuración para desarrollo local - MODO DIAGNÓSTICO
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    console.log('🔧 Modo desarrollo detectado - Firebase OAuth warnings visibles para diagnóstico');
+    
+    // Para desarrollo local, configuramos la auth
+    try {
+        auth.settings = {
+            appVerificationDisabledForTesting: true
+        };
+    } catch (error) {
+        console.log('ℹ️ Emuladores ya configurados:', error.message);
+    }
+}
+
 // Exporta las funciones de Firestore para usarlas en otros módulos
 export { 
     collection, 
@@ -44,5 +59,6 @@ export {
     arrayUnion, 
     runTransaction, 
     serverTimestamp,
-    deleteDoc // <--- Y exporta deleteDoc aquí
+    deleteDoc,
+    connectFirestoreEmulator
 };

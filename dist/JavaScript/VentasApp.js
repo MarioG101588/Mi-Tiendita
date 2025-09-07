@@ -4,7 +4,15 @@ import {
     runTransaction, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js"; // Se asume que este archivo exporta la app de Firebase inicializada
-import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
+import { 
+    mostrarAdvertencia,
+    mostrarFormularioVenta, 
+    mostrarCargando, 
+    mostrarExito, 
+    mostrarError, 
+    cerrarModal,
+    mostrarValidacion 
+} from "./SweetAlertManager.js";
 import { mostrarModalMedioPago } from "./Engranaje.js";
 
 const db = getFirestore(app);
@@ -166,45 +174,18 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
  */
 export async function realizarVenta(carrito) {
     if (Object.keys(carrito).length === 0) {
-        Swal.fire('Carrito vacío', 'No hay productos para vender.', 'warning');
+        mostrarAdvertencia('No hay productos para vender.');
         return;
     }
 
-    const { value: formValues } = await Swal.fire({
-        title: 'Finalizar Venta',
-        html:
-            '<input id="swal-input-cliente" class="swal2-input" placeholder="Nombre del Cliente (opcional)">' +
-            '<select id="swal-select-clase-venta" class="swal2-select">' +
-            '<option value="Pago en efectivo" selected>Pago en efectivo</option>' +
-            '<option value="Consumo en el local">Consumo en el local</option>' +
-            '<option value="En cuaderno">En cuaderno</option>' +
-            '</select>',
-        focusConfirm: false,
-        preConfirm: () => {
-            const claseVenta = document.getElementById('swal-select-clase-venta').value;
-            const cliente = document.getElementById('swal-input-cliente').value.trim();
-
-            if ((claseVenta === 'En cuaderno' || claseVenta === 'Consumo en el local') && !cliente) {
-                Swal.showValidationMessage('El nombre del cliente es obligatorio para esta opción');
-                return false;
-            }
-            return { cliente, claseVenta };
-        },
-        confirmButtonText: 'Confirmar Venta',
-        showCancelButton: true,
-        cancelButtonText: 'Cancelar'
-    });
+    const { value: formValues } = await mostrarFormularioVenta();
 
     if (formValues) {
-        Swal.fire({
-            title: 'Procesando...',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
+        mostrarCargando('Procesando venta...');
 
         try {
             if (formValues.claseVenta === 'Pago en efectivo') {
-                Swal.close(); // Cerrar el loading
+                cerrarModal(); // Cerrar el loading
                 
                 const total = Object.values(carrito).reduce((acc, item) => acc + item.total, 0);
                 const medioPagoFinal = await mostrarModalMedioPago(total);
@@ -214,12 +195,7 @@ export async function realizarVenta(carrito) {
                 }
 
                 // Mostrar loading nuevamente
-                Swal.fire({
-                    title: 'Procesando pago...',
-                    text: `Procesando pago con ${medioPagoFinal}`,
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
-                });
+                mostrarCargando(`Procesando pago con ${medioPagoFinal}`);
 
                 // Procesar venta con el medio de pago seleccionado
                 await procesarVentaDirecta(carrito, medioPagoFinal);
@@ -230,7 +206,7 @@ export async function realizarVenta(carrito) {
 
             window.carrito = {};
             if (window.renderCarrito) window.renderCarrito();
-            Swal.fire('¡Éxito!', 'La venta ha sido registrada correctamente.', 'success');
+            mostrarExito('La venta ha sido registrada correctamente.');
 
             // Redirigir a cuentas activas si la función global está disponible
             if (typeof window.mostrarContainer === 'function') {
@@ -238,7 +214,7 @@ export async function realizarVenta(carrito) {
             }
 
         } catch (error) {
-            Swal.fire('Error', `Ocurrió un error al procesar la venta: ${error.message}`, 'error');
+            mostrarError(`Ocurrió un error al procesar la venta: ${error.message}`);
             console.error("Error en realizarVenta:", error);
         }
     }

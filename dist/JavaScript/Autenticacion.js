@@ -6,7 +6,14 @@ import {
     getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs 
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js";
-import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
+import { 
+    mostrarAdvertencia, 
+    mostrarCargando, 
+    mostrarExito, 
+    mostrarError, 
+    mostrarInfo,
+    cerrarModal 
+} from "./SweetAlertManager.js";
 
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -15,10 +22,14 @@ const db = getFirestore(app);
  * Verifica automáticamente si hay una sesión activa y un turno activo
  */
 export function verificarSesionAutomatica() {
+    console.log('🔵 verificarSesionAutomatica: Iniciando verificación...');
+    
     return new Promise((resolve) => {
         onAuthStateChanged(auth, async (user) => {
+            console.log('🔵 onAuthStateChanged disparado, user:', user ? user.email : 'null');
+            
             if (user) {
-                console.log("Usuario autenticado encontrado:", user.email);
+                console.log("✅ Usuario autenticado encontrado:", user.email);
                 
                 try {
                     // Buscar turno activo del usuario
@@ -27,7 +38,10 @@ export function verificarSesionAutomatica() {
                         where("usuario", "==", user.email),
                         where("estado", "==", "activo")
                     );
+                    console.log('🔵 Buscando turno activo para:', user.email);
+                    
                     const querySnapshot = await getDocs(q);
+                    console.log('🔵 Resultado query turnos:', querySnapshot.size, 'documentos');
                     
                     if (!querySnapshot.empty) {
                         // Turno activo encontrado
@@ -35,7 +49,9 @@ export function verificarSesionAutomatica() {
                         localStorage.setItem("idTurno", turnoActivo.idTurno);
                         localStorage.setItem("usuarioActual", user.email);
                         
-                        console.log("Turno activo encontrado:", turnoActivo.idTurno);
+                        console.log("✅ Turno activo encontrado:", turnoActivo.idTurno);
+                        console.log("✅ Datos guardados en localStorage");
+                        
                         resolve({ 
                             autenticado: true, 
                             turnoActivo: true, 
@@ -82,7 +98,7 @@ export function verificarSesionAutomatica() {
  */
 export async function iniciarSesion(email, password, recordar) {
     if (!email || !password) {
-        Swal.fire("Campos incompletos", "Por favor completa todos los campos.", "warning");
+        mostrarAdvertencia("Campos incompletos", "Por favor completa todos los campos.");
         return;
     }
 
@@ -98,16 +114,11 @@ export async function iniciarSesion(email, password, recordar) {
     }
 
     try {
-        Swal.fire({
-            title: 'Iniciando sesión...',
-            text: 'Por favor, espere un momento.',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
+        mostrarCargando("Iniciando sesión...");
 
         // Autenticación en Firebase
         await signInWithEmailAndPassword(auth, email, password);
-        Swal.close();
+        cerrarModal();
 
         // Buscar en Firestore si el usuario ya tiene un turno activo
         const q = query(
@@ -121,7 +132,7 @@ export async function iniciarSesion(email, password, recordar) {
             // Si existe un turno activo, usarlo y no crear otro
             const turnoExistente = querySnapshot.docs[0].data();
             localStorage.setItem("idTurno", turnoExistente.idTurno);
-            Swal.fire("Turno activo", turnoExistente.idTurno, "info");
+            mostrarInfo("Turno activo", turnoExistente.idTurno);
             return;
         }
 
@@ -140,10 +151,10 @@ export async function iniciarSesion(email, password, recordar) {
 
         localStorage.setItem("idTurno", idTurno);
 
-        Swal.fire("Éxito", "Turno iniciado correctamente", "success");
+        mostrarExito("Éxito", "Turno iniciado correctamente");
 
     } catch (error) {
-        Swal.fire("Error al iniciar sesión", error.message, "error");
+        mostrarError("Error al iniciar sesión", error.message);
     }
 }
 
@@ -164,9 +175,9 @@ export async function cerrarSesion() {
 
         await signOut(auth);
 
-        Swal.fire("Sesión cerrada", "Has cerrado sesión exitosamente.", "success");
+        mostrarExito("Sesión cerrada", "Has cerrado sesión exitosamente.");
 
     } catch (error) {
-        Swal.fire("Error al cerrar sesión", error.message, "error");
+        mostrarError("Error al cerrar sesión", error.message);
     }
 }

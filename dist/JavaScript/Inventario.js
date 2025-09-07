@@ -12,21 +12,29 @@ const db = getFirestore(app);
 
 export async function cargarInventario(filtro = "") {
     const resultadoDiv = document.getElementById("resultadoBusqueda1");
-    if (!resultadoDiv) return;
+    if (!resultadoDiv) {
+        console.error('🔴 No se encontró el elemento resultadoBusqueda1');
+        return;
+    }
 
     // Mostrar u ocultar inventario según el filtro
     if (!filtro.trim()) {
         resultadoDiv.style.display = "none";
+        resultadoDiv.classList.add("d-none");
         resultadoDiv.innerHTML = "";
         return;
     } else {
         resultadoDiv.style.display = "block";
+        resultadoDiv.classList.remove("d-none");
+        resultadoDiv.classList.add("d-block");
     }
     resultadoDiv.innerHTML = "Cargando...";
 
     try {
+        console.log('🔵 Cargando inventario con filtro:', filtro);
         const inventarioRef = collection(db, "inventario");
         const snapshot = await getDocs(inventarioRef);
+        console.log('✅ Documentos obtenidos:', snapshot.size);
 
         let html = `
             <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
@@ -68,7 +76,9 @@ export async function cargarInventario(filtro = "") {
     resultadoDiv.innerHTML = hayResultados ? html : "No hay resultados.";
     } catch (error) {
         resultadoDiv.innerHTML = "Error al cargar inventario.";
-        console.error(error);
+        console.error('🔴 Error cargando inventario:', error);
+        // Remover dependencia de SweetAlert temporalmente
+        alert('Error al cargar inventario: ' + error.message);
     }
 }
 
@@ -77,6 +87,9 @@ export function ocultarInventario() {
     const resultadoDiv = document.getElementById("resultadoBusqueda1");
     if (resultadoDiv) {
         resultadoDiv.style.display = "none";
+        resultadoDiv.classList.add("d-none");
+        resultadoDiv.classList.remove("d-block");
         resultadoDiv.innerHTML = "";
+        console.log('✅ Inventario ocultado');
     }
 }

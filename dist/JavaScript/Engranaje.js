@@ -10,10 +10,23 @@ import { agregarAlCarrito, aumentarCantidad, disminuirCantidad, quitarDelCarrito
 import { realizarVenta } from "./VentasApp.js";
 import { db } from './Conexion.js';
 import { cargarDetalleCuenta } from "./Cuentas.js";
+import { configurarDesarrollo, mostrarInfoEntorno } from "./config-desarrollo.js";
 
 // IMPORTACIONES de Firebase para la funcionalidad de cuentas
 import { collection, onSnapshot, query, doc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
-import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
+import { 
+    mostrarPersonalizado, 
+    cerrarModal, 
+    mostrarConfirmacion, 
+    mostrarCargando, 
+    mostrarExito, 
+    mostrarError,
+    mostrarAdvertencia 
+} from "./SweetAlertManager.js";
+
+// Configurar entorno de desarrollo
+configurarDesarrollo();
+mostrarInfoEntorno();
 
 // **FUNCIÓN UTILITARIA PARA CONVERTIR idTurno A FECHA LEGIBLE**
 function convertirIdTurnoAFecha(idTurno) {
@@ -69,6 +82,8 @@ function cargarCuentasAbiertas() {
     onSnapshot(q, async (querySnapshot) => {
         console.log('cargarCuentasAbiertas ejecutándose...');
         console.log('ID Turno actual:', idTurno);
+        console.log('📊 Total documentos encontrados:', querySnapshot.size);
+        
         let htmlContent = '';
         let pendientes = [];
         let activas = [];
@@ -93,23 +108,41 @@ function cargarCuentasAbiertas() {
             // Clasificar cuentas: las del turno actual van a activas, el resto a pendientes
             if (cuenta.turno === idTurno && cuenta.tipo !== 'En cuaderno') {
                 activas.push({ ...cuenta, id: clienteId });
+                console.log('✅ ACTIVA:', clienteId, '- Turno:', cuenta.turno, '- Tipo:', cuenta.tipo);
             } else {
                 pendientes.push({ ...cuenta, id: clienteId });
+                console.log('🟡 PENDIENTE:', clienteId, '- Turno:', cuenta.turno, '- Tipo:', cuenta.tipo);
             }
         }
+        
+        console.log('📊 RESUMEN - Activas:', activas.length, 'Pendientes:', pendientes.length);
+        
         // Mostrar nota si hay pendientes
         if (pendientes.length > 0) {
-            htmlContent += `<div class="alert alert-warning cuenta-pendiente-alert" onclick="window.mostrarCuentasPendientes()">
-                📋 Aquí hay <b>${pendientes.length}</b> cuenta(s) pendiente(s). Haz clic para verlas.
-            </div>`;
+            htmlContent += `
+                <div class="alert alert-warning text-center p-4 mb-3" style="cursor:pointer; border-left: 5px solid #ffc107;" onclick="window.mostrarCuentasPendientes()">
+                    <h5>📋 Cuentas Pendientes</h5>
+                    <p class="mb-2">Hay <strong>${pendientes.length}</strong> cuenta(s) pendiente(s) de turnos anteriores.</p>
+                    <small class="text-muted">👆 Haz clic aquí para revisarlas</small>
+                </div>
+            `;
+            console.log('🟡 Agregado HTML de pendientes mejorado');
         }
         
         // Actualizar variable global para consistencia
         window._cuentasPendientes = pendientes;
         if (activas.length === 0) {
-            htmlContent += "<p>No hay cuentas activas en este momento.</p>";
+            htmlContent += `
+                <div class="alert alert-info text-center p-4 mb-3">
+                    <h4>✨ ¡Turno Limpio!</h4>
+                    <p class="mb-2">No hay cuentas activas en este turno actual.</p>
+                    <small class="text-muted">Turno: ${idTurno}</small>
+                </div>
+            `;
+            console.log('ℹ️ Agregado mensaje mejorado: No hay cuentas activas');
         } else {
             htmlContent += '<div class="list-group">';
+            console.log('📋 Generando lista para', activas.length, 'cuentas activas');
             activas.forEach((cuenta) => {
                 const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(cuenta.total);
                 htmlContent += `
@@ -126,20 +159,43 @@ function cargarCuentasAbiertas() {
                 `;
             });
             htmlContent += '</div>';
+            console.log('✅ Lista de activas generada');
         }
+        
+        console.log('📝 HTML final length:', htmlContent.length);
+        console.log('📝 HTML preview (primeros 200 chars):', htmlContent.substring(0, 200));
+        console.log('🎯 Container encontrado:', !!container);
+        console.log('🎯 Container ID:', container?.id);
+        
         container.innerHTML = htmlContent;
+        console.log('✅ innerHTML asignado - contenido actualizado');
+        
+        // Verificar que realmente se asignó
+        setTimeout(() => {
+            console.log('🔍 Verificación post-asignación - container.innerHTML length:', container.innerHTML.length);
+        }, 100);
     });
 }
 // Mostrar cuentas pendientes en containerPendientes
 window.mostrarCuentasPendientes = function() {
-    document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes').forEach(el => {
+    console.log('🔵 Mostrando cuentas pendientes...');
+    
+    // Aplicar la misma lógica de mostrarContainer
+    document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
+        el.style.display = 'none';
         el.classList.add('d-none');
+        el.classList.remove('d-block');
     });
-    document.getElementById('containerPendientes').classList.remove('d-none');
+    
+    const containerPendientes = document.getElementById('containerPendientes');
+    containerPendientes.style.display = 'block';
+    containerPendientes.classList.remove('d-none');
+    containerPendientes.classList.add('d-block');
     
     const container = document.getElementById('cuentasPendientesTurno');
     if (!container) {
-        console.error("Contenedor cuentasPendientesTurno no encontrado");
+        console.error("🔴 Contenedor cuentasPendientesTurno no encontrado");
+        mostrarError('Error', 'No se encontró el contenedor de cuentas pendientes');
         return;
     }
     
@@ -172,7 +228,7 @@ window.mostrarCuentasPendientes = function() {
             
             htmlContent += `
                 <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" 
-                     onclick="mostrarDetalleCuenta('${cuenta.id}')" class="cuenta-item"> 
+                     onclick="mostrarDetalleCuenta('${cuenta.id}')" style="cursor: pointer;"> 
                      <div>
                         <h6 class="mb-1">${cuenta.cliente || 'Cliente sin nombre'}</h6>
                         <p class="mb-1 ${tipoClase}"><strong>${cuenta.tipo || 'Sin tipo'}</strong></p>
@@ -228,16 +284,41 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Eventos del formulario de login
     if (loginButton) {
-        loginButton.addEventListener('click', function() {
-            if (loginForm) loginForm.classList.remove('d-none');
-            loginButton.classList.add('d-none');
+        console.log('✅ Event listener del loginButton configurado');
+        loginButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🔵 LoginButton clickeado - mostrando formulario');
+            
+            if (loginForm) {
+                loginForm.style.display = 'block';
+                loginForm.classList.remove('d-none');
+                loginForm.classList.add('d-block');
+                console.log('✅ Formulario mostrado');
+            }
+            
+            loginButton.style.display = 'none';
+            console.log('✅ Botón ocultado');
         });
+    } else {
+        console.error('🔴 No se encontró loginButton');
     }
 
     if (closeButton) {
-        closeButton.addEventListener('click', function() {
-            if (loginForm) loginForm.classList.add('d-none');
-            if (loginButton) loginButton.classList.remove('d-none');
+        closeButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🔵 CloseButton clickeado - ocultando formulario');
+            
+            if (loginForm) {
+                loginForm.style.display = 'none';
+                loginForm.classList.add('d-none');
+                loginForm.classList.remove('d-block');
+                console.log('✅ Formulario ocultado');
+            }
+            
+            if (loginButton) {
+                loginButton.style.display = 'inline-block';
+                console.log('✅ Botón mostrado');
+            }
         });
     }
 
@@ -250,8 +331,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             try {
                 await iniciarSesion(email, password, recordar);
-                if (container) container.classList.add('d-none');
-                if (loginForm) loginForm.classList.add('d-none');
+                if (container) container.style.display = 'none';
+                if (loginForm) loginForm.style.display = 'none';
                 
                 mostrarContainer('container2');
                 
@@ -288,7 +369,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else if (estadoSesion.autenticado && !estadoSesion.turnoActivo) {
             // Usuario autenticado pero sin turno activo - mostrar aviso y login
             console.log("⚠️ Usuario autenticado pero sin turno activo");
-            Swal.fire({
+            mostrarPersonalizado({
                 icon: 'info',
                 title: 'Sesión Recuperada',
                 text: 'Tu sesión está activa, pero necesitas iniciar un nuevo turno',
@@ -310,16 +391,48 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 // Función para cambiar entre contenedores (expuesta globalmente)
 function mostrarContainer(idMostrar) {
+    console.log('🔵 mostrarContainer llamado con:', idMostrar);
+    
+    // Verificar que el elemento existe
+    const elementoDestino = document.getElementById(idMostrar);
+    if (!elementoDestino) {
+        console.error('🔴 ERROR: No se encontró el elemento con ID:', idMostrar);
+        return;
+    }
+    
+    console.log('✅ Elemento encontrado:', elementoDestino);
+    
+    // OCULTAR TODOS los containers - removiendo clases Y estilos
     document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
+        el.style.display = 'none';
         el.classList.add('d-none');
+        el.classList.remove('d-block');
     });
-    document.getElementById(idMostrar).classList.remove('d-none');
+    
+    // MOSTRAR el container destino - SOBRESCRIBIENDO clases Y estilos
+    elementoDestino.classList.remove('d-none');
+    elementoDestino.classList.add('d-block');
+    elementoDestino.style.display = 'block';
+    elementoDestino.style.visibility = 'visible';
+    elementoDestino.style.opacity = '1';
+    
+    console.log('✅ Container mostrado:', idMostrar);
+    console.log('🔍 Clases finales:', elementoDestino.className);
+    console.log('🔍 Style final:', elementoDestino.style.display);
+    
     if (idMostrar === "container1") {
+        console.log('🔵 Inicializando container1...');
         ocultarInventario();
         renderCarrito();
     }
     if (idMostrar === "container2") {
-        cargarCuentasAbiertas();
+        console.log('🔵 Inicializando container2 - cargando cuentas abiertas...');
+        try {
+            cargarCuentasAbiertas();
+            console.log('✅ cargarCuentasAbiertas() ejecutado');
+        } catch (error) {
+            console.error('🔴 ERROR en cargarCuentasAbiertas():', error);
+        }
     }
     if (idMostrar === "containerPendientes") {
         // Si no hay cuentas pendientes cargadas, ir primero a cargar las cuentas activas
@@ -348,14 +461,65 @@ function mostrarContainer(idMostrar) {
 
 // Función para cerrar sesión (expuesta globalmente)
 async function cerrarSesion() {
-    await cerrarSesionAuth(); // Se llama a la función importada de Autenticacion.js
-    // Oculta todos los containers y muestra el de inicio
-    document.querySelectorAll('.container, .container1, .container2, .container3').forEach(el => {
-        el.classList.add('d-none');
-    });
-    document.getElementById('container').classList.remove('d-none');
-    document.getElementById('loginButton').classList.remove('d-none');
-    document.getElementById('loginForm').classList.add('d-none');
+    console.log('🔵 Iniciando proceso de cierre de sesión...');
+    
+    const confirmacion = await mostrarConfirmacion(
+        '¿Cerrar Sesión?',
+        '¿Estás seguro de que deseas cerrar la sesión actual?',
+        'Sí, cerrar',
+        'Cancelar'
+    );
+    
+    if (confirmacion.isConfirmed) {
+        mostrarCargando('Cerrando sesión...');
+        
+        try {
+            await cerrarSesionAuth(); // Se llama a la función importada de Autenticacion.js
+            
+            // Oculta todos los containers y muestra el de inicio
+            document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
+                el.style.display = 'none';
+                el.classList.add('d-none');
+                el.classList.remove('d-block');
+            });
+            
+            const containerInicio = document.getElementById('container');
+            containerInicio.style.display = 'block';
+            containerInicio.classList.remove('d-none');
+            containerInicio.classList.add('d-block');
+            
+            // FORZAR VISIBILIDAD del formulario de login
+            const loginButton = document.getElementById('loginButton');
+            const loginForm = document.getElementById('loginForm');
+            
+            if (loginButton) {
+                loginButton.style.display = 'inline-block';
+                loginButton.style.visibility = 'visible';
+            }
+            
+            if (loginForm) {
+                loginForm.style.display = 'none'; // El formulario se muestra al hacer clic en el botón
+                loginForm.classList.add('d-none');
+            }
+            
+            // Forzar estilos del container principal
+            containerInicio.style.visibility = 'visible';
+            containerInicio.style.opacity = '1';
+            containerInicio.style.minHeight = '400px';
+            containerInicio.style.padding = '20px';
+            containerInicio.style.background = 'white';
+            containerInicio.style.borderRadius = '12px';
+            
+            cerrarModal();
+            mostrarExito('Sesión cerrada correctamente');
+            
+            console.log('✅ Sesión cerrada exitosamente');
+        } catch (error) {
+            cerrarModal();
+            mostrarError('Error al cerrar sesión', error.message);
+            console.error('🔴 Error cerrando sesión:', error);
+        }
+    }
 };
 
 // Función para mostrar el detalle de una cuenta (expuesta globalmente)
@@ -376,7 +540,7 @@ export async function mostrarModalMedioPago(total) {
     const template = document.getElementById('modalMediosPagoTemplate');
     const modalHTML = template ? template.innerHTML : '';
 
-    const { value: medioPago } = await Swal.fire({
+    const { value: medioPago } = await mostrarPersonalizado({
         title: '💳 Seleccionar Medio de Pago',
         text: `Total a pagar: ${totalFormateado}`,
         html: modalHTML,
@@ -387,7 +551,7 @@ export async function mostrarModalMedioPago(total) {
         didOpen: () => {
             // Función temporal para manejar la selección
             window.seleccionarMedioPagoModal = (pago) => {
-                Swal.close();
+                cerrarModal();
                 window.medioPagoSeleccionadoModal = pago;
             };
         },

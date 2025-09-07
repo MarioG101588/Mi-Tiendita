@@ -6,7 +6,15 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 import { app } from "./Conexion.js"; // debe exportar `app`
-import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
+import { 
+    mostrarCargando, 
+    mostrarExito, 
+    mostrarError, 
+    mostrarConfirmacion,
+    mostrarInput,
+    cerrarModal,
+    mostrarPersonalizado
+} from "./SweetAlertManager.js";
 import { mostrarModalMedioPago } from "./Engranaje.js";
 
 const db = getFirestore(app);
@@ -45,7 +53,7 @@ export async function cargarDetalleCuenta(clienteId) {
     const detalleContainer = document.getElementById('detalleCuentaContainer');
     if (!detalleContainer) return;
 
-    Swal.fire({ title: 'Cargando detalles...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    mostrarCargando('Cargando detalles...');
 
     try {
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
@@ -53,7 +61,7 @@ export async function cargarDetalleCuenta(clienteId) {
 
         if (!cuentaDoc.exists()) {
             detalleContainer.innerHTML = `<p>La cuenta no fue encontrada.</p>`;
-            Swal.close();
+            cerrarModal();
             return;
         }
 
@@ -246,17 +254,10 @@ async function modificarCantidadProductoCuenta(clienteId, productoId, operacion)
             ? `✅ Agregada 1 unidad de ${producto.nombre}` 
             : `➖ ${producto.cantidad === 0 ? 'Eliminado' : 'Reducida 1 unidad de'} ${producto.nombre}`;
         
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: mensaje,
-            showConfirmButton: false,
-            timer: 2000
-        });
+        mostrarExito(mensaje);
 
     } catch (error) {
-        Swal.fire('Error', 'No se pudo modificar la cantidad: ' + error.message, 'error');
+        mostrarError('No se pudo modificar la cantidad: ' + error.message);
     }
 }
 
@@ -362,27 +363,25 @@ window.disminuirCantidadCuenta = function(clienteId, productoId) {
         `;
 // --- BORRAR CUENTA ACTIVA ---
 window.borrarCuentaActiva = async function(clienteId) {
-    const confirm = await Swal.fire({
-        title: '¿Borrar cuenta?',
-        text: '¿Seguro que deseas eliminar esta cuenta? Esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, borrar',
-        cancelButtonText: 'Cancelar'
-    });
+    const confirm = await mostrarConfirmacion(
+        '¿Borrar cuenta?',
+        '¿Seguro que deseas eliminar esta cuenta? Esta acción no se puede deshacer.',
+        'Sí, borrar',
+        'Cancelar'
+    );
     if (!confirm.isConfirmed) return;
     try {
         await deleteDoc(doc(db, "cuentasActivas", clienteId));
-        Swal.fire('Eliminada', 'La cuenta ha sido eliminada.', 'success');
+        mostrarExito('La cuenta ha sido eliminada.');
         if (typeof mostrarContainer === 'function') mostrarContainer('container2');
     } catch (error) {
-        Swal.fire('Error', 'No se pudo eliminar la cuenta: ' + error.message, 'error');
+        mostrarError('No se pudo eliminar la cuenta: ' + error.message);
     }
 };
 
-        Swal.close();
+        cerrarModal();
     } catch (error) {
-        Swal.fire('Error', `No se pudo cargar el detalle: ${error.message}`, 'error');
+        mostrarError(`No se pudo cargar el detalle: ${error.message}`);
         console.error("Error cargarDetalleCuenta:", error);
     }
 }
@@ -406,7 +405,7 @@ window.pagoEfectivo = async function (clienteId) {
  */
 window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
     try {
-        Swal.fire({ title: 'Cargando cuenta...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        mostrarCargando('Cargando cuenta...');
 
         // 1) Obtener cuenta
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
@@ -414,21 +413,19 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
         if (!cuentaDoc.exists()) throw new Error("La cuenta no existe.");
         const cuenta = cuentaDoc.data();
 
-        Swal.close();
+        cerrarModal();
 
         // 2) Pago Americano (opcional)
         if (esPagoAmericano) {
-            const { value: partes } = await Swal.fire({
-                title: '¿Dividir entre cuántas personas?',
-                input: 'number',
-                inputValue: 1,
-                inputAttributes: { min: 1 },
-                showCancelButton: true
-            });
+            const { value: partes } = await mostrarInput(
+                '¿Dividir entre cuántas personas?',
+                '',
+                '1'
+            );
             if (!partes) return;
 
             const montoPorPersona = (cuenta.total ?? 0) / partes;
-            await Swal.fire({
+            await mostrarPersonalizado({
                 title: 'Monto por persona',
                 html: `<b>Total (en cuenta):</b> $${(cuenta.total ?? 0).toFixed(2)}<br>
                        <b>Entre ${partes} personas:</b> $${montoPorPersona.toFixed(2)} cada uno`,
@@ -444,12 +441,7 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
         }
 
         // Mostrar loading para procesamiento
-        Swal.fire({
-            title: 'Procesando pago...',
-            text: `Procesando pago con ${medioPagoFinal}`,
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
+        mostrarCargando(`Procesando pago con ${medioPagoFinal}`);
 
         // 4) Buscar turno activo
         let idTurno = localStorage.getItem("idTurno");
@@ -509,11 +501,11 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
         // 9) Eliminar cuenta activa
         await deleteDoc(cuentaRef);
 
-        Swal.fire('¡Éxito!', 'La venta ha sido registrada.', 'success');
+        mostrarExito('La venta ha sido registrada.');
         if (typeof mostrarContainer === 'function') mostrarContainer('container2');
 
     } catch (error) {
-        Swal.fire('Error', `No se pudo cerrar la cuenta: ${error.message}`, 'error');
+        mostrarError(`No se pudo cerrar la cuenta: ${error.message}`);
         console.error("Error al cerrar la cuenta:", error);
     }
 };
