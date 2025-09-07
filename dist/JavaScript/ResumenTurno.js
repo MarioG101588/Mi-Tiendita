@@ -10,9 +10,9 @@ import { doc, getDoc, collection, getDocs, query, where } from "https://www.gsta
  */
 export async function obtenerResumenTurno(idTurno) {
     // 1. Obtener ventas cerradas del turno
-    const ventasCerradasRef = doc(db, 'ventasCerradas', idTurno);
-    const ventasCerradasSnap = await getDoc(ventasCerradasRef);
-    const ventasCerradas = ventasCerradasSnap.exists() ? ventasCerradasSnap.data().clientes || [] : [];
+    const cuentasCerradasRef = doc(db, 'cuentasCerradas', idTurno);
+    const cuentasCerradasSnap = await getDoc(cuentasCerradasRef);
+    const cuentasCerradas = cuentasCerradasSnap.exists() ? cuentasCerradasSnap.data().clientes || [] : [];
 
     // 2. Obtener cuentas activas del turno
     const cuentasActivasRef = collection(db, 'cuentasActivas');
@@ -25,12 +25,12 @@ export async function obtenerResumenTurno(idTurno) {
     let totalTabaco = 0;
     let totalNoCobradas = 0;
     let totalEnCuaderno = 0;
-    let totalVentasCerradas = 0;
+    let totalCuentasCerradas = 0;
     let tipoVenta = { efectivo: 0, nequi: 0, daviplata: 0 };
 
     // 4. Procesar ventas cerradas
-    for (const venta of ventasCerradas) {
-        totalVentasCerradas += venta.total || 0;
+    for (const venta of cuentasCerradas) {
+        totalCuentasCerradas += venta.total || 0;
         const medioPago = venta.tipoVenta?.toLowerCase();
         if (medioPago && tipoVenta[medioPago] !== undefined) {
             tipoVenta[medioPago] += venta.total || 0;
@@ -77,13 +77,13 @@ export async function obtenerResumenTurno(idTurno) {
     }
 
     // 6. Calcular pago de turno
-    const pagoTurno = Math.round(totalVentasCerradas * 0.10 + 7000);
+    const pagoTurno = Math.round(totalCuentasCerradas * 0.10 + 7000);
 
     return {
         totalTabaco,
         totalNoCobradas,
         totalEnCuaderno,
-        totalVentasCerradas,
+        totalCuentasCerradas,
         tipoVenta,
         pagoTurno
     };
@@ -103,7 +103,7 @@ export function renderizarResumenTurno(resumen, containerId) {
             <li class="list-group-item">Total ventas de tabaco: <b>$${resumen.totalTabaco}</b></li>
             <li class="list-group-item">Total ventas no cobradas (Consumo en el local): <b>$${resumen.totalNoCobradas}</b></li>
             <li class="list-group-item">Total cuentas En cuaderno: <b>$${resumen.totalEnCuaderno}</b></li>
-            <li class="list-group-item">Total ventas cerradas: <b>$${resumen.totalVentasCerradas}</b></li>
+            <li class="list-group-item">Total cuentas cerradas: <b>$${resumen.totalCuentasCerradas}</b></li>
             <li class="list-group-item">Efectivo: <b>$${resumen.tipoVenta.efectivo}</b></li>
             <li class="list-group-item">Nequi: <b>$${resumen.tipoVenta.nequi}</b></li>
             <li class="list-group-item">Daviplata: <b>$${resumen.tipoVenta.daviplata}</b></li>

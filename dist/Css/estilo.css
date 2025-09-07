@@ -76,3 +76,47 @@ button:hover {
     background: #fff;
     z-index: 2;
 }
+
+/* Estilos para modal de medios de pago */
+.pago-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px 24px;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    width: 100%;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.pago-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.pago-efectivo {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.pago-nequi {
+    background: linear-gradient(135deg, #6f42c1, #7c4dff);
+    color: white;
+}
+
+.pago-daviplata {
+    background: linear-gradient(135deg, #fd7e14, #ffc107);
+    color: white;
+}
+
+.icono-pago {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+}

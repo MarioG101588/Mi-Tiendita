@@ -5,11 +5,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js"; // Se asume que este archivo exporta la app de Firebase inicializada
 import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
+import { mostrarModalMedioPago } from "./Engranaje.js";
 
 const db = getFirestore(app);
 
 /**
- * Procesa una venta de 'Pago en efectivo' directamente a 'ventasCerradas'.
+ * Procesa una venta de 'Pago en efectivo' directamente a 'cuentasCerradas'.
  * Esta función está adaptada de la lógica de 'cerrarCuenta'.
  * @param {object} carrito - El objeto del carrito de compras.
  * @param {string} medioPago - El medio de pago específico (Efectivo, Nequi, Daviplata).
@@ -60,8 +61,8 @@ export async function procesarVentaDirecta(carrito, medioPago) {
         throw new Error("No hay productos en el carrito para registrar.");
     }
 
-    // 6. Guardar la venta en el documento del turno activo dentro de 'ventasCerradas'.
-    const turnoRef = doc(db, "ventasCerradas", idTurno);
+    // 6. Guardar la venta en el documento del turno activo dentro de 'cuentasCerradas'.
+    const turnoRef = doc(db, "cuentasCerradas", idTurno);
     const turnoSnap = await getDoc(turnoRef);
 
     if (!turnoSnap.exists()) {
@@ -203,89 +204,10 @@ export async function realizarVenta(carrito) {
 
         try {
             if (formValues.claseVenta === 'Pago en efectivo') {
-                // FLUJO 1: Preguntar primero el medio de pago específico
                 Swal.close(); // Cerrar el loading
                 
-                // Preguntar medio de pago con botones personalizados
-                const { value: medioPago } = await Swal.fire({
-                    title: '💳 Seleccionar Medio de Pago',
-                    text: `Total a pagar: ${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(Object.values(carrito).reduce((acc, item) => acc + item.total, 0))}`,
-                    html: `
-                        <style>
-                            .pago-btn {
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                gap: 12px;
-                                padding: 18px 24px;
-                                font-size: 18px;
-                                font-weight: bold;
-                                border: none;
-                                border-radius: 12px;
-                                width: 100%;
-                                margin-bottom: 12px;
-                                cursor: pointer;
-                                transition: all 0.2s ease;
-                                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                            }
-                            .pago-btn:hover {
-                                transform: translateY(-2px);
-                                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                            }
-                            .pago-efectivo {
-                                background: linear-gradient(135deg, #28a745, #20c997);
-                                color: white;
-                            }
-                            .pago-nequi {
-                                background: linear-gradient(135deg, #6f42c1, #7c4dff);
-                                color: white;
-                            }
-                            .pago-daviplata {
-                                background: linear-gradient(135deg, #fd7e14, #ffc107);
-                                color: white;
-                            }
-                            .icono-pago {
-                                width: 32px;
-                                height: 32px;
-                                border-radius: 6px;
-                            }
-                        </style>
-                        <div style="display: flex; flex-direction: column; gap: 8px; margin: 20px 0;">
-                            <button type="button" class="pago-btn pago-efectivo" onclick="window.seleccionarMedioPago('Efectivo')">
-                                <span style="font-size: 28px;">💵</span>
-                                <span>Efectivo</span>
-                            </button>
-                            <button type="button" class="pago-btn pago-nequi" onclick="window.seleccionarMedioPago('Nequi')">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nequi_logo.svg/1200px-Nequi_logo.svg.png" 
-                                     alt="Nequi" class="icono-pago" style="background: white; padding: 4px;">
-                                <span>Nequi</span>
-                            </button>
-                            <button type="button" class="pago-btn pago-daviplata" onclick="window.seleccionarMedioPago('Daviplata')">
-                                <img src="https://play-lh.googleusercontent.com/EMobDJKabP1eVoxKVuHBGZsO-YMCvSDyyAWGnwh12LqHHPgjRdcOh7rpzrM6-T5Gf8E=w240-h480-rw" 
-                                     alt="DaviPlata" class="icono-pago">
-                                <span>DaviPlata</span>
-                            </button>
-                        </div>
-                    `,
-                    showConfirmButton: false,
-                    showCancelButton: true,
-                    cancelButtonText: 'Cancelar',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        // Función temporal para manejar la selección
-                        window.seleccionarMedioPago = (pago) => {
-                            Swal.close();
-                            window.medioPagoSeleccionado = pago;
-                        };
-                    },
-                    willClose: () => {
-                        // Limpiar función temporal
-                        delete window.seleccionarMedioPago;
-                    }
-                });
-
-                const medioPagoFinal = window.medioPagoSeleccionado;
-                delete window.medioPagoSeleccionado;
+                const total = Object.values(carrito).reduce((acc, item) => acc + item.total, 0);
+                const medioPagoFinal = await mostrarModalMedioPago(total);
 
                 if (!medioPagoFinal) {
                     return; // Usuario canceló
@@ -300,7 +222,7 @@ export async function realizarVenta(carrito) {
                 });
 
                 // Procesar venta con el medio de pago seleccionado
-                await procesarVentaEfectivoACerrada(carrito, medioPagoFinal);
+                await procesarVentaDirecta(carrito, medioPagoFinal);
             } else {
                 // FLUJO 2: La venta se guarda en 'cuentasActivas'.
                 await procesarVentaCliente(carrito, formValues.cliente, formValues.claseVenta);
@@ -320,4 +242,14 @@ export async function realizarVenta(carrito) {
             console.error("Error en realizarVenta:", error);
         }
     }
+}
+
+/**
+ * Procesa una venta de pago en efectivo cuando la caja está cerrada
+ * @param {object} carrito - El objeto del carrito de compras.
+ * @param {string} medioPago - El medio de pago específico (Efectivo, Nequi, Daviplata).
+ */
+async function procesarVentaEfectivoACerrada(carrito, medioPago) {
+    // Usar la función existente procesarVentaDirecta
+    return await procesarVentaDirecta(carrito, medioPago);
 }

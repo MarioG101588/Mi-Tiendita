@@ -7,6 +7,7 @@ import {
 
 import { app } from "./Conexion.js"; // debe exportar `app`
 import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
+import { mostrarModalMedioPago } from "./Engranaje.js";
 
 const db = getFirestore(app);
 
@@ -371,7 +372,7 @@ window.pagoEfectivo = async function (clienteId) {
 };
 
 /**
- * Cierra una cuenta activa y la registra en ventasCerradas/{idTurno}
+ * Cierra una cuenta activa y la registra en cuentasCerradas/{idTurno}
  * @param {string} clienteId - ID de la cuenta en Firestore
  * @param {boolean} esPagoAmericano - Si true, pregunta división entre personas
  */
@@ -407,92 +408,11 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
             });
         }
 
-        // 3) Selección de medio de pago con iconos (igual que en VentasApp.js)
-        const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(cuenta.total || 0);
-        
-        const { value: medioPago } = await Swal.fire({
-            title: '💳 Seleccionar Medio de Pago',
-            text: `Total a pagar: ${totalFormateado}`,
-            html: `
-                <style>
-                    .pago-btn {
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 12px;
-                        padding: 18px 24px;
-                        font-size: 18px;
-                        font-weight: bold;
-                        border: none;
-                        border-radius: 12px;
-                        width: 100%;
-                        margin-bottom: 12px;
-                        cursor: pointer;
-                        transition: all 0.2s ease;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                    }
-                    .pago-btn:hover {
-                        transform: translateY(-2px);
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                    }
-                    .pago-efectivo {
-                        background: linear-gradient(135deg, #28a745, #20c997);
-                        color: white;
-                    }
-                    .pago-nequi {
-                        background: linear-gradient(135deg, #6f42c1, #7c4dff);
-                        color: white;
-                    }
-                    .pago-daviplata {
-                        background: linear-gradient(135deg, #fd7e14, #ffc107);
-                        color: white;
-                    }
-                    .icono-pago {
-                        width: 32px;
-                        height: 32px;
-                        border-radius: 6px;
-                    }
-                </style>
-                <div style="display: flex; flex-direction: column; gap: 8px; margin: 20px 0;">
-                    <button type="button" class="pago-btn pago-efectivo" onclick="window.seleccionarMedioPagoCuenta('Efectivo')">
-                        <span style="font-size: 28px;">💵</span>
-                        <span>Efectivo</span>
-                    </button>
-                    <button type="button" class="pago-btn pago-nequi" onclick="window.seleccionarMedioPagoCuenta('Nequi')">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nequi_logo.svg/1200px-Nequi_logo.svg.png" 
-                             alt="Nequi" class="icono-pago" style="background: white; padding: 4px;">
-                        <span>Nequi</span>
-                    </button>
-                    <button type="button" class="pago-btn pago-daviplata" onclick="window.seleccionarMedioPagoCuenta('Daviplata')">
-                        <img src="https://play-lh.googleusercontent.com/EMobDJKabP1eVoxKVuHGZsO-YMCvSDyyAWGnwh12LqHHPgjRdcOh7rpzrM6-T5Gf8E=w240-h480-rw" 
-                             alt="DaviPlata" class="icono-pago">
-                        <span>DaviPlata</span>
-                    </button>
-                </div>
-            `,
-            showConfirmButton: false,
-            showCancelButton: true,
-            cancelButtonText: 'Cancelar',
-            allowOutsideClick: false,
-            didOpen: () => {
-                // Función temporal para manejar la selección
-                window.seleccionarMedioPagoCuenta = (pago) => {
-                    Swal.close();
-                    window.medioPagoSeleccionadoCuenta = pago;
-                };
-            },
-            willClose: () => {
-                // Limpiar función temporal
-                delete window.seleccionarMedioPagoCuenta;
-            }
-        });
-
-        const medioPagoFinal = window.medioPagoSeleccionadoCuenta;
-        delete window.medioPagoSeleccionadoCuenta;
+        // 3) Selección de medio de pago - USAR FUNCIÓN UNIFICADA
+        const medioPagoFinal = await mostrarModalMedioPago(cuenta.total || 0);
 
         if (!medioPagoFinal) {
-            // Usuario canceló - no hacer nada, mantener la vista actual
-            return;
+            return; // Usuario canceló
         }
 
         // Mostrar loading para procesamiento
@@ -549,8 +469,8 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
             throw new Error("Datos incompletos para guardar la venta.");
         }
 
-        // 8) Guardar en ventasCerradas/{idTurno}
-        const turnoRef = doc(db, "ventasCerradas", idTurno);
+        // 8) Guardar en cuentasCerradas/{idTurno}
+        const turnoRef = doc(db, "cuentasCerradas", idTurno);
         const turnoSnap = await getDoc(turnoRef);
         if (!turnoSnap.exists()) {
             await setDoc(turnoRef, { clientes: [clienteObj] });
@@ -569,3 +489,5 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
         console.error("Error al cerrar la cuenta:", error);
     }
 };
+
+

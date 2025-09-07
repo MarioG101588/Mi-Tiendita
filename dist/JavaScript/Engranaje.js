@@ -12,7 +12,8 @@ import { db } from './Conexion.js';
 import { cargarDetalleCuenta } from "./Cuentas.js";
 
 // IMPORTACIONES de Firebase para la funcionalidad de cuentas
-import { collection, onSnapshot, query, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import { collection, onSnapshot, query, doc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
 
 // Exportar funciones del carrito al ámbito global
 // Redefinir agregarAlCarrito para limpiar buscador y ocultar inventario tras agregar
@@ -30,7 +31,7 @@ window.renderCarrito = renderCarrito;
 window.realizarVenta = () => realizarVenta(window.carrito);
 
 // **FUNCIÓN PARA CARGAR CUENTAS ABIERTAS**
-function cargarCuentasActivas() {
+function cargarCuentasAbiertas() {
     const q = query(collection(db, "cuentasActivas"));
     const container = document.getElementById('cuentasActivasTurno');
     const idTurno = localStorage.getItem("idTurno");
@@ -39,7 +40,7 @@ function cargarCuentasActivas() {
         return;
     }
     onSnapshot(q, async (querySnapshot) => {
-        console.log('cargarCuentasActivas ejecutándose...');
+        console.log('cargarCuentasAbiertas ejecutándose...');
         console.log('ID Turno actual:', idTurno);
         let htmlContent = '';
         let pendientes = [];
@@ -72,9 +73,12 @@ function cargarCuentasActivas() {
         // Mostrar nota si hay pendientes
         if (pendientes.length > 0) {
             htmlContent += `<div class="alert alert-warning" style="cursor:pointer;" onclick="window.mostrarCuentasPendientes()">
-                Aquí hay <b>${pendientes.length}</b> cuentas en el CUADERNO. Haz clic para verlas.
+                📋 Aquí hay <b>${pendientes.length}</b> cuenta(s) pendiente(s). Haz clic para verlas.
             </div>`;
         }
+        
+        // Actualizar variable global para consistencia
+        window._cuentasPendientes = pendientes;
         if (activas.length === 0) {
             htmlContent += "<p>No hay cuentas activas en este momento.</p>";
         } else {
@@ -97,8 +101,6 @@ function cargarCuentasActivas() {
             htmlContent += '</div>';
         }
         container.innerHTML = htmlContent;
-        // Guardar pendientes en window para mostrar luego
-        window._cuentasPendientes = pendientes;
     });
 }
 // Mostrar cuentas pendientes en containerPendientes
@@ -107,21 +109,47 @@ window.mostrarCuentasPendientes = function() {
         el.style.display = 'none';
     });
     document.getElementById('containerPendientes').style.display = 'block';
+    
     const container = document.getElementById('cuentasPendientesTurno');
+    if (!container) {
+        console.error("Contenedor cuentasPendientesTurno no encontrado");
+        return;
+    }
+    
     const pendientes = window._cuentasPendientes || [];
     let htmlContent = '';
+    
     if (pendientes.length === 0) {
-        htmlContent = '<p>No hay cuentas pendientes.</p>';
+        htmlContent = `
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i> No hay cuentas pendientes por cobrar.
+                <br><small>Las cuentas "En cuaderno" y de turnos anteriores aparecerán aquí.</small>
+                <br><br><button class="btn btn-primary" onclick="mostrarContainer('container2')">
+                    Ir a Cuentas Activas para actualizar
+                </button>
+            </div>
+        `;
     } else {
-        htmlContent = '<div class="list-group">';
+        htmlContent = `
+            <div class="alert alert-warning">
+                <strong>📋 ${pendientes.length} cuenta(s) pendiente(s) encontrada(s)</strong>
+                <br><small>Incluye cuentas "En cuaderno" y de turnos anteriores</small>
+            </div>
+            <div class="list-group">
+        `;
+        
         pendientes.forEach((cuenta) => {
-            const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(cuenta.total);
+            const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(cuenta.total || 0);
+            const turnoInfo = cuenta.turno ? `Turno: ${cuenta.turno}` : 'Sin turno';
+            const tipoClase = cuenta.tipo === 'En cuaderno' ? 'text-warning' : 'text-muted';
+            
             htmlContent += `
-                <div class="list-group-item d-flex justify-content-between align-items-center" 
-                     onclick="mostrarDetalleCuenta('${cuenta.id}')"> 
+                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" 
+                     onclick="mostrarDetalleCuenta('${cuenta.id}')" style="cursor: pointer;"> 
                      <div>
-                        <h6 class="mb-0">${cuenta.cliente}</h6>
-                        <small class="text-muted">${cuenta.tipo}</small>
+                        <h6 class="mb-1">${cuenta.cliente || 'Cliente sin nombre'}</h6>
+                        <p class="mb-1 ${tipoClase}"><strong>${cuenta.tipo || 'Sin tipo'}</strong></p>
+                        <small class="text-muted">${turnoInfo}</small>
                     </div>
                     <span class="badge bg-success rounded-pill fs-6">
                         ${totalFormateado}
@@ -177,7 +205,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 el.style.display = 'none';
             });
             document.getElementById('container2').style.display = 'block';
-            cargarCuentasActivas();
+            cargarCuentasAbiertas();
         } catch (error) {
             console.error("Fallo al iniciar sesión:", error);
         }
@@ -205,10 +233,21 @@ function mostrarContainer(idMostrar) {
         renderCarrito();
     }
     if (idMostrar === "container2") {
-        cargarCuentasActivas();
+        cargarCuentasAbiertas();
     }
     if (idMostrar === "containerPendientes") {
-        window.mostrarCuentasPendientes();
+        // Si no hay cuentas pendientes cargadas, ir primero a cargar las cuentas activas
+        if (!window._cuentasPendientes || window._cuentasPendientes.length === 0) {
+            console.log("No hay cuentas pendientes cargadas, cargando primero las cuentas activas...");
+            // Forzar carga de cuentas activas para actualizar pendientes
+            cargarCuentasAbiertas();
+            // Esperar un momento y luego mostrar pendientes
+            setTimeout(() => {
+                window.mostrarCuentasPendientes();
+            }, 1000);
+        } else {
+            window.mostrarCuentasPendientes();
+        }
     }
     if (idMostrar === "containerResumenTurno") {
         // Mostrar resumen del turno en curso
@@ -238,6 +277,45 @@ function mostrarDetalleCuenta(clienteId) {
     mostrarContainer('container3');
     cargarDetalleCuenta(clienteId);
 };
+
+/**
+ * Muestra el modal unificado de selección de medio de pago
+ * @param {number} total - El total a mostrar en el modal
+ * @returns {Promise<string|null>} El medio de pago seleccionado o null si se canceló
+ */
+export async function mostrarModalMedioPago(total) {
+    const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(total);
+    
+    // Obtener template del HTML
+    const template = document.getElementById('modalMediosPagoTemplate');
+    const modalHTML = template ? template.innerHTML : '';
+
+    const { value: medioPago } = await Swal.fire({
+        title: '💳 Seleccionar Medio de Pago',
+        text: `Total a pagar: ${totalFormateado}`,
+        html: modalHTML,
+        showConfirmButton: false,
+        showCancelButton: true,
+        cancelButtonText: 'Cancelar',
+        allowOutsideClick: false,
+        didOpen: () => {
+            // Función temporal para manejar la selección
+            window.seleccionarMedioPagoModal = (pago) => {
+                Swal.close();
+                window.medioPagoSeleccionadoModal = pago;
+            };
+        },
+        willClose: () => {
+            // Limpiar función temporal
+            delete window.seleccionarMedioPagoModal;
+        }
+    });
+
+    const medioPagoFinal = window.medioPagoSeleccionadoModal;
+    delete window.medioPagoSeleccionadoModal;
+    
+    return medioPagoFinal;
+}
 
 // Exportar funciones globales para que puedan ser accedidas desde el HTML
 window.cerrarSesion = cerrarSesion;
