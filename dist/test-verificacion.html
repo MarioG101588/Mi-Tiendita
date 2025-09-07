@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Test Verificación Automática</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f2f5;
+        }
+        .test-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 5px; 
+            max-height: 300px; 
+            overflow-y: auto; 
+            font-family: monospace; 
+            font-size: 13px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de Verificación Automática de Sesión</h1>
+    
+    <div class="test-panel">
+        <h2>📊 Estado Actual</h2>
+        <div id="estadoSesion" class="status info">
+            🔄 Verificando estado de sesión...
+        </div>
+        
+        <h3>💾 Datos en localStorage:</h3>
+        <div id="datosLocales" class="log"></div>
+    </div>
+
+    <div class="test-panel">
+        <h2>🔧 Controles de Prueba</h2>
+        <button onclick="verificarSesion()">🔍 Verificar Sesión</button>
+        <button onclick="simularRecarga()">🔄 Simular Recarga</button>
+        <button onclick="limpiarDatos()">🧹 Limpiar Datos</button>
+        <button onclick="abrirPOS()">🏪 Abrir POS</button>
+    </div>
+
+    <div class="test-panel">
+        <h2>📝 Log de Eventos</h2>
+        <div id="logEventos" class="log"></div>
+        <button onclick="limpiarLog()">🗑️ Limpiar Log</button>
+    </div>
+
+    <script type="module">
+        import { verificarSesionAutomatica } from './JavaScript/Autenticacion.js';
+        
+        function log(mensaje, tipo = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('logEventos');
+            const iconos = { info: '💡', success: '✅', error: '❌', warning: '⚠️' };
+            logDiv.innerHTML += `<div>[${timestamp}] ${iconos[tipo]} ${mensaje}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[TEST] ${mensaje}`);
+        }
+
+        function actualizarDatosLocales() {
+            const datos = {
+                idTurno: localStorage.getItem('idTurno'),
+                usuarioActual: localStorage.getItem('usuarioActual'),
+                recordar: localStorage.getItem('recordar'),
+                email: localStorage.getItem('email')
+            };
+            
+            document.getElementById('datosLocales').innerHTML = 
+                Object.entries(datos).map(([key, value]) => 
+                    `<div><strong>${key}:</strong> ${value || '❌ null'}</div>`
+                ).join('');
+        }
+
+        window.verificarSesion = async function() {
+            log('Iniciando verificación automática de sesión...', 'info');
+            try {
+                const estado = await verificarSesionAutomatica();
+                const estadoDiv = document.getElementById('estadoSesion');
+                
+                if (estado.autenticado && estado.turnoActivo) {
+                    estadoDiv.className = 'status success';
+                    estadoDiv.innerHTML = `✅ <strong>SESIÓN COMPLETA</strong><br>
+                        👤 Usuario: ${estado.usuario}<br>
+                        🏪 Turno: ${estado.turno}<br>
+                        🎯 Resultado: Debe ir a container2`;
+                    log(`Sesión completa - Usuario: ${estado.usuario}, Turno: ${estado.turno}`, 'success');
+                    
+                } else if (estado.autenticado && !estado.turnoActivo) {
+                    estadoDiv.className = 'status warning';
+                    estadoDiv.innerHTML = `⚠️ <strong>SESIÓN PARCIAL</strong><br>
+                        👤 Usuario: ${estado.usuario}<br>
+                        ❌ Sin turno activo<br>
+                        🎯 Resultado: Mostrar aviso y login`;
+                    log(`Sesión parcial - Usuario autenticado sin turno: ${estado.usuario}`, 'warning');
+                    
+                } else {
+                    estadoDiv.className = 'status error';
+                    estadoDiv.innerHTML = `❌ <strong>SIN SESIÓN</strong><br>
+                        🎯 Resultado: Mostrar login`;
+                    log('Sin sesión activa', 'error');
+                }
+                
+                actualizarDatosLocales();
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                document.getElementById('estadoSesion').className = 'status error';
+                document.getElementById('estadoSesion').innerHTML = `💥 <strong>ERROR:</strong> ${error.message}`;
+            }
+        };
+
+        window.simularRecarga = function() {
+            log('Simulando recarga de página...', 'info');
+            setTimeout(() => {
+                window.verificarSesion();
+            }, 500);
+        };
+
+        window.limpiarDatos = function() {
+            localStorage.clear();
+            log('Todos los datos locales limpiados', 'warning');
+            actualizarDatosLocales();
+            window.verificarSesion();
+        };
+
+        window.abrirPOS = function() {
+            window.open('./index.html', '_blank');
+        };
+
+        window.limpiarLog = function() {
+            document.getElementById('logEventos').innerHTML = '';
+        };
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Test de verificación automática cargado', 'info');
+            actualizarDatosLocales();
+            window.verificarSesion();
+        });
+    </script>
+</body>
+</html>

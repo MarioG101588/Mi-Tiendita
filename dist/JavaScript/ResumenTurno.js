@@ -101,7 +101,7 @@ export function renderizarResumenTurno(resumen, containerId) {
         <h2>Resumen del Turno</h2>
         <ul class="list-group mb-3">
             <li class="list-group-item">Total ventas de tabaco: <b>$${resumen.totalTabaco}</b></li>
-            <li class="list-group-item">Total ventas no cobradas (Consumo en el local): <b>$${resumen.totalNoCobradas}</b></li>
+            <li class="list-group-item">Total ventas no Pagas (Consumo en el local): <b>$${resumen.totalNoCobradas}</b></li>
             <li class="list-group-item">Total cuentas En cuaderno: <b>$${resumen.totalEnCuaderno}</b></li>
             <li class="list-group-item">Total cuentas cerradas: <b>$${resumen.totalCuentasCerradas}</b></li>
             <li class="list-group-item">Efectivo: <b>$${resumen.tipoVenta.efectivo}</b></li>

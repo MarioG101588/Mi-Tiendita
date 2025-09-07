@@ -1,6 +1,6 @@
 // JavaScript/autenticacion.js
 import { 
-    getAuth, signInWithEmailAndPassword, signOut 
+    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import { 
     getFirestore, doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs 
@@ -10,6 +10,72 @@ import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
 
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+/**
+ * Verifica automáticamente si hay una sesión activa y un turno activo
+ */
+export function verificarSesionAutomatica() {
+    return new Promise((resolve) => {
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                console.log("Usuario autenticado encontrado:", user.email);
+                
+                try {
+                    // Buscar turno activo del usuario
+                    const q = query(
+                        collection(db, "turnos"),
+                        where("usuario", "==", user.email),
+                        where("estado", "==", "activo")
+                    );
+                    const querySnapshot = await getDocs(q);
+                    
+                    if (!querySnapshot.empty) {
+                        // Turno activo encontrado
+                        const turnoActivo = querySnapshot.docs[0].data();
+                        localStorage.setItem("idTurno", turnoActivo.idTurno);
+                        localStorage.setItem("usuarioActual", user.email);
+                        
+                        console.log("Turno activo encontrado:", turnoActivo.idTurno);
+                        resolve({ 
+                            autenticado: true, 
+                            turnoActivo: true, 
+                            usuario: user.email, 
+                            turno: turnoActivo.idTurno 
+                        });
+                    } else {
+                        // Usuario autenticado pero sin turno activo
+                        console.log("Usuario autenticado pero sin turno activo");
+                        resolve({ 
+                            autenticado: true, 
+                            turnoActivo: false, 
+                            usuario: user.email, 
+                            turno: null 
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error al verificar turno:", error);
+                    resolve({ 
+                        autenticado: true, 
+                        turnoActivo: false, 
+                        usuario: user.email, 
+                        turno: null 
+                    });
+                }
+            } else {
+                console.log("No hay usuario autenticado");
+                // Limpiar datos locales
+                localStorage.removeItem("idTurno");
+                localStorage.removeItem("usuarioActual");
+                resolve({ 
+                    autenticado: false, 
+                    turnoActivo: false, 
+                    usuario: null, 
+                    turno: null 
+                });
+            }
+        });
+    });
+}
 
 /**
  * Inicia sesión y crea turno si no hay uno activo en Firestore.

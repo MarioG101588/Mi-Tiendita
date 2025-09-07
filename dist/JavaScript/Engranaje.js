@@ -4,7 +4,7 @@ import { obtenerResumenTurno, renderizarResumenTurno } from "./ResumenTurno.js";
 // y manejar los eventos de la interfaz (botones, inputs, etc.).
 
 // Importaciones de módulos locales
-import { iniciarSesion, cerrarSesion as cerrarSesionAuth } from "./Autenticacion.js";
+import { iniciarSesion, cerrarSesion as cerrarSesionAuth, verificarSesionAutomatica } from "./Autenticacion.js";
 import { cargarInventario, ocultarInventario } from "./Inventario.js";
 import { agregarAlCarrito, aumentarCantidad, disminuirCantidad, quitarDelCarrito, renderCarrito } from "./CarritoCompras.js";
 import { realizarVenta } from "./VentasApp.js";
@@ -14,6 +14,33 @@ import { cargarDetalleCuenta } from "./Cuentas.js";
 // IMPORTACIONES de Firebase para la funcionalidad de cuentas
 import { collection, onSnapshot, query, doc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
+
+// **FUNCIÓN UTILITARIA PARA CONVERTIR idTurno A FECHA LEGIBLE**
+function convertirIdTurnoAFecha(idTurno) {
+    if (!idTurno || idTurno === 'Sin turno') return 'Sin fecha';
+    
+    try {
+        // Formato esperado: "2025-9-7_10-18" 
+        const partes = idTurno.split('_')[0]; // Tomar solo la parte de fecha: "2025-9-7"
+        const [año, mes, dia] = partes.split('-');
+        
+        // Crear objeto Date
+        const fecha = new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia));
+        
+        // Formatear a español
+        const opciones = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        
+        return fecha.toLocaleDateString('es-ES', opciones);
+    } catch (error) {
+        console.error('Error al convertir idTurno a fecha:', error);
+        return 'Fecha inválida';
+    }
+}
 
 // Exportar funciones del carrito al ámbito global
 // Redefinir agregarAlCarrito para limpiar buscador y ocultar inventario tras agregar
@@ -140,7 +167,7 @@ window.mostrarCuentasPendientes = function() {
         
         pendientes.forEach((cuenta) => {
             const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(cuenta.total || 0);
-            const turnoInfo = cuenta.turno ? `Turno: ${cuenta.turno}` : 'Sin turno';
+            const turnoInfo = cuenta.turno ? convertirIdTurnoAFecha(cuenta.turno) : 'Sin fecha';
             const tipoClase = cuenta.tipo === 'En cuaderno' ? 'text-warning' : 'text-muted';
             
             htmlContent += `
@@ -163,7 +190,10 @@ window.mostrarCuentasPendientes = function() {
 };
 
 // Evento que se dispara cuando el DOM está completamente cargado
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
+    console.log("🔄 Verificando sesión automáticamente...");
+    
+    // CONFIGURACIÓN DE ELEMENTOS DE INTERFAZ (SIEMPRE SE EJECUTA)
     const emailInput = document.getElementById("emailinicio");
     const passwordInput = document.getElementById("passwordinicio");
     const recordarCheckbox = document.getElementById("recordarDatos");
@@ -175,42 +205,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const closeButton = document.getElementById("closeButton");
     const campoBusqueda1 = document.getElementById("campoBusqueda1");
 
-    if (localStorage.getItem("recordar") === "true") {
-        emailInput.value = localStorage.getItem("email") || "";
-        passwordInput.value = localStorage.getItem("password") || "";
-        recordarCheckbox.checked = true;
-    }
-
-    loginButton.addEventListener('click', function() {
-        loginForm.style.display = 'block';
-        loginButton.style.display = 'none';
-    });
-
-    closeButton.addEventListener('click', function() {
-        loginForm.style.display = 'none';
-        loginButton.style.display = 'inline-block';
-    });
-
-    btnIniciarSesion.addEventListener("click", async function () {
-        const email = emailInput.value.trim();
-        const password = passwordInput.value.trim();
-        const recordar = recordarCheckbox.checked;
-
-        try {
-            await iniciarSesion(email, password, recordar);
-            container.style.display = 'none';
-            loginForm.style.display = 'none';
-            // Mostrar directamente cuentas activas
-            document.querySelectorAll('.container, .container1, .container2, .container3').forEach(el => {
-                el.style.display = 'none';
-            });
-            document.getElementById('container2').style.display = 'block';
-            cargarCuentasAbiertas();
-        } catch (error) {
-            console.error("Fallo al iniciar sesión:", error);
-        }
-    });
-
+    // Configurar eventos del buscador SIEMPRE
     if (campoBusqueda1) {
         campoBusqueda1.addEventListener("input", function() {
             if (this.value.trim()) {
@@ -219,6 +214,97 @@ document.addEventListener("DOMContentLoaded", function () {
                 ocultarInventario();
             }
         });
+        console.log("✅ Evento del buscador configurado");
+    } else {
+        console.warn("⚠️ Campo de búsqueda no encontrado");
+    }
+
+    // Cargar datos guardados
+    if (localStorage.getItem("recordar") === "true") {
+        if (emailInput) emailInput.value = localStorage.getItem("email") || "";
+        if (passwordInput) passwordInput.value = localStorage.getItem("password") || "";
+        if (recordarCheckbox) recordarCheckbox.checked = true;
+    }
+
+    // Eventos del formulario de login
+    if (loginButton) {
+        loginButton.addEventListener('click', function() {
+            if (loginForm) loginForm.style.display = 'block';
+            loginButton.style.display = 'none';
+        });
+    }
+
+    if (closeButton) {
+        closeButton.addEventListener('click', function() {
+            if (loginForm) loginForm.style.display = 'none';
+            if (loginButton) loginButton.style.display = 'inline-block';
+        });
+    }
+
+    // Evento de inicio de sesión
+    if (btnIniciarSesion) {
+        btnIniciarSesion.addEventListener("click", async function () {
+            const email = emailInput?.value.trim();
+            const password = passwordInput?.value.trim();
+            const recordar = recordarCheckbox?.checked;
+
+            try {
+                await iniciarSesion(email, password, recordar);
+                if (container) container.style.display = 'none';
+                if (loginForm) loginForm.style.display = 'none';
+                
+                mostrarContainer('container2');
+                
+                // Actualizar UI con información del usuario
+                const usuarioActualElement = document.getElementById('usuarioActual');
+                if (usuarioActualElement) {
+                    usuarioActualElement.textContent = email;
+                }
+                
+                cargarCuentasAbiertas();
+            } catch (error) {
+                console.error("Fallo al iniciar sesión:", error);
+            }
+        });
+    }
+    
+    // VERIFICACIÓN AUTOMÁTICA DE SESIÓN (DESPUÉS DE CONFIGURAR EVENTOS)
+    try {
+        const estadoSesion = await verificarSesionAutomatica();
+        
+        if (estadoSesion.autenticado && estadoSesion.turnoActivo) {
+            // Usuario autenticado con turno activo - ir directo a container2
+            console.log("✅ Sesión y turno activos - redirigiendo a cuentas");
+            mostrarContainer('container2');
+            
+            // Actualizar UI con información del usuario
+            const usuarioActualElement = document.getElementById('usuarioActual');
+            if (usuarioActualElement) {
+                usuarioActualElement.textContent = estadoSesion.usuario;
+            }
+            
+            cargarCuentasAbiertas();
+            
+        } else if (estadoSesion.autenticado && !estadoSesion.turnoActivo) {
+            // Usuario autenticado pero sin turno activo - mostrar aviso y login
+            console.log("⚠️ Usuario autenticado pero sin turno activo");
+            Swal.fire({
+                icon: 'info',
+                title: 'Sesión Recuperada',
+                text: 'Tu sesión está activa, pero necesitas iniciar un nuevo turno',
+                confirmButtonText: 'Iniciar Turno'
+            });
+            mostrarContainer('container');
+            
+        } else {
+            // No autenticado - mostrar login
+            console.log("❌ No hay sesión activa - mostrar login");
+            mostrarContainer('container');
+        }
+        
+    } catch (error) {
+        console.error("Error al verificar sesión automática:", error);
+        mostrarContainer('container');
     }
 });
 

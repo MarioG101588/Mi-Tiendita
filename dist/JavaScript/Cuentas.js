@@ -11,6 +11,33 @@ import { mostrarModalMedioPago } from "./Engranaje.js";
 
 const db = getFirestore(app);
 
+// **FUNCIÓN UTILITARIA PARA CONVERTIR idTurno A FECHA LEGIBLE**
+function convertirIdTurnoAFecha(idTurno) {
+    if (!idTurno || idTurno === 'Sin turno') return 'Sin fecha';
+    
+    try {
+        // Formato esperado: "2025-9-7_10-18" 
+        const partes = idTurno.split('_')[0]; // Tomar solo la parte de fecha: "2025-9-7"
+        const [año, mes, dia] = partes.split('-');
+        
+        // Crear objeto Date
+        const fecha = new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia));
+        
+        // Formatear a español
+        const opciones = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        
+        return fecha.toLocaleDateString('es-ES', opciones);
+    } catch (error) {
+        console.error('Error al convertir idTurno a fecha:', error);
+        return 'Fecha inválida';
+    }
+}
+
 /**
  * Carga detalle de una cuenta activa
  */
@@ -74,7 +101,7 @@ export async function cargarDetalleCuenta(clienteId) {
                                 <div>
                                     <strong>${icono} ${registro.fecha}</strong>
                                     <span class="badge ${badgeClass} ms-2">${tipoLabel}</span>
-                                    <small class="text-muted ms-2">Turno: ${registro.turno}</small>
+                                    <small class="text-muted ms-2">${convertirIdTurnoAFecha(registro.turno)}</small>
                                 </div>
                                 <span class="badge bg-secondary">${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(registro.subtotal)}</span>
                             </div>
@@ -263,8 +290,8 @@ window.disminuirCantidadCuenta = function(clienteId, productoId) {
                             <strong>${fechaActual}</strong>
                         </div>
                         <div class="col-md-6 text-end">
-                            <small class="text-muted">ID Turno:</small><br>
-                            <code>${cuenta.turno || 'Sin turno'}</code>
+                            <small class="text-muted">Fecha del turno:</small><br>
+                            <code>${convertirIdTurnoAFecha(cuenta.turno)}</code>
                         </div>
                     </div>
                     
@@ -312,6 +339,10 @@ window.disminuirCantidadCuenta = function(clienteId, productoId) {
                 </div>
                 <div class="card-footer">
                     <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <button class="btn btn-secondary" onclick="mostrarContainer('container2')">
+                            ↩️ Volver
+                        </button>
+
                         <button class="btn btn-success btn-lg" onclick="cerrarCuenta('${clienteId}')">
                             💰 Pagar cuenta
                         </button>
@@ -320,9 +351,6 @@ window.disminuirCantidadCuenta = function(clienteId, productoId) {
                         </button>
                         <button class="btn btn-danger" onclick="window.borrarCuentaActiva('${clienteId}')">
                             🗑️ Eliminar Cuenta
-                        </button>
-                        <button class="btn btn-secondary" onclick="mostrarContainer('container2')">
-                            ↩️ Volver
                         </button>
                     </div>
                     <small class="text-muted d-block text-center mt-2">
