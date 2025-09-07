@@ -30,6 +30,7 @@ export async function cargarDetalleCuenta(clienteId) {
         }
 
         const cuenta = cuentaDoc.data();
+        
         let productosHtml = '';
         let historialHtml = '';
         let total = 0;

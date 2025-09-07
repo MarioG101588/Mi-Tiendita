@@ -14,7 +14,7 @@ const db = getFirestore(app);
  * @param {object} carrito - El objeto del carrito de compras.
  * @param {string} medioPago - El medio de pago específico (Efectivo, Nequi, Daviplata).
  */
-async function procesarVentaEfectivoACerrada(carrito, medioPago) {
+export async function procesarVentaDirecta(carrito, medioPago) {
     // 1. El medio de pago viene como parámetro desde la selección del usuario
 
     // 2. Buscar el turno activo para asociar la venta.
@@ -27,6 +27,9 @@ async function procesarVentaEfectivoACerrada(carrito, medioPago) {
             idTurno = snap.docs[0].id;
             localStorage.setItem("idTurno", idTurno);
         }
+    }
+    if (!idTurno) {
+        throw new Error("No se encontró un turno activo. Por favor, inicie un turno para registrar la venta.");
     }
     if (!idTurno) {
         throw new Error("No se encontró un turno activo. Por favor, inicie un turno para registrar la venta.");
