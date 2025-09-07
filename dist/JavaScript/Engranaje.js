@@ -99,7 +99,7 @@ function cargarCuentasAbiertas() {
         }
         // Mostrar nota si hay pendientes
         if (pendientes.length > 0) {
-            htmlContent += `<div class="alert alert-warning" style="cursor:pointer;" onclick="window.mostrarCuentasPendientes()">
+            htmlContent += `<div class="alert alert-warning cuenta-pendiente-alert" onclick="window.mostrarCuentasPendientes()">
                 📋 Aquí hay <b>${pendientes.length}</b> cuenta(s) pendiente(s). Haz clic para verlas.
             </div>`;
         }
@@ -133,9 +133,9 @@ function cargarCuentasAbiertas() {
 // Mostrar cuentas pendientes en containerPendientes
 window.mostrarCuentasPendientes = function() {
     document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes').forEach(el => {
-        el.style.display = 'none';
+        el.classList.add('d-none');
     });
-    document.getElementById('containerPendientes').style.display = 'block';
+    document.getElementById('containerPendientes').classList.remove('d-none');
     
     const container = document.getElementById('cuentasPendientesTurno');
     if (!container) {
@@ -172,7 +172,7 @@ window.mostrarCuentasPendientes = function() {
             
             htmlContent += `
                 <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" 
-                     onclick="mostrarDetalleCuenta('${cuenta.id}')" style="cursor: pointer;"> 
+                     onclick="mostrarDetalleCuenta('${cuenta.id}')" class="cuenta-item"> 
                      <div>
                         <h6 class="mb-1">${cuenta.cliente || 'Cliente sin nombre'}</h6>
                         <p class="mb-1 ${tipoClase}"><strong>${cuenta.tipo || 'Sin tipo'}</strong></p>
@@ -229,15 +229,15 @@ document.addEventListener("DOMContentLoaded", async function () {
     // Eventos del formulario de login
     if (loginButton) {
         loginButton.addEventListener('click', function() {
-            if (loginForm) loginForm.style.display = 'block';
-            loginButton.style.display = 'none';
+            if (loginForm) loginForm.classList.remove('d-none');
+            loginButton.classList.add('d-none');
         });
     }
 
     if (closeButton) {
         closeButton.addEventListener('click', function() {
-            if (loginForm) loginForm.style.display = 'none';
-            if (loginButton) loginButton.style.display = 'inline-block';
+            if (loginForm) loginForm.classList.add('d-none');
+            if (loginButton) loginButton.classList.remove('d-none');
         });
     }
 
@@ -250,8 +250,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             try {
                 await iniciarSesion(email, password, recordar);
-                if (container) container.style.display = 'none';
-                if (loginForm) loginForm.style.display = 'none';
+                if (container) container.classList.add('d-none');
+                if (loginForm) loginForm.classList.add('d-none');
                 
                 mostrarContainer('container2');
                 
@@ -311,9 +311,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 // Función para cambiar entre contenedores (expuesta globalmente)
 function mostrarContainer(idMostrar) {
     document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
-        el.style.display = 'none';
+        el.classList.add('d-none');
     });
-    document.getElementById(idMostrar).style.display = 'block';
+    document.getElementById(idMostrar).classList.remove('d-none');
     if (idMostrar === "container1") {
         ocultarInventario();
         renderCarrito();
@@ -351,11 +351,11 @@ async function cerrarSesion() {
     await cerrarSesionAuth(); // Se llama a la función importada de Autenticacion.js
     // Oculta todos los containers y muestra el de inicio
     document.querySelectorAll('.container, .container1, .container2, .container3').forEach(el => {
-        el.style.display = 'none';
+        el.classList.add('d-none');
     });
-    document.getElementById('container').style.display = 'block';
-    document.getElementById('loginButton').style.display = 'inline-block';
-    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('container').classList.remove('d-none');
+    document.getElementById('loginButton').classList.remove('d-none');
+    document.getElementById('loginForm').classList.add('d-none');
 };
 
 // Función para mostrar el detalle de una cuenta (expuesta globalmente)

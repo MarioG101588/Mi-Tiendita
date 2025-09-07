@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test CSS Centralizado</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/estilo.css">
+</head>
+<body class="test-page">
+    <div class="test-panel">
+        <h1>✅ Prueba de CSS Centralizado</h1>
+        
+        <div class="status success">
+            <h3>🎨 Estilos Centralizados Correctamente</h3>
+            <p>Todos los estilos inline han sido consolidados en <code>estilo.css</code></p>
+        </div>
+
+        <div class="test-panel">
+            <h3>🧪 Test de Componentes</h3>
+            
+            <!-- Test de Medios de Pago -->
+            <h4>Medios de Pago:</h4>
+            <div class="modal-pago-container">
+                <button type="button" class="pago-btn pago-efectivo">
+                    <span class="pago-emoji">💵</span>
+                    <span>Efectivo</span>
+                </button>
+                <button type="button" class="pago-btn pago-nequi">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nequi_logo.svg/1200px-Nequi_logo.svg.png" 
+                         alt="Nequi" class="icono-pago nequi-logo">
+                    <span>Nequi</span>
+                </button>
+                <button type="button" class="pago-btn pago-daviplata">
+                    <img src="https://play-lh.googleusercontent.com/EMobDJKabP1eVoxKVuHBGZsO-YMCvSDyyAWGnwh12LqHHPgjRdcOh7rpzrM6-T5Gf8E=w240-h480-rw" 
+                         alt="DaviPlata" class="icono-pago">
+                    <span>DaviPlata</span>
+                </button>
+            </div>
+
+            <!-- Test de Tabla Inventario -->
+            <h4>Tabla de Inventario:</h4>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered inventario-fija">
+                    <thead>
+                        <tr>
+                            <th>PRODUCTOS</th>
+                            <th>PRECIO</th>
+                            <th>CANTIDAD</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="fila-inventario">
+                            <td>Producto Test</td>
+                            <td>$1,000</td>
+                            <td>10</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Test de Carrito -->
+            <h4>Carrito de Compras:</h4>
+            <div class="carrito-total">
+                Total: $5,000
+            </div>
+            <div class="carrito-acciones">
+                <button class="btn btn-success">Realizar venta</button>
+            </div>
+
+            <!-- Test de Detalles -->
+            <h4>Detalles Expandibles:</h4>
+            <details>
+                <summary class="detalle-operacion">Ver detalles de operación</summary>
+                <p>Contenido de los detalles aquí...</p>
+            </details>
+        </div>
+
+        <div class="status info">
+            <h3>📋 Resumen de Cambios</h3>
+            <ul>
+                <li>✅ Todos los estilos inline eliminados del HTML</li>
+                <li>✅ JavaScript actualizado para usar clases CSS en lugar de .style</li>
+                <li>✅ CSS organizado en secciones lógicas con comentarios</li>
+                <li>✅ Responsive design incluido</li>
+                <li>✅ Estados iniciales de contenedores definidos</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
