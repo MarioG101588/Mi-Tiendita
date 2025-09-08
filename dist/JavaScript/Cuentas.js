@@ -189,7 +189,7 @@ export async function cargarDetalleCuenta(clienteId) {
                     </div>
                     
                     <h5 class="mb-3 text-center">📦 Productos ordenados:</h5>
-                    <div class="table-responsive">
+                    <div class="table-responsive w-40">
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
