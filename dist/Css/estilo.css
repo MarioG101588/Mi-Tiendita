@@ -647,6 +647,21 @@ details .detalle-content {
         padding: 6px 2px !important; /* Padding muy reducido */
         font-size: 0.8rem !important;
     }
+    
+    /* Header inventario en móviles */
+    .inventario-header {
+        padding: 10px;
+    }
+    
+    .inventario-gif {
+        width: 30px;
+        height: 30px;
+        margin-right: 8px;
+    }
+    
+    .inventario-titulo {
+        font-size: 1rem;
+    }
 }
 
 /* Desktop */
@@ -1423,9 +1438,38 @@ th {
 }
 
 /* Estilos para elementos de inventario */
+.inventario-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #dee2e6;
+    border-radius: 10px 10px 0 0;
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 0;
+}
+
+.inventario-gif {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+    vertical-align: middle;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.inventario-titulo {
+    display: inline-block;
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+    font-size: 1.1rem;
+    vertical-align: middle;
+}
+
 .inventario-table-container {
     max-height: 220px;
     overflow-y: auto;
+    border-radius: 0 0 8px 8px; /* Solo bordes inferiores redondeados */
+    border-top: none; /* Sin borde superior para conectar con header */
 }
 
 .inventario-row-clickable {
@@ -1895,6 +1939,64 @@ th {
         width: 28px;
         height: 28px;
         font-size: 14px;
+    }
+    
+    /* OPTIMIZACIÓN MÓVIL PARA VISTA VENTAS */
+    #container1 .table-responsive {
+        max-height: 300px; /* Reducir altura para móviles */
+        overflow-y: auto;
+        overflow-x: hidden !important;
+    }
+    
+    /* Tabla de resultados de búsqueda en ventas */
+    #resultadoBusqueda1 .table {
+        table-layout: fixed !important;
+        font-size: 13px; /* Reducir texto para móviles */
+    }
+    
+    #resultadoBusqueda1 .table th,
+    #resultadoBusqueda1 .table td {
+        padding: 6px 4px !important; /* Reducir padding para móviles */
+        white-space: normal !important;
+        word-wrap: break-word !important;
+    }
+    
+    /* Carrito de ventas móvil */
+    #carritoVenta .table-responsive {
+        max-height: 280px; /* Altura fija para carrito en móviles */
+    }
+    
+    #carritoVenta .inventario-fija {
+        font-size: 13px; /* Texto más pequeño en móviles */
+    }
+    
+    #carritoVenta .inventario-fija th,
+    #carritoVenta .inventario-fija td {
+        padding: 6px 3px !important; /* Reducir espaciado interno */
+    }
+    
+    /* Botones del carrito en móviles */
+    #carritoVenta .btn-cantidad {
+        width: 25px;
+        height: 25px;
+        font-size: 12px;
+        padding: 0;
+    }
+    
+    /* Contenedor principal de ventas */
+    #container1 {
+        padding: 8px; /* Reducir padding general */
+        margin: 0;
+    }
+    
+    /* Ajustar buscador en ventas para móviles */
+    #container1 .buscador-container {
+        margin-bottom: 10px; /* Reducir espacio inferior */
+    }
+    
+    #container1 .form-control {
+        font-size: 16px; /* Evitar zoom en iOS */
+        height: 45px; /* Altura adecuada para móviles */
     }
 }
 

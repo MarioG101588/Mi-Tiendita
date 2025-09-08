@@ -36,6 +36,12 @@ export async function cargarInventario(filtro = "") {
         // console.log('✅ Documentos obtenidos:', snapshot.size);
 
         let html = `
+            <!-- Cabecera animada del inventario -->
+            <div class="inventario-header">
+                <img src="./pngs/busqueda.gif" alt="Búsqueda de Inventario" class="inventario-gif" />
+                <h5 class="inventario-titulo">📦 Inventario de Productos</h5>
+            </div>
+            
             <div class="table-responsive inventario-table-container">
             <table class="table table-striped table-bordered inventario-fija">
                 <thead>
