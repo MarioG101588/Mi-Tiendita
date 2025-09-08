@@ -731,19 +731,21 @@ th {
 
 /* Botones +/- */
 .btn-cantidad {
-    background-color: #f0f0f0 !important;
-    color: #333 !important;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 1px 6px;
-    font-size: 0.8rem;
+    background-color: #6c757d !important; /* Gris semi oscuro */
+    color: white !important;
+    border: 1px solid #5a6268;
+    border-radius: 3px;
+    padding: 0.5px 1.5px; /* Más pequeño */
+    font-size: 0.7rem; /* Texto más pequeño */
     line-height: 1;
     cursor: pointer;
+    min-width: 20px; /* Ancho mínimo más pequeño */
+    min-height: 20px; /* Alto mínimo más pequeño */
 }
 
 .btn-cantidad:hover {
-    background-color: #ddd !important;
-    color: #000 !important;
+    background-color: #5a6268 !important; /* Gris más oscuro al hover */
+    color: white !important;
 }
 
 .cantidad-num {
@@ -755,7 +757,7 @@ th {
 .btn-quitar {
     background-color: #dc3545 !important;
     color: #fff !important;
-    padding: 6px 10px;
+    padding: 0.5px 1.5px; /* Más pequeño */
     border-radius: 8px;
     font-size: 0.9rem;
     cursor: pointer;
@@ -768,27 +770,227 @@ th {
 /* Responsive carrito */
 @media (max-width: 768px) {
     .cantidad-container {
-        gap: 6px;
+        gap: 4px; /* Gap más pequeño */
     }
     .btn-cantidad {
-        padding: 5px 6px;
-        font-size: 0.8rem;
-        min-width: 30px;
+    padding: 0.5px 1.5px; /* Más pequeño */
+        font-size: 0.65rem; /* Texto más pequeño */
+        min-width: 22px; /* Ancho más pequeño */
+        min-height: 22px; /* Alto más pequeño */
     }
     .cantidad-num {
-        min-width: 22px;
-        font-size: 0.9rem;
+        min-width: 20px;
+        font-size: 0.8rem;
     }
 }
 
 @media (max-width: 420px) {
     .btn-cantidad {
-        padding: 4px 5px;
-        font-size: 0.75rem;
-        min-width: 26px;
+    padding: 0.5px 1.5px; /* Más pequeño */
+        font-size: 0.6rem; /* Texto aún más pequeño */
+        min-width: 18px; /* Ancho aún más pequeño */
+        min-height: 18px; /* Alto aún más pequeño */
     }
     .cantidad-num {
-        min-width: 20px;
-        font-size: 0.85rem;
+        min-width: 18px;
+        font-size: 0.75rem;
+    }
+}
+
+/* ===========================================
+   ESTILOS PARA LIMPIEZA DE CSS EMBEBIDO
+   ========================================== */
+
+/* Clases para control de visibilidad mejoradas */
+.d-block-force {
+    display: block !important;
+}
+
+.container-visible {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.container2.container-visible,
+.container1.container-visible,
+.container3.container-visible,
+.containerPendientes.container-visible,
+.containerResumenTurno.container-visible {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Estilos específicos para el contenedor de login */
+.container-login {
+    background: white !important;
+    border-radius: 12px !important;
+    padding: 20px !important;
+    margin: 10px auto !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+    min-height: 200px !important;
+    border: 3px solid #007bff !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+.container-login h1 {
+    color: #333 !important;
+    margin-bottom: 20px !important;
+    text-align: center !important;
+    font-size: 24px !important;
+}
+
+/* Botón de login estilizado */
+.btn-login {
+    display: inline-block !important;
+    visibility: visible !important;
+    padding: 10px 20px !important;
+    background: #007bff !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+}
+
+/* Estilos para elementos de inventario */
+.inventario-table-container {
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.inventario-row-clickable {
+    cursor: pointer;
+}
+
+/* Estilos para alertas y elementos interactivos */
+.alert-clickable {
+    cursor: pointer;
+    border-left: 5px solid #ffc107;
+}
+
+.cuenta-row-clickable {
+    cursor: pointer;
+}
+
+/* Estilos para resumen de turno */
+.resumen-summary-clickable {
+    cursor: pointer;
+    color: #0d6efd;
+}
+
+/* Clases para manipulación de display via JavaScript */
+.js-hidden {
+    display: none !important;
+}
+
+.js-visible {
+    display: block !important;
+}
+
+.js-inline-block {
+    display: inline-block !important;
+}
+
+.js-opacity-visible {
+    opacity: 1 !important;
+}
+
+.js-visibility-visible {
+    visibility: visible !important;
+}
+
+/* Clases adicionales para elementos específicos */
+.cuentas-summary-clickable {
+    cursor: pointer;
+}
+
+.carrito-total-right {
+    text-align: right;
+    font-weight: bold;
+}
+
+.carrito-buttons-right {
+    text-align: right;
+    margin-top: 10px;
+}
+
+/* ===========================================
+   ESTILOS PARA PÁGINA 404 ERROR
+   ========================================== */
+
+/* Estilos específicos para página 404 */
+.error-404-body {
+    background: #ECEFF1 !important;
+    color: rgba(0,0,0,0.87) !important;
+    font-family: Roboto, Helvetica, Arial, sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.error-404-message {
+    background: white;
+    max-width: 360px;
+    margin: 100px auto 16px;
+    padding: 32px 24px 16px;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.error-404-message h3 {
+    color: #888;
+    font-weight: normal;
+    font-size: 16px;
+    margin: 16px 0 12px;
+}
+
+.error-404-message h2 {
+    color: #ffa100;
+    font-weight: bold;
+    font-size: 16px;
+    margin: 0 0 8px;
+}
+
+.error-404-message h1 {
+    font-size: 22px;
+    font-weight: 300;
+    color: rgba(0,0,0,0.6);
+    margin: 0 0 16px;
+}
+
+.error-404-message p {
+    line-height: 140%;
+    margin: 16px 0 24px;
+    font-size: 14px;
+}
+
+.error-404-message a {
+    display: block;
+    text-align: center;
+    background: #039be5;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: white;
+    padding: 16px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.error-404-load {
+    color: rgba(0,0,0,0.4);
+    text-align: center;
+    font-size: 13px;
+}
+
+@media (max-width: 600px) {
+    .error-404-body,
+    .error-404-message {
+        margin-top: 0;
+        background: white;
+        box-shadow: none;
+    }
+    .error-404-body {
+        border-top: 16px solid #ffa100;
     }
 }

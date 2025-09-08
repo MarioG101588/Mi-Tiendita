@@ -108,10 +108,10 @@ export function renderCarrito() {
     html += `
             </tbody>
         </table>
-        <div style="text-align:right; font-weight:bold;">
+        <div class="carrito-total-right">
             Total general: $${totalGeneral}
         </div>
-        <div style="text-align:right; margin-top:10px;">
+        <div class="carrito-buttons-right">
             <button class="btn btn-success" onclick="window.realizarVenta()">Realizar venta</button>
         </div>
     `;

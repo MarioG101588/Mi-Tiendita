@@ -19,14 +19,13 @@ export async function cargarInventario(filtro = "") {
 
     // Mostrar u ocultar inventario según el filtro
     if (!filtro.trim()) {
-        resultadoDiv.style.display = "none";
-        resultadoDiv.classList.add("d-none");
+        resultadoDiv.classList.add("js-hidden", "d-none");
+        resultadoDiv.classList.remove("js-visible", "d-block");
         resultadoDiv.innerHTML = "";
         return;
     } else {
-        resultadoDiv.style.display = "block";
-        resultadoDiv.classList.remove("d-none");
-        resultadoDiv.classList.add("d-block");
+        resultadoDiv.classList.remove("js-hidden", "d-none");
+        resultadoDiv.classList.add("js-visible", "d-block");
     }
     resultadoDiv.innerHTML = "Cargando...";
 
@@ -37,7 +36,7 @@ export async function cargarInventario(filtro = "") {
         console.log('✅ Documentos obtenidos:', snapshot.size);
 
         let html = `
-            <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+            <div class="table-responsive inventario-table-container">
             <table class="table table-striped table-bordered inventario-fija">
                 <thead>
                     <tr>
@@ -58,7 +57,7 @@ export async function cargarInventario(filtro = "") {
                 const data = doc.data();
                 hayResultados = true;
                 html += `
-                    <tr style="cursor:pointer" onclick="window.agregarAlCarrito('${doc.id}', ${data.precioVenta})">
+                    <tr class="inventario-row-clickable" onclick="window.agregarAlCarrito('${doc.id}', ${data.precioVenta})">
                         <td>${doc.id}</td>
                         <td>${data.precioVenta !== undefined ? data.precioVenta : "-"}</td>
                         <td>${data.cantidad !== undefined ? data.cantidad : "-"}</td>
@@ -86,9 +85,8 @@ export async function cargarInventario(filtro = "") {
 export function ocultarInventario() {
     const resultadoDiv = document.getElementById("resultadoBusqueda1");
     if (resultadoDiv) {
-        resultadoDiv.style.display = "none";
-        resultadoDiv.classList.add("d-none");
-        resultadoDiv.classList.remove("d-block");
+        resultadoDiv.classList.add("js-hidden", "d-none");
+        resultadoDiv.classList.remove("js-visible", "d-block");
         resultadoDiv.innerHTML = "";
         console.log('✅ Inventario ocultado');
     }

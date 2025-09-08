@@ -120,7 +120,7 @@ function cargarCuentasAbiertas() {
         // Mostrar nota si hay pendientes
         if (pendientes.length > 0) {
             htmlContent += `
-                <div class="alert alert-warning text-center p-4 mb-3" style="cursor:pointer; border-left: 5px solid #ffc107;" onclick="window.mostrarCuentasPendientes()">
+                <div class="alert alert-warning text-center p-4 mb-3 alert-clickable" onclick="window.mostrarCuentasPendientes()">
                     <h5>📋 Cuentas Pendientes</h5>
                     <p class="mb-2">Hay <strong>${pendientes.length}</strong> cuenta(s) pendiente(s) de turnos anteriores.</p>
                     <small class="text-muted">👆 Haz clic aquí para revisarlas</small>
@@ -182,15 +182,13 @@ window.mostrarCuentasPendientes = function() {
     
     // Aplicar la misma lógica de mostrarContainer
     document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
-        el.style.display = 'none';
-        el.classList.add('d-none');
-        el.classList.remove('d-block');
+        el.classList.add('js-hidden', 'd-none');
+        el.classList.remove('js-visible', 'd-block');
     });
     
     const containerPendientes = document.getElementById('containerPendientes');
-    containerPendientes.style.display = 'block';
-    containerPendientes.classList.remove('d-none');
-    containerPendientes.classList.add('d-block');
+    containerPendientes.classList.remove('js-hidden', 'd-none');
+    containerPendientes.classList.add('js-visible', 'd-block');
     
     const container = document.getElementById('cuentasPendientesTurno');
     if (!container) {
@@ -228,7 +226,7 @@ window.mostrarCuentasPendientes = function() {
             
             htmlContent += `
                 <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" 
-                     onclick="mostrarDetalleCuenta('${cuenta.id}')" style="cursor: pointer;"> 
+                     onclick="mostrarDetalleCuenta('${cuenta.id}')" class="cuenta-row-clickable"> 
                      <div>
                         <h6 class="mb-1">${cuenta.cliente || 'Cliente sin nombre'}</h6>
                         <p class="mb-1 ${tipoClase}"><strong>${cuenta.tipo || 'Sin tipo'}</strong></p>
@@ -290,13 +288,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             console.log('🔵 LoginButton clickeado - mostrando formulario');
             
             if (loginForm) {
-                loginForm.style.display = 'block';
-                loginForm.classList.remove('d-none');
-                loginForm.classList.add('d-block');
+                loginForm.classList.remove('js-hidden', 'd-none');
+                loginForm.classList.add('js-visible', 'd-block');
                 console.log('✅ Formulario mostrado');
             }
             
-            loginButton.style.display = 'none';
+            loginButton.classList.add('js-hidden');
             console.log('✅ Botón ocultado');
         });
     } else {
@@ -309,14 +306,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             console.log('🔵 CloseButton clickeado - ocultando formulario');
             
             if (loginForm) {
-                loginForm.style.display = 'none';
-                loginForm.classList.add('d-none');
-                loginForm.classList.remove('d-block');
+                loginForm.classList.add('js-hidden', 'd-none');
+                loginForm.classList.remove('js-visible', 'd-block');
                 console.log('✅ Formulario ocultado');
             }
             
             if (loginButton) {
-                loginButton.style.display = 'inline-block';
+                loginButton.classList.remove('js-hidden');
+                loginButton.classList.add('js-inline-block');
                 console.log('✅ Botón mostrado');
             }
         });
@@ -331,8 +328,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             try {
                 await iniciarSesion(email, password, recordar);
-                if (container) container.style.display = 'none';
-                if (loginForm) loginForm.style.display = 'none';
+                
+                // Solo ejecutar esto si el login fue exitoso
+                console.log('✅ Login exitoso, redirigiendo...');
+                
+                if (container) {
+                    container.classList.add('js-hidden');
+                    container.classList.remove('js-visible');
+                }
+                if (loginForm) {
+                    loginForm.classList.add('js-hidden', 'd-none');
+                    loginForm.classList.remove('js-visible', 'd-block');
+                }
                 
                 mostrarContainer('container2');
                 
@@ -344,7 +351,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 
                 cargarCuentasAbiertas();
             } catch (error) {
-                console.error("Fallo al iniciar sesión:", error);
+                console.error("🔴 Fallo al iniciar sesión:", error);
+                // NO redirigir si hay error - el usuario se queda en la pantalla de login
+                console.log('🔴 Login falló, manteniendo pantalla de login');
+                // El error ya fue mostrado por la función iniciarSesion
             }
         });
     }
@@ -402,23 +412,18 @@ function mostrarContainer(idMostrar) {
     
     console.log('✅ Elemento encontrado:', elementoDestino);
     
-    // OCULTAR TODOS los containers - removiendo clases Y estilos
+    // OCULTAR TODOS los containers - usando solo clases CSS
     document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
-        el.style.display = 'none';
-        el.classList.add('d-none');
-        el.classList.remove('d-block');
+        el.classList.add('js-hidden', 'd-none');
+        el.classList.remove('js-visible', 'd-block', 'container-visible');
     });
     
-    // MOSTRAR el container destino - SOBRESCRIBIENDO clases Y estilos
-    elementoDestino.classList.remove('d-none');
-    elementoDestino.classList.add('d-block');
-    elementoDestino.style.display = 'block';
-    elementoDestino.style.visibility = 'visible';
-    elementoDestino.style.opacity = '1';
+    // MOSTRAR el container destino - usando solo clases CSS
+    elementoDestino.classList.remove('js-hidden', 'd-none');
+    elementoDestino.classList.add('js-visible', 'd-block', 'container-visible');
     
     console.log('✅ Container mostrado:', idMostrar);
     console.log('🔍 Clases finales:', elementoDestino.className);
-    console.log('🔍 Style final:', elementoDestino.style.display);
     
     if (idMostrar === "container1") {
         console.log('🔵 Inicializando container1...');
@@ -478,37 +483,27 @@ async function cerrarSesion() {
             
             // Oculta todos los containers y muestra el de inicio
             document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
-                el.style.display = 'none';
-                el.classList.add('d-none');
-                el.classList.remove('d-block');
+                el.classList.add('js-hidden', 'd-none');
+                el.classList.remove('js-visible', 'd-block', 'container-visible');
             });
             
             const containerInicio = document.getElementById('container');
-            containerInicio.style.display = 'block';
-            containerInicio.classList.remove('d-none');
-            containerInicio.classList.add('d-block');
+            containerInicio.classList.remove('js-hidden', 'd-none');
+            containerInicio.classList.add('js-visible', 'd-block', 'container-visible');
             
             // FORZAR VISIBILIDAD del formulario de login
             const loginButton = document.getElementById('loginButton');
             const loginForm = document.getElementById('loginForm');
             
             if (loginButton) {
-                loginButton.style.display = 'inline-block';
-                loginButton.style.visibility = 'visible';
+                loginButton.classList.remove('js-hidden');
+                loginButton.classList.add('js-inline-block', 'js-visibility-visible');
             }
             
             if (loginForm) {
-                loginForm.style.display = 'none'; // El formulario se muestra al hacer clic en el botón
-                loginForm.classList.add('d-none');
+                loginForm.classList.add('js-hidden', 'd-none');
+                loginForm.classList.remove('js-visible', 'd-block');
             }
-            
-            // Forzar estilos del container principal
-            containerInicio.style.visibility = 'visible';
-            containerInicio.style.opacity = '1';
-            containerInicio.style.minHeight = '400px';
-            containerInicio.style.padding = '20px';
-            containerInicio.style.background = 'white';
-            containerInicio.style.borderRadius = '12px';
             
             cerrarModal();
             mostrarExito('Sesión cerrada correctamente');

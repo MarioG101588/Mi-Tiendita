@@ -181,7 +181,7 @@ export function renderizarResumenTurno(resumen, containerId) {
         
         listadoCuentasEnCuaderno = `
             <details class="mt-2">
-                <summary style="cursor: pointer; color: #0d6efd;">
+                <summary class="resumen-summary-clickable">
                     Ver detalles (${resumen.cuentasEnCuaderno.length} cuenta${resumen.cuentasEnCuaderno.length !== 1 ? 's' : ''})
                 </summary>
                 <ul class="list-unstyled mt-2 ms-3">${listItems}</ul>

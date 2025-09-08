@@ -99,7 +99,7 @@ export function verificarSesionAutomatica() {
 export async function iniciarSesion(email, password, recordar) {
     if (!email || !password) {
         mostrarAdvertencia("Campos incompletos", "Por favor completa todos los campos.");
-        return;
+        throw new Error("Campos incompletos");
     }
 
     // Guardar datos si el usuario marcó "recordar"
@@ -150,11 +150,15 @@ export async function iniciarSesion(email, password, recordar) {
         });
 
         localStorage.setItem("idTurno", idTurno);
+        localStorage.setItem("usuarioActual", email);
 
         mostrarExito("Éxito", "Turno iniciado correctamente");
 
     } catch (error) {
+        console.error('🔴 Error en iniciarSesion:', error);
         mostrarError("Error al iniciar sesión", error.message);
+        // IMPORTANTE: Re-lanzar el error para que Engranaje.js lo capture
+        throw error;
     }
 }
 

@@ -114,7 +114,7 @@ export async function cargarDetalleCuenta(clienteId) {
                                 <span class="badge bg-secondary">${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(registro.subtotal)}</span>
                             </div>
                             <details class="mt-1">
-                                <summary class="text-primary" style="cursor: pointer;">Ver detalles de esta operación</summary>
+                                <summary class="text-primary cuentas-summary-clickable">Ver detalles de esta operación</summary>
                                 <ul class="mt-2 mb-0">${productosDelRegistro}</ul>
                             </details>
                         </div>
