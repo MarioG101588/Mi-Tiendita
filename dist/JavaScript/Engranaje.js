@@ -11,7 +11,6 @@ import { agregarAlCarrito, aumentarCantidad, disminuirCantidad, quitarDelCarrito
 import { realizarVenta } from "./VentasApp.js";
 import { db } from './Conexion.js';
 import { cargarDetalleCuenta } from "./Cuentas.js";
-import { configurarDesarrollo, mostrarInfoEntorno } from "./config-desarrollo.js";
 
 // IMPORTACIONES de Firebase para la funcionalidad de cuentas
 import { collection, onSnapshot, query, doc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
@@ -24,10 +23,6 @@ import {
     mostrarError,
     mostrarAdvertencia 
 } from "./SweetAlertManager.js";
-
-// Configurar entorno de desarrollo
-configurarDesarrollo();
-mostrarInfoEntorno();
 
 // **FUNCIÓN UTILITARIA PARA CONVERTIR idTurno A FECHA LEGIBLE**
 function convertirIdTurnoAFecha(idTurno) {
