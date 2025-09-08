@@ -148,14 +148,24 @@ export function mostrarInput(titulo, placeholder = '', valorInicial = '') {
 export function mostrarFormularioVenta() {
     return Swal.fire({
         title: 'Finalizar Venta',
-        html:
-            '<input id="swal-input-cliente" class="swal2-input" placeholder="Nombre del Cliente (opcional)">' +
-            '<select id="swal-select-clase-venta" class="swal2-select">' +
-            '<option value="Pago en efectivo" selected>Pago en efectivo</option>' +
-            '<option value="Consumo en el local">Consumo en el local</option>' +
-            '<option value="En cuaderno">En cuaderno</option>' +
-            '</select>',
+        html: `
+            <div style="padding: 10px 0;">
+                <input id="swal-input-cliente" 
+                       class="swal2-input" 
+                       placeholder="Nombre del Cliente (opcional)"
+                       style="margin-bottom: 15px;">
+                <select id="swal-select-clase-venta" 
+                        class="swal2-select"
+                        style="margin-bottom: 10px;">
+                    <option value="Pago en efectivo" selected>Pago en efectivo</option>
+                    <option value="Consumo en el local">Consumo en el local</option>
+                    <option value="En cuaderno">En cuaderno</option>
+                </select>
+            </div>
+        `,
         focusConfirm: false,
+        width: '90%',
+        padding: '20px',
         preConfirm: () => {
             const claseVenta = document.getElementById('swal-select-clase-venta').value;
             const cliente = document.getElementById('swal-input-cliente').value.trim();
