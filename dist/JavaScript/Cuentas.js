@@ -142,9 +142,9 @@ export async function cargarDetalleCuenta(clienteId) {
                     <td>
                         <strong>${producto.nombre || 'Producto sin nombre'}</strong>
                         <div class="mt-1">
-                            <button class="btn btn-sm btn-outline-danger" onclick="window.disminuirCantidadCuenta('${clienteId}','${productoId}')">-</button>
+                            <button class="btn btn-cantidad" onclick="window.disminuirCantidadCuenta('${clienteId}','${productoId}')">-</button>
                             <span class="mx-2 fw-bold">${cantidad}</span>
-                            <button class="btn btn-sm btn-outline-success" onclick="window.aumentarCantidadCuenta('${clienteId}','${productoId}')">+</button>
+                            <button class="btn btn-cantidad" onclick="window.aumentarCantidadCuenta('${clienteId}','${productoId}')">+</button>
                         </div>
                         ${primerPedido ? `<div>${primerPedido}</div>` : ''}
                         ${ultimaFecha && ultimaFecha !== primerPedido ? `<div>${ultimaFecha}</div>` : ''}

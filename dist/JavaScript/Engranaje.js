@@ -180,15 +180,28 @@ function cargarCuentasAbiertas() {
 window.mostrarCuentasPendientes = function() {
     console.log('🔵 Mostrando cuentas pendientes...');
     
-    // Aplicar la misma lógica de mostrarContainer
-    document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
-        el.classList.add('js-hidden', 'd-none');
-        el.classList.remove('js-visible', 'd-block');
+    // FORZAR ocultación de TODOS los containers específicamente
+    const todosLosContainers = ['container', 'container1', 'container2', 'container3', 'containerPendientes', 'containerResumenTurno'];
+    
+    todosLosContainers.forEach(containerId => {
+        const elemento = document.getElementById(containerId);
+        if (elemento) {
+            // Remover todas las clases de visibilidad
+            elemento.classList.remove('js-visible', 'd-block', 'container-visible', 'd-block-force');
+            // Agregar todas las clases de ocultación
+            elemento.classList.add('js-hidden', 'd-none');
+            console.log(`🔍 ${containerId} ocultado - clases:`, elemento.className);
+        }
     });
     
+    // MOSTRAR específicamente containerPendientes con máxima prioridad
     const containerPendientes = document.getElementById('containerPendientes');
-    containerPendientes.classList.remove('js-hidden', 'd-none');
-    containerPendientes.classList.add('js-visible', 'd-block');
+    if (containerPendientes) {
+        containerPendientes.classList.remove('js-hidden', 'd-none');
+        containerPendientes.classList.add('js-visible', 'd-block', 'container-visible');
+        console.log('✅ Container pendientes mostrado');
+        console.log('🔍 Clases finales containerPendientes:', containerPendientes.className);
+    }
     
     const container = document.getElementById('cuentasPendientesTurno');
     if (!container) {

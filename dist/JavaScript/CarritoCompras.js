@@ -94,8 +94,8 @@ export function renderCarrito() {
                 <td>${window.carrito[id].nombre}</td>
                 <td>
                     ${window.carrito[id].cantidad}
-                    <button class="btn btn-sm btn-outline-secondary" onclick="window.disminuirCantidad('${id}')">-</button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="window.aumentarCantidad('${id}')">+</button>
+                    <button class="btn btn-cantidad" onclick="window.disminuirCantidad('${id}')">-</button>
+                    <button class="btn btn-cantidad" onclick="window.aumentarCantidad('${id}')">+</button>
                 </td>
                 <td>${window.carrito[id].total}</td>
                 <td>
