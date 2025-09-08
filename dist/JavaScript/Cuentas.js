@@ -6,6 +6,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 import { app } from "./Conexion.js"; // debe exportar `app`
+import { formatearPrecio } from "./FormateoPrecios.js";
 import { 
     mostrarCargando, 
     mostrarExito, 
@@ -78,7 +79,7 @@ export async function cargarDetalleCuenta(clienteId) {
                 const productosDelRegistro = registro.productos.map(p => {
                     const signo = p.cantidad > 0 ? '+' : '';
                     const color = p.cantidad > 0 ? 'text-success' : 'text-danger';
-                    return `<li class="${color}">${signo}${p.cantidad} ${p.nombre} (${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(p.precioVenta)} c/u)</li>`;
+                    return `<li class="${color}">${signo}${p.cantidad} ${p.nombre} (${formatearPrecio(p.precioVenta)} c/u)</li>`;
                 }).join('');
                 
                 // Icono y color según el tipo de registro
@@ -111,7 +112,7 @@ export async function cargarDetalleCuenta(clienteId) {
                                     <span class="badge ${badgeClass} ms-2">${tipoLabel}</span>
                                     <small class="text-muted ms-2">${convertirIdTurnoAFecha(registro.turno)}</small>
                                 </div>
-                                <span class="badge bg-secondary">${new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(registro.subtotal)}</span>
+                                <span class="badge bg-secondary">${formatearPrecio(registro.subtotal)}</span>
                             </div>
                             <details class="mt-1">
                                 <summary class="text-primary cuentas-summary-clickable">Ver detalles de esta operación</summary>
@@ -130,8 +131,8 @@ export async function cargarDetalleCuenta(clienteId) {
             total += subtotal;
             const precioUnitario = producto.precioUnidad ?? producto.precioVenta ?? 0;
             const cantidad = producto.cantidad ?? 0;
-            const precioUnitarioFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(precioUnitario);
-            const precioTotalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(subtotal);
+            const precioUnitarioFormateado = formatearPrecio(precioUnitario);
+            const precioTotalFormateado = formatearPrecio(subtotal);
             
             // Información de fechas
             const primerPedido = producto.primerPedido ? `<small class="text-muted">Primer pedido: ${producto.primerPedido}</small>` : '';
@@ -269,7 +270,7 @@ window.disminuirCantidadCuenta = function(clienteId, productoId) {
     modificarCantidadProductoCuenta(clienteId, productoId, 'disminuir');
 };
 
-        const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(total);
+        const totalFormateado = formatearPrecio(total);
         const fechaActual = new Date().toLocaleDateString('es-CO', { 
             year: 'numeric', 
             month: 'long', 
@@ -427,8 +428,8 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
             const montoPorPersona = (cuenta.total ?? 0) / partes;
             await mostrarPersonalizado({
                 title: 'Monto por persona',
-                html: `<b>Total (en cuenta):</b> $${(cuenta.total ?? 0).toFixed(2)}<br>
-                       <b>Entre ${partes} personas:</b> $${montoPorPersona.toFixed(2)} cada uno`,
+                html: `<b>Total (en cuenta):</b> ${formatearPrecio(cuenta.total ?? 0)}<br>
+                       <b>Entre ${partes} personas:</b> ${formatearPrecio(montoPorPersona)} cada uno`,
                 icon: 'info'
             });
         }

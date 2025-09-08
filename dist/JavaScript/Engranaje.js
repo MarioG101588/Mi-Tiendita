@@ -1,4 +1,5 @@
 import { obtenerResumenTurno, renderizarResumenTurno } from "./ResumenTurno.js";
+import { formatearPrecio } from "./FormateoPrecios.js";
 // JavaScript/main.js
 // Este es el archivo principal que se encargará de importar las funciones de los otros archivos
 // y manejar los eventos de la interfaz (botones, inputs, etc.).
@@ -144,7 +145,7 @@ function cargarCuentasAbiertas() {
             htmlContent += '<div class="list-group">';
             console.log('📋 Generando lista para', activas.length, 'cuentas activas');
             activas.forEach((cuenta) => {
-                const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(cuenta.total);
+                const totalFormateado = formatearPrecio(cuenta.total);
                 htmlContent += `
                     <div class="list-group-item d-flex justify-content-between align-items-center" 
                          onclick="mostrarDetalleCuenta('${cuenta.id}')"> 
@@ -233,7 +234,7 @@ window.mostrarCuentasPendientes = function() {
         `;
         
         pendientes.forEach((cuenta) => {
-            const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(cuenta.total || 0);
+            const totalFormateado = formatearPrecio(cuenta.total || 0);
             const turnoInfo = cuenta.turno ? convertirIdTurnoAFecha(cuenta.turno) : 'Sin fecha';
             const tipoClase = cuenta.tipo === 'En cuaderno' ? 'text-warning' : 'text-muted';
             
@@ -542,7 +543,7 @@ function mostrarDetalleCuenta(clienteId) {
  * @returns {Promise<string|null>} El medio de pago seleccionado o null si se canceló
  */
 export async function mostrarModalMedioPago(total) {
-    const totalFormateado = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(total);
+    const totalFormateado = formatearPrecio(total);
     
     // Obtener template del HTML
     const template = document.getElementById('modalMediosPagoTemplate');

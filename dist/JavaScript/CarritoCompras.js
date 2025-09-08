@@ -1,5 +1,7 @@
 // JavaScript/carrito.js
 // Este archivo maneja toda la lógica del carrito de compras, incluyendo la adición, eliminación y renderización de productos.
+import { formatearPrecio } from './FormateoPrecios.js';
+
 // Carrito global (se recomienda manejarlo como un estado en un objeto para mayor control)
 window.carrito = {};
 
@@ -97,7 +99,7 @@ export function renderCarrito() {
                     <button class="btn btn-cantidad" onclick="window.disminuirCantidad('${id}')">-</button>
                     <button class="btn btn-cantidad" onclick="window.aumentarCantidad('${id}')">+</button>
                 </td>
-                <td>${window.carrito[id].total}</td>
+                <td>${formatearPrecio(window.carrito[id].total)}</td>
                 <td>
                     <button class="btn btn-sm btn-danger" onclick="window.quitarDelCarrito('${id}')">Quitar</button>
                 </td>
@@ -109,7 +111,7 @@ export function renderCarrito() {
             </tbody>
         </table>
         <div class="carrito-total-right">
-            Total general: $${totalGeneral}
+            Total general: ${formatearPrecio(totalGeneral)}
         </div>
         <div class="carrito-buttons-right">
             <button class="btn btn-success" onclick="window.realizarVenta()">Realizar venta</button>

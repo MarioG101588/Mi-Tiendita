@@ -145,6 +145,42 @@ button:disabled {
     border: 1px solid #dee2e6;
 }
 
+/* Configuración general para todas las tablas */
+.table {
+    table-layout: auto !important; /* Permite ajuste automático de columnas */
+    width: 100%;
+}
+
+.table th,
+.table td {
+    width: auto !important; /* Ancho automático basado en contenido */
+    white-space: nowrap; /* Evita que el texto se corte */
+    max-width: none !important; /* Elimina restricciones de Bootstrap */
+}
+
+/* Permite que la primera columna haga wrap si es necesario */
+.table th:first-child,
+.table td:first-child {
+    white-space: normal;
+}
+
+/* Forzar ajuste automático para todas las tablas del proyecto */
+.table-striped,
+.table-hover,
+.table-bordered {
+    table-layout: auto !important;
+}
+
+.table-striped th,
+.table-striped td,
+.table-hover th,
+.table-hover td,
+.table-bordered th,
+.table-bordered td {
+    width: auto !important;
+    max-width: none !important;
+}
+
 .inventario-fija {
     margin-bottom: 0;
 }
@@ -359,8 +395,27 @@ details .detalle-content {
     
     /* Tabla resumen de productos en tablets */
     .tabla-resumen-productos {
-        margin: 0 -15px;
-        padding: 0 15px;
+        margin: 0 -20px; /* Más extensión en tablets */
+        padding: 0 20px;
+    }
+    
+    .tabla-resumen-productos .table {
+        font-size: 0.85rem; /* Fuente un poco más grande en tablets */
+    }
+    
+    .tabla-resumen-productos th:first-child,
+    .tabla-resumen-productos td:first-child {
+        width: 50% !important;
+    }
+    
+    .tabla-resumen-productos th:nth-child(2),
+    .tabla-resumen-productos td:nth-child(2) {
+        width: 25% !important;
+    }
+    
+    .tabla-resumen-productos th:nth-child(3),
+    .tabla-resumen-productos td:nth-child(3) {
+        width: 25% !important;
     }
 }
 
@@ -478,39 +533,99 @@ details .detalle-content {
     /* Tabla resumen de productos más ancha en móviles */
     .tabla-resumen-productos {
         width: 100% !important;
-        margin: 0 -10px; /* Extiende hacia los bordes */
-        padding: 0 10px;
-        max-width: calc(100vw - 20px); /* Usa casi todo el ancho de la pantalla */
+        margin: 0 -15px; /* Extiende más hacia los bordes */
+        padding: 0 15px;
+        max-width: calc(100vw - 10px); /* Usa casi todo el ancho de la pantalla */
     }
     
     .tabla-resumen-productos .table {
         margin-bottom: 0;
-        font-size: 0.8rem;
+        font-size: 0.75rem; /* Fuente más pequeña */
+        table-layout: fixed !important; /* Layout fijo para controlar anchos */
+        width: 100%;
+    }
+    
+    /* Hacer los precios más compactos */
+    .tabla-resumen-productos th:nth-child(2),
+    .tabla-resumen-productos td:nth-child(2),
+    .tabla-resumen-productos th:nth-child(3),
+    .tabla-resumen-productos td:nth-child(3) {
+        font-size: 0.7rem; /* Fuente aún más pequeña para números */
+        font-weight: 600; /* Negrita para compensar */
     }
     
     .tabla-resumen-productos th,
     .tabla-resumen-productos td {
-        padding: 6px 4px;
+        padding: 6px 4px; /* Padding más compacto */
         white-space: nowrap;
+        width: auto !important;
     }
     
-    /* Ajustar columnas para aprovechar el espacio */
+    /* Distribución específica de columnas */
     .tabla-resumen-productos th:first-child,
     .tabla-resumen-productos td:first-child {
-        width: 50%;
         white-space: normal;
+        width: 55% !important; /* Más espacio para producto */
+        max-width: 55%;
     }
     
     .tabla-resumen-productos th:nth-child(2),
     .tabla-resumen-productos td:nth-child(2) {
-        width: 25%;
         text-align: center;
+        width: 25% !important; /* Espacio medio para precio */
+        max-width: 25%;
     }
     
     .tabla-resumen-productos th:nth-child(3),
     .tabla-resumen-productos td:nth-child(3) {
-        width: 25%;
         text-align: right;
+        width: 20% !important; /* Menos espacio para subtotal */
+        max-width: 20%;
+    }
+    
+    /* Botones de cantidad en móviles - extra compactos */
+    .btn-cantidad {
+        min-width: 20px !important;
+        max-width: 20px !important;
+        min-height: 20px !important;
+        max-height: 20px !important;
+        width: 20px !important;
+        height: 20px !important;
+        padding: 0 !important;
+        font-size: 0.6rem !important;
+        margin: 0 1px !important;
+    }
+    
+    /* Contenedor de botones más compacto */
+    .tabla-resumen-productos .btn-cantidad {
+        min-width: 18px !important;
+        max-width: 18px !important;
+        min-height: 18px !important;
+        max-height: 18px !important;
+        width: 18px !important;
+        height: 18px !important;
+        font-size: 0.55rem !important;
+    }
+    
+    /* Mejor distribución de elementos en las celdas con botones */
+    .tabla-resumen-productos td .mt-1,
+    .table td .mt-1 {
+        margin-top: 0.25rem !important;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 3px; /* Espacio entre elementos */
+    }
+    
+    /* Número de cantidad más compacto */
+    .tabla-resumen-productos .mx-2,
+    .table .mx-2 {
+        margin-left: 0.25rem !important;
+        margin-right: 0.25rem !important;
+        font-size: 0.7rem;
+        font-weight: bold;
+        min-width: 15px;
+        text-align: center;
     }
     
     .inventario-fija thead th {
@@ -779,12 +894,34 @@ th {
     color: white !important;
     border: 1px solid #5a6268;
     border-radius: 3px;
-    padding: 0.5px 1.5px; /* Más pequeño */
+    padding: 2px 6px; /* Padding más equilibrado */
     font-size: 0.7rem; /* Texto más pequeño */
     line-height: 1;
     cursor: pointer;
-    min-width: 20px; /* Ancho mínimo más pequeño */
-    min-height: 20px; /* Alto mínimo más pequeño */
+    min-width: 24px !important; /* Ancho fijo */
+    max-width: 24px !important; /* Ancho máximo fijo */
+    min-height: 24px !important; /* Alto fijo */
+    max-height: 24px !important; /* Alto máximo fijo */
+    width: 24px !important; /* Ancho fijo absoluto */
+    height: 24px !important; /* Alto fijo absoluto */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1px; /* Pequeño margen entre botones */
+}
+
+/* Botones de cantidad específicos para tablas */
+.tabla-resumen-productos .btn-cantidad,
+.table .btn-cantidad {
+    min-width: 22px !important;
+    max-width: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    width: 22px !important;
+    height: 22px !important;
+    padding: 1px 4px;
+    font-size: 0.65rem;
+    margin: 0 1px;
 }
 
 .btn-cantidad:hover {

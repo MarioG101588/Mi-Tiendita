@@ -1,6 +1,7 @@
 // ResumenTurno.js
 // Módulo para obtener y mostrar el resumen de ventas del turno en curso
 import { db } from './Conexion.js';
+import { formatearPrecio } from './FormateoPrecios.js';
 import { doc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 /**
@@ -175,7 +176,7 @@ export function renderizarResumenTurno(resumen, containerId) {
                 👤 <strong>${cuenta.cliente}</strong> 
                 <span class="badge bg-secondary ms-1">${cuenta.turno}</span><br>
                 📅 ${cuenta.fechaCreacion} → ⏰ ${cuenta.fechaModificacion}<br>
-                💰 <span class="text-success fw-bold">$${cuenta.total.toLocaleString('es-CO')}</span>
+                💰 <span class="text-success fw-bold">${formatearPrecio(cuenta.total)}</span>
             </li>`;
         }).join('');
         
@@ -196,19 +197,19 @@ export function renderizarResumenTurno(resumen, containerId) {
     c.innerHTML = `
         <h2>Resumen del Turno</h2>
         <ul class="list-group mb-3">
-            <li class="list-group-item">Total ventas de tabaco: <b>$${resumen.totalTabaco.toLocaleString('es-CO')}</b></li>
-            <li class="list-group-item">Total ventas no Pagas (Consumo en el local): <b>$${resumen.totalNoCobradas.toLocaleString('es-CO')}</b></li>
+            <li class="list-group-item">Total ventas de tabaco: <b>${formatearPrecio(resumen.totalTabaco)}</b></li>
+            <li class="list-group-item">Total ventas no Pagas (Consumo en el local): <b>${formatearPrecio(resumen.totalNoCobradas)}</b></li>
             <li class="list-group-item">
-                Cuentas En cuaderno: <b>$${totalEnCuaderno.toLocaleString('es-CO')}</b>
+                Cuentas En cuaderno: <b>${formatearPrecio(totalEnCuaderno)}</b>
                 ${listadoCuentasEnCuaderno}
             </li>
-            <li class="list-group-item">Total cuentas cerradas: <b>$${resumen.totalCuentasCerradas.toLocaleString('es-CO')}</b></li>
-            <li class="list-group-item">Efectivo: <b>$${resumen.tipoVenta.efectivo.toLocaleString('es-CO')}</b></li>
-            <li class="list-group-item">Nequi: <b>$${resumen.tipoVenta.nequi.toLocaleString('es-CO')}</b></li>
-            <li class="list-group-item">Daviplata: <b>$${resumen.tipoVenta.daviplata.toLocaleString('es-CO')}</b></li>
+            <li class="list-group-item">Total cuentas cerradas: <b>${formatearPrecio(resumen.totalCuentasCerradas)}</b></li>
+            <li class="list-group-item">Efectivo: <b>${formatearPrecio(resumen.tipoVenta.efectivo)}</b></li>
+            <li class="list-group-item">Nequi: <b>${formatearPrecio(resumen.tipoVenta.nequi)}</b></li>
+            <li class="list-group-item">Daviplata: <b>${formatearPrecio(resumen.tipoVenta.daviplata)}</b></li>
         </ul>
         <div class="alert alert-info">
-            Pago de turno (10% ventas cerradas + aseo $7.000): <b>$${resumen.pagoTurno.toLocaleString('es-CO')}</b>
+            Pago de turno (10% ventas cerradas + aseo $ 7.000): <b>${formatearPrecio(resumen.pagoTurno)}</b>
         </div>
     `;
 }
