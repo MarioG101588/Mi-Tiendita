@@ -395,12 +395,12 @@ details .detalle-content {
     
     /* Tabla resumen de productos en tablets */
     .tabla-resumen-productos {
-        margin: 0 -20px; /* Más extensión en tablets */
-        padding: 0 20px;
+        margin: 0 -25px; /* Más extensión en tablets */
+        padding: 0 25px;
     }
     
     .tabla-resumen-productos .table {
-        font-size: 0.85rem; /* Fuente un poco más grande en tablets */
+        font-size: 0.9rem; /* Fuente un poco más grande en tablets */
     }
     
     .tabla-resumen-productos th:first-child,
@@ -533,14 +533,14 @@ details .detalle-content {
     /* Tabla resumen de productos más ancha en móviles */
     .tabla-resumen-productos {
         width: 100% !important;
-        margin: 0 -15px; /* Extiende más hacia los bordes */
-        padding: 0 15px;
-        max-width: calc(100vw - 10px); /* Usa casi todo el ancho de la pantalla */
+        margin: 0 -18px; /* Más extensión hacia los bordes */
+        padding: 0 18px;
+        max-width: calc(100vw - 5px); /* Usa más ancho de la pantalla */
     }
     
     .tabla-resumen-productos .table {
         margin-bottom: 0;
-        font-size: 0.75rem; /* Fuente más pequeña */
+        font-size: 0.8rem; /* Fuente ligeramente más grande */
         table-layout: fixed !important; /* Layout fijo para controlar anchos */
         width: 100%;
     }
@@ -556,7 +556,7 @@ details .detalle-content {
     
     .tabla-resumen-productos th,
     .tabla-resumen-productos td {
-        padding: 6px 4px; /* Padding más compacto */
+        padding: 8px 5px; /* Padding más generoso */
         white-space: nowrap;
         width: auto !important;
     }
@@ -626,6 +626,15 @@ details .detalle-content {
         font-weight: bold;
         min-width: 15px;
         text-align: center;
+    }
+    
+    /* Total centrado en el pie de tabla */
+    .tabla-resumen-productos .table-success th {
+        background-color: #d1e7dd !important;
+        color: #0f5132 !important;
+        font-weight: bold;
+        padding: 12px 8px;
+        border: none;
     }
     
     .inventario-fija thead th {

@@ -312,8 +312,7 @@ window.disminuirCantidadCuenta = function(clienteId, productoId) {
                             </tbody>
                             <tfoot class="table-success">
                                 <tr>
-                                    <th colspan="2" class="text-end">TOTAL A PAGAR:</th>
-                                    <th class="text-end fs-4">${totalFormateado}</th>
+                                    <th colspan="3" class="text-center fs-4">TOTAL A PAGAR: ${totalFormateado}</th>
                                 </tr>
                             </tfoot>
                         </table>
