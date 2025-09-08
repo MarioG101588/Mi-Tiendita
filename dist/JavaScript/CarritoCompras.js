@@ -79,14 +79,14 @@ export function renderCarrito() {
             <h4 class="carrito-titulo">Carrito de Compras</h4>
         </div>
         
-        <div class="carrito-container">
-            <table class="table table-sm table-carrito">
-                <thead class="carrito-thead">
+        <div class="table-responsive carrito-table-container">
+            <table class="table table-striped table-bordered inventario-fija">
+                <thead>
                     <tr>
-                        <th>Producto</th>
-                        <th>Cantidad</th>
-                        <th>Total</th>
-                        <th>Acciones</th>
+                        <th>PRODUCTO</th>
+                        <th>CANTIDAD</th>
+                        <th>TOTAL</th>
+                        <th>ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -99,17 +99,17 @@ export function renderCarrito() {
         hayItems = true;
         totalGeneral += window.carrito[id].total;
         html += `
-            <tr class="carrito-row">
-                <td class="producto-cell">${window.carrito[id].nombre}</td>
-                <td class="cantidad-cell">
+            <tr class="inventario-row-clickable">
+                <td>${window.carrito[id].nombre}</td>
+                <td class="text-center">
                     <div class="cantidad-controls">
                         <button class="btn-cantidad btn-menos" onclick="window.disminuirCantidad('${id}')">-</button>
                         <span class="cantidad-display">${window.carrito[id].cantidad}</span>
                         <button class="btn-cantidad btn-mas" onclick="window.aumentarCantidad('${id}')">+</button>
                     </div>
                 </td>
-                <td class="total-cell">${formatearPrecio(window.carrito[id].total)}</td>
-                <td class="acciones-cell">
+                <td class="text-end">${formatearPrecio(window.carrito[id].total)}</td>
+                <td class="text-center">
                     <button class="btn-quitar" onclick="window.quitarDelCarrito('${id}')">Quitar</button>
                 </td>
             </tr>
@@ -119,6 +119,7 @@ export function renderCarrito() {
     html += `
             </tbody>
         </table>
+        </div>
         
         <div class="carrito-footer">
             <div class="carrito-total">

@@ -184,46 +184,6 @@ button:disabled {
     pointer-events: none;
 }
 
-/* Controles del buscador para móviles */
-.buscador-controles {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-    justify-content: center;
-}
-
-.btn-listo, .btn-limpiar {
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 100px;
-    touch-action: manipulation; /* Mejor respuesta táctil */
-}
-
-.btn-listo {
-    background: #28a745;
-    color: white;
-}
-
-.btn-listo:hover, .btn-listo:active {
-    background: #218838;
-    transform: scale(0.98);
-}
-
-.btn-limpiar {
-    background: #dc3545;
-    color: white;
-}
-
-.btn-limpiar:hover, .btn-limpiar:active {
-    background: #c82333;
-    transform: scale(0.98);
-}
-
 /* MEJORAS PARA MÓVILES ANDROID - TECLADO */
 /* Prevenir zoom automático en inputs en iOS */
 input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea, select {
@@ -245,34 +205,10 @@ body.keyboard-active {
     box-shadow: 0 0 10px rgba(40, 167, 69, 0.3) !important;
 }
 
-/* Mensaje de ayuda para móviles */
-.mobile-help {
-    display: none;
-    background: #e3f2fd;
-    border: 1px solid #2196f3;
-    border-radius: 8px;
-    padding: 10px;
-    margin: 10px 0;
-    text-align: center;
-    color: #1976d2;
-    font-size: 0.9rem;
-}
-
 @media (max-width: 768px) {
-    .mobile-help {
-        display: block;
-    }
-    
     /* Espaciado extra en móviles */
     .buscador-container {
-        margin-bottom: 80px; /* Espacio para el teclado */
-    }
-    
-    /* Botones más grandes en móviles */
-    .btn-listo, .btn-limpiar {
-        padding: 15px 25px;
-        font-size: 1.1rem;
-        min-height: 50px;
+        margin-bottom: 20px; /* Reducir espacio ya que no hay botones */
     }
 }
 
@@ -1786,99 +1722,45 @@ th {
     vertical-align: middle;
 }
 
-/* Contenedor del carrito - igual estilo que inventario */
-.carrito-container {
-    background: white;
+/* Contenedor del carrito - IDÉNTICO al inventario */
+.carrito-table-container {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
     border-radius: 8px;
-    border: 1px solid #dee2e6; /* Igual que table-responsive */
-    overflow: hidden; /* Evitar desbordamiento */
-}
-
-/* Tabla del carrito - estilo unificado con inventario */
-.table-carrito {
-    margin-bottom: 0;
-    border: none;
-    font-size: 0.9rem; /* Reducir tamaño de fuente */
-    table-layout: fixed !important; /* Control de columnas */
+    border: 1px solid #dee2e6;
     width: 100%;
 }
 
-.carrito-thead {
-    background: #007bff;
+/* El carrito ahora usa las mismas clases que inventario */
+.carrito-table-container .inventario-fija {
+    margin-bottom: 0;
 }
 
-.carrito-thead th {
-    color: white !important;
+.carrito-table-container .inventario-fija thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
     font-weight: 600;
-    border: none;
-    padding: 8px 4px; /* Reducir padding como las otras tablas */
-    text-align: center;
-    font-size: 0.85rem; /* Fuente más pequeña */
-    white-space: normal !important; /* Permitir wrap */
-    word-wrap: break-word;
-    overflow: hidden;
+    font-size: 0.9rem;
+    padding: 12px 8px;
+    color: #495057;
 }
 
-/* Distribución específica para columnas del carrito */
-.table-carrito th:first-child,
-.table-carrito td:first-child {
-    width: 35%; /* Producto */
+.carrito-table-container .inventario-fija tbody td {
+    padding: 10px 8px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #f1f1f1;
 }
 
-.table-carrito th:nth-child(2),
-.table-carrito td:nth-child(2) {
-    width: 15%; /* Cantidad */
-    text-align: center;
-}
-
-.table-carrito th:nth-child(3),
-.table-carrito td:nth-child(3) {
-    width: 20%; /* Precio */
-    text-align: right;
-}
-
-.table-carrito th:nth-child(4),
-.table-carrito td:nth-child(4) {
-    width: 20%; /* Subtotal */
-    text-align: right;
-}
-
-.table-carrito th:last-child,
-.table-carrito td:last-child {
-    width: 10%; /* Eliminar */
-    text-align: center;
-}
-
-/* Filas del carrito - estilo unificado */
-.carrito-row {
-    border-bottom: 1px solid #dee2e6;
-}
-
-.carrito-row:nth-child(even) {
+.carrito-table-container .inventario-row-clickable:hover {
     background-color: #f8f9fa;
 }
 
-.carrito-row td {
-    padding: 8px 4px; /* Padding consistente */
-    font-size: 0.85rem; /* Fuente más pequeña */
-    white-space: normal !important; /* Permitir wrap */
-    word-wrap: break-word;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
-}
-
-/* Botones en el carrito más compactos */
-.carrito-row .btn {
-    padding: 4px 8px;
-    font-size: 0.75rem;
-    border-radius: 4px;
-}
-
-.carrito-row .btn-danger {
-    background: #dc3545;
-    border: none;
-    color: white;
+.carrito-table-container .inventario-row-clickable {
+    cursor: default; /* No cursor pointer para carrito */
+    transition: background-color 0.2s ease;
 }
 
 .carrito-row td {
