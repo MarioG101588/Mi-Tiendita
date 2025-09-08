@@ -35,7 +35,7 @@ export const db = getFirestore(app);
 
 // Configuración para desarrollo local - MODO DIAGNÓSTICO
 if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-    console.log('🔧 Modo desarrollo detectado - Firebase OAuth warnings visibles para diagnóstico');
+    // console.log('🔧 Modo desarrollo detectado - Firebase OAuth warnings visibles para diagnóstico');
     
     // Para desarrollo local, configuramos la auth
     try {
@@ -43,7 +43,7 @@ if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
             appVerificationDisabledForTesting: true
         };
     } catch (error) {
-        console.log('ℹ️ Emuladores ya configurados:', error.message);
+        // console.log('ℹ️ Emuladores ya configurados:', error.message);
     }
 }
 

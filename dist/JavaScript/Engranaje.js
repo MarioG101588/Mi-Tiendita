@@ -76,9 +76,9 @@ function cargarCuentasAbiertas() {
         return;
     }
     onSnapshot(q, async (querySnapshot) => {
-        console.log('cargarCuentasAbiertas ejecutándose...');
-        console.log('ID Turno actual:', idTurno);
-        console.log('📊 Total documentos encontrados:', querySnapshot.size);
+        // console.log('cargarCuentasAbiertas ejecutándose...');
+        // console.log('ID Turno actual:', idTurno);
+        // console.log('📊 Total documentos encontrados:', querySnapshot.size);
         
         let htmlContent = '';
         let pendientes = [];
@@ -87,15 +87,15 @@ function cargarCuentasAbiertas() {
         for (const docSnap of querySnapshot.docs) {
             const cuenta = docSnap.data();
             const clienteId = docSnap.id;
-            console.log('Procesando cuenta:', clienteId, 'Turno de cuenta:', cuenta.turno, 'Tipo:', cuenta.tipo);
+            // console.log('Procesando cuenta:', clienteId, 'Turno de cuenta:', cuenta.turno, 'Tipo:', cuenta.tipo);
             
             // Lógica corregida: solo actualizar cuentas de turnos anteriores
             if (cuenta.turno && cuenta.turno !== idTurno && cuenta.tipo !== 'En cuaderno') {
-                console.log('Actualizando cuenta', clienteId, 'de', cuenta.tipo, 'a "En cuaderno" (turno anterior)');
+                // console.log('Actualizando cuenta', clienteId, 'de', cuenta.tipo, 'a "En cuaderno" (turno anterior)');
                 try {
                     await updateDoc(doc(collection(db, "cuentasActivas"), clienteId), { tipo: 'En cuaderno' });
                     cuenta.tipo = 'En cuaderno';
-                    console.log('Cuenta actualizada exitosamente');
+                    // console.log('Cuenta actualizada exitosamente');
                 } catch (error) {
                     console.error('Error al actualizar cuenta:', error);
                 }
@@ -104,14 +104,14 @@ function cargarCuentasAbiertas() {
             // Clasificar cuentas: las del turno actual van a activas, el resto a pendientes
             if (cuenta.turno === idTurno && cuenta.tipo !== 'En cuaderno') {
                 activas.push({ ...cuenta, id: clienteId });
-                console.log('✅ ACTIVA:', clienteId, '- Turno:', cuenta.turno, '- Tipo:', cuenta.tipo);
+                // console.log('✅ ACTIVA:', clienteId, '- Turno:', cuenta.turno, '- Tipo:', cuenta.tipo);
             } else {
                 pendientes.push({ ...cuenta, id: clienteId });
-                console.log('🟡 PENDIENTE:', clienteId, '- Turno:', cuenta.turno, '- Tipo:', cuenta.tipo);
+                // console.log('🟡 PENDIENTE:', clienteId, '- Turno:', cuenta.turno, '- Tipo:', cuenta.tipo);
             }
         }
         
-        console.log('📊 RESUMEN - Activas:', activas.length, 'Pendientes:', pendientes.length);
+        // console.log('📊 RESUMEN - Activas:', activas.length, 'Pendientes:', pendientes.length);
         
         // Mostrar nota si hay pendientes
         if (pendientes.length > 0) {
@@ -122,7 +122,7 @@ function cargarCuentasAbiertas() {
                     <small class="text-muted">👆 Haz clic aquí para revisarlas</small>
                 </div>
             `;
-            console.log('🟡 Agregado HTML de pendientes mejorado');
+            // console.log('🟡 Agregado HTML de pendientes mejorado');
         }
         
         // Actualizar variable global para consistencia
@@ -135,10 +135,10 @@ function cargarCuentasAbiertas() {
                     <small class="text-muted">Turno: ${idTurno}</small>
                 </div>
             `;
-            console.log('ℹ️ Agregado mensaje mejorado: No hay cuentas activas');
+            // console.log('ℹ️ Agregado mensaje mejorado: No hay cuentas activas');
         } else {
             htmlContent += '<div class="list-group">';
-            console.log('📋 Generando lista para', activas.length, 'cuentas activas');
+            // console.log('📋 Generando lista para', activas.length, 'cuentas activas');
             activas.forEach((cuenta) => {
                 const totalFormateado = formatearPrecio(cuenta.total);
                 htmlContent += `
@@ -155,26 +155,26 @@ function cargarCuentasAbiertas() {
                 `;
             });
             htmlContent += '</div>';
-            console.log('✅ Lista de activas generada');
+            // console.log('✅ Lista de activas generada');
         }
         
-        console.log('📝 HTML final length:', htmlContent.length);
-        console.log('📝 HTML preview (primeros 200 chars):', htmlContent.substring(0, 200));
-        console.log('🎯 Container encontrado:', !!container);
-        console.log('🎯 Container ID:', container?.id);
+        // console.log('📝 HTML final length:', htmlContent.length);
+        // console.log('📝 HTML preview (primeros 200 chars):', htmlContent.substring(0, 200));
+        // console.log('🎯 Container encontrado:', !!container);
+        // console.log('🎯 Container ID:', container?.id);
         
         container.innerHTML = htmlContent;
-        console.log('✅ innerHTML asignado - contenido actualizado');
+        // console.log('✅ innerHTML asignado - contenido actualizado');
         
         // Verificar que realmente se asignó
         setTimeout(() => {
-            console.log('🔍 Verificación post-asignación - container.innerHTML length:', container.innerHTML.length);
+            // console.log('🔍 Verificación post-asignación - container.innerHTML length:', container.innerHTML.length);
         }, 100);
     });
 }
 // Mostrar cuentas pendientes en containerPendientes
 window.mostrarCuentasPendientes = function() {
-    console.log('🔵 Mostrando cuentas pendientes...');
+    // console.log('🔵 Mostrando cuentas pendientes...');
     
     // FORZAR ocultación de TODOS los containers específicamente
     const todosLosContainers = ['container', 'container1', 'container2', 'container3', 'containerPendientes', 'containerResumenTurno'];
@@ -186,7 +186,7 @@ window.mostrarCuentasPendientes = function() {
             elemento.classList.remove('js-visible', 'd-block', 'container-visible', 'd-block-force');
             // Agregar todas las clases de ocultación
             elemento.classList.add('js-hidden', 'd-none');
-            console.log(`🔍 ${containerId} ocultado - clases:`, elemento.className);
+            // console.log(`🔍 ${containerId} ocultado - clases:`, elemento.className);
         }
     });
     
@@ -195,8 +195,8 @@ window.mostrarCuentasPendientes = function() {
     if (containerPendientes) {
         containerPendientes.classList.remove('js-hidden', 'd-none');
         containerPendientes.classList.add('js-visible', 'd-block', 'container-visible');
-        console.log('✅ Container pendientes mostrado');
-        console.log('🔍 Clases finales containerPendientes:', containerPendientes.className);
+        // console.log('✅ Container pendientes mostrado');
+        // console.log('🔍 Clases finales containerPendientes:', containerPendientes.className);
     }
     
     const container = document.getElementById('cuentasPendientesTurno');
@@ -223,7 +223,7 @@ window.mostrarCuentasPendientes = function() {
         htmlContent = `
             <div class="alert alert-warning">
                 <strong>📋 ${pendientes.length} cuenta(s) pendiente(s) encontrada(s)</strong>
-                <br><small>Incluye cuentas "En cuaderno" y de turnos anteriores</small>
+                <br><!--<small>Incluye cuentas "En cuaderno" y de turnos anteriores</small>-->
             </div>
             <div class="list-group">
         `;
@@ -254,7 +254,7 @@ window.mostrarCuentasPendientes = function() {
 
 // Evento que se dispara cuando el DOM está completamente cargado
 document.addEventListener("DOMContentLoaded", async function () {
-    console.log("🔄 Verificando sesión automáticamente...");
+    // console.log("🔄 Verificando sesión automáticamente...");
     
     // CONFIGURACIÓN DE ELEMENTOS DE INTERFAZ (SIEMPRE SE EJECUTA)
     const emailInput = document.getElementById("emailinicio");
@@ -277,7 +277,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 ocultarInventario();
             }
         });
-        console.log("✅ Evento del buscador configurado");
+        // console.log("✅ Evento del buscador configurado");
     } else {
         console.warn("⚠️ Campo de búsqueda no encontrado");
     }
@@ -291,19 +291,19 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // Eventos del formulario de login
     if (loginButton) {
-        console.log('✅ Event listener del loginButton configurado');
+        // console.log('✅ Event listener del loginButton configurado');
         loginButton.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('🔵 LoginButton clickeado - mostrando formulario');
+            // console.log('🔵 LoginButton clickeado - mostrando formulario');
             
             if (loginForm) {
                 loginForm.classList.remove('js-hidden', 'd-none');
                 loginForm.classList.add('js-visible', 'd-block');
-                console.log('✅ Formulario mostrado');
+                // console.log('✅ Formulario mostrado');
             }
             
             loginButton.classList.add('js-hidden');
-            console.log('✅ Botón ocultado');
+            // console.log('✅ Botón ocultado');
         });
     } else {
         console.error('🔴 No se encontró loginButton');
@@ -312,18 +312,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (closeButton) {
         closeButton.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('🔵 CloseButton clickeado - ocultando formulario');
+            // console.log('🔵 CloseButton clickeado - ocultando formulario');
             
             if (loginForm) {
                 loginForm.classList.add('js-hidden', 'd-none');
                 loginForm.classList.remove('js-visible', 'd-block');
-                console.log('✅ Formulario ocultado');
+                // console.log('✅ Formulario ocultado');
             }
             
             if (loginButton) {
                 loginButton.classList.remove('js-hidden');
                 loginButton.classList.add('js-inline-block');
-                console.log('✅ Botón mostrado');
+                // console.log('✅ Botón mostrado');
             }
         });
     }
@@ -339,7 +339,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 await iniciarSesion(email, password, recordar);
                 
                 // Solo ejecutar esto si el login fue exitoso
-                console.log('✅ Login exitoso, redirigiendo...');
+                // console.log('✅ Login exitoso, redirigiendo...');
                 
                 if (container) {
                     container.classList.add('js-hidden');
@@ -362,7 +362,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             } catch (error) {
                 console.error("🔴 Fallo al iniciar sesión:", error);
                 // NO redirigir si hay error - el usuario se queda en la pantalla de login
-                console.log('🔴 Login falló, manteniendo pantalla de login');
+                // console.log('🔴 Login falló, manteniendo pantalla de login');
                 // El error ya fue mostrado por la función iniciarSesion
             }
         });
@@ -374,7 +374,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         
         if (estadoSesion.autenticado && estadoSesion.turnoActivo) {
             // Usuario autenticado con turno activo - ir directo a container2
-            console.log("✅ Sesión y turno activos - redirigiendo a cuentas");
+            // console.log("✅ Sesión y turno activos - redirigiendo a cuentas");
             mostrarContainer('container2');
             
             // Actualizar UI con información del usuario
@@ -387,7 +387,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             
         } else if (estadoSesion.autenticado && !estadoSesion.turnoActivo) {
             // Usuario autenticado pero sin turno activo - mostrar aviso y login
-            console.log("⚠️ Usuario autenticado pero sin turno activo");
+            // console.log("⚠️ Usuario autenticado pero sin turno activo");
             mostrarPersonalizado({
                 icon: 'info',
                 title: 'Sesión Recuperada',
@@ -398,7 +398,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             
         } else {
             // No autenticado - mostrar login
-            console.log("❌ No hay sesión activa - mostrar login");
+            // console.log("❌ No hay sesión activa - mostrar login");
             mostrarContainer('container');
         }
         
@@ -410,7 +410,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 // Función para cambiar entre contenedores (expuesta globalmente)
 function mostrarContainer(idMostrar) {
-    console.log('🔵 mostrarContainer llamado con:', idMostrar);
+    // console.log('🔵 mostrarContainer llamado con:', idMostrar);
     
     // Verificar que el elemento existe
     const elementoDestino = document.getElementById(idMostrar);
@@ -419,7 +419,7 @@ function mostrarContainer(idMostrar) {
         return;
     }
     
-    console.log('✅ Elemento encontrado:', elementoDestino);
+    // console.log('✅ Elemento encontrado:', elementoDestino);
     
     // OCULTAR TODOS los containers - usando solo clases CSS
     document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
@@ -431,19 +431,19 @@ function mostrarContainer(idMostrar) {
     elementoDestino.classList.remove('js-hidden', 'd-none');
     elementoDestino.classList.add('js-visible', 'd-block', 'container-visible');
     
-    console.log('✅ Container mostrado:', idMostrar);
-    console.log('🔍 Clases finales:', elementoDestino.className);
+    // console.log('✅ Container mostrado:', idMostrar);
+    // console.log('🔍 Clases finales:', elementoDestino.className);
     
     if (idMostrar === "container1") {
-        console.log('🔵 Inicializando container1...');
+        // console.log('🔵 Inicializando container1...');
         ocultarInventario();
         renderCarrito();
     }
     if (idMostrar === "container2") {
-        console.log('🔵 Inicializando container2 - cargando cuentas abiertas...');
+        // console.log('🔵 Inicializando container2 - cargando cuentas abiertas...');
         try {
             cargarCuentasAbiertas();
-            console.log('✅ cargarCuentasAbiertas() ejecutado');
+            // console.log('✅ cargarCuentasAbiertas() ejecutado');
         } catch (error) {
             console.error('🔴 ERROR en cargarCuentasAbiertas():', error);
         }
@@ -451,7 +451,7 @@ function mostrarContainer(idMostrar) {
     if (idMostrar === "containerPendientes") {
         // Si no hay cuentas pendientes cargadas, ir primero a cargar las cuentas activas
         if (!window._cuentasPendientes || window._cuentasPendientes.length === 0) {
-            console.log("No hay cuentas pendientes cargadas, cargando primero las cuentas activas...");
+            // console.log("No hay cuentas pendientes cargadas, cargando primero las cuentas activas...");
             // Forzar carga de cuentas activas para actualizar pendientes
             cargarCuentasAbiertas();
             // Esperar un momento y luego mostrar pendientes
@@ -475,7 +475,7 @@ function mostrarContainer(idMostrar) {
 
 // Función para cerrar sesión (expuesta globalmente)
 async function cerrarSesion() {
-    console.log('🔵 Iniciando proceso de cierre de sesión...');
+    // console.log('🔵 Iniciando proceso de cierre de sesión...');
     
     const confirmacion = await mostrarConfirmacion(
         '¿Cerrar Sesión?',
@@ -517,7 +517,7 @@ async function cerrarSesion() {
             cerrarModal();
             mostrarExito('Sesión cerrada correctamente');
             
-            console.log('✅ Sesión cerrada exitosamente');
+            // console.log('✅ Sesión cerrada exitosamente');
         } catch (error) {
             cerrarModal();
             mostrarError('Error al cerrar sesión', error.message);

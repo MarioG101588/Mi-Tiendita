@@ -99,4 +99,4 @@ export function migrarFormatoAnterior(precioAnterior) {
     return formatearPrecio(precioAnterior);
 }
 
-console.log('📊 Módulo FormateoPrecios cargado - Formato: "$ 20.000"');
+// console.log('📊 Módulo FormateoPrecios cargado - Formato: "$ 20.000"');

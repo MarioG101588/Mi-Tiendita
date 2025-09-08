@@ -30,10 +30,10 @@ export async function cargarInventario(filtro = "") {
     resultadoDiv.innerHTML = "Cargando...";
 
     try {
-        console.log('🔵 Cargando inventario con filtro:', filtro);
+        // console.log('🔵 Cargando inventario con filtro:', filtro);
         const inventarioRef = collection(db, "inventario");
         const snapshot = await getDocs(inventarioRef);
-        console.log('✅ Documentos obtenidos:', snapshot.size);
+        // console.log('✅ Documentos obtenidos:', snapshot.size);
 
         let html = `
             <div class="table-responsive inventario-table-container">
@@ -88,6 +88,6 @@ export function ocultarInventario() {
         resultadoDiv.classList.add("js-hidden", "d-none");
         resultadoDiv.classList.remove("js-visible", "d-block");
         resultadoDiv.innerHTML = "";
-        console.log('✅ Inventario ocultado');
+        // console.log('✅ Inventario ocultado');
     }
 }

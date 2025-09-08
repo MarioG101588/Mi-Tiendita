@@ -64,11 +64,11 @@
     <div id="cuentasPendientesTurno" class="mt-1 mb-2"></div>
     <div class="d-flex flex-wrap gap-2 mt-3">
         <button onclick="mostrarContainer('container2')" class="btn btn-primary flex-fill">
-            ↩️ Ir a Cuentas Activas
+            ↩️ Ir a INICIO
         </button>
-        <button onclick="window.mostrarCuentasPendientes();" class="btn btn-outline-secondary flex-fill">
+        <!--<button onclick="window.mostrarCuentasPendientes();" class="btn btn-outline-secondary flex-fill">
             🔄 Actualizar Lista
-        </button>
+        </button>-->
     </div>
 </div>
 
@@ -78,11 +78,11 @@
     <div id="loginForm" class="d-none">
         <div class="form-floating mb-3">
             <input type="email" class="form-control" id="emailinicio" placeholder="name@example.com">
-            <label for="emailinicio">Email address</label>
+            <label for="emailinicio">Tu Correo Electronico</label>
         </div>
         <div class="form-floating mb-3">
             <input type="password" class="form-control" id="passwordinicio" placeholder="Password">
-            <label for="passwordinicio">Password</label>
+            <label for="passwordinicio">Tu Contraseña</label>
         </div>
         <div class="form-check mb-3">
         <input class="form-check-input" type="checkbox" id="recordarDatos">
@@ -104,21 +104,22 @@
     <div id="carritoVenta"></div>
     <div class="d-flex justify-content-center">
         <button onclick="mostrarContainer('container2')" class="btn btn-primary">
-            📋 Ir a Cuentas En Turno
+            📋 Ir a Cuentas INICIO
         </button>
     </div>
 </div>
 </div>
 <div class="container2 d-none" id="container2">
     <h1 class="titulo-superior">Cigarreria y Algo Mas El Arrendajo Azul</h1>
-    <h2 class="titulo-superior">Cuentas En Turno</h2>
+    <h2 class="titulo-superior">INICIO</h2>
+    <h3 class="titulo-superior">Cuentas En Turno</h3>
     <div id="cuentasActivasTurno" class="mt-1 mb-2"></div>
     <div class="d-flex flex-wrap gap-2">
         <button onclick="mostrarContainer('container1')" class="btn btn-success flex-fill">
             🛒 Nueva Venta
         </button>
         <button onclick="mostrarContainer('containerResumenTurno')" class="btn btn-info flex-fill">
-            📊 Ver Resumen del Turno
+            📊 Ver Resumen del Dia
         </button>
     </div>
 </div>
@@ -129,7 +130,7 @@
     <div id="resumenTurnoContent" class="mt-3 mb-3"></div>
     <div class="d-flex flex-wrap gap-2">
         <button onclick="mostrarContainer('container2')" class="btn btn-primary flex-fill">
-            ↩️ Volver a Cuentas En Turno
+            ↩️ Volver a INICIO
         </button>
         <button onclick="cerrarSesion()" class="btn btn-danger flex-fill">
             🚪 Cerrar sesión

@@ -215,7 +215,7 @@ export async function realizarVenta(carrito) {
 
         } catch (error) {
             mostrarError(`Ocurrió un error al procesar la venta: ${error.message}`);
-            console.error("Error en realizarVenta:", error);
+            // console.error("Error en realizarVenta:", error);
         }
     }
 }

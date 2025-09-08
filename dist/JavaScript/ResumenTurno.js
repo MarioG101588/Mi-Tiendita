@@ -31,7 +31,7 @@ function formatearFechaAbreviada(fecha) {
  * @returns {Promise<Object>} resumen
  */
 export async function obtenerResumenTurno(idTurno) {
-    console.log('=== INICIANDO RESUMEN PARA TURNO:', idTurno, '===');
+    // console.log('=== INICIANDO RESUMEN PARA TURNO:', idTurno, '===');
     
     // 1. Obtener ventas cerradas del turno
     const cuentasCerradasRef = doc(db, 'cuentasCerradas', idTurno);
@@ -45,7 +45,7 @@ export async function obtenerResumenTurno(idTurno) {
     const cuentasActivasDelTurno = [];
     cuentasSnap.forEach(doc => cuentasActivasDelTurno.push({ id: doc.id, ...doc.data() }));
     
-    console.log('Cuentas activas del turno encontradas:', cuentasActivasDelTurno.length);
+    // console.log('Cuentas activas del turno encontradas:', cuentasActivasDelTurno.length);
 
     // 3. TAMBIÉN obtener TODAS las cuentas "En cuaderno" (sin filtrar por turno)
     const todasCuentasRef = collection(db, 'cuentasActivas');
@@ -54,7 +54,7 @@ export async function obtenerResumenTurno(idTurno) {
     const todasCuentasEnCuaderno = [];
     todasCuentasSnap.forEach(doc => todasCuentasEnCuaderno.push({ id: doc.id, ...doc.data() }));
     
-    console.log('TODAS las cuentas En cuaderno encontradas:', todasCuentasEnCuaderno.length);
+    // console.log('TODAS las cuentas En cuaderno encontradas:', todasCuentasEnCuaderno.length);
 
     // 4. Calcular totales
     let totalTabaco = 0;
@@ -103,7 +103,7 @@ export async function obtenerResumenTurno(idTurno) {
 
     // 5. Procesar cuentas activas DEL TURNO (para consumo en local)
     for (const cuenta of cuentasActivasDelTurno) {
-        console.log('Procesando cuenta del turno:', cuenta.cliente || cuenta.id, 'Tipo:', cuenta.tipo, 'Total:', cuenta.total);
+        // console.log('Procesando cuenta del turno:', cuenta.cliente || cuenta.id, 'Tipo:', cuenta.tipo, 'Total:', cuenta.total);
         
         if (cuenta.tipo === 'Consumo en el local') {
             totalNoCobradas += cuenta.total || 0;
@@ -112,7 +112,7 @@ export async function obtenerResumenTurno(idTurno) {
     
     // 6. Procesar TODAS las cuentas "En cuaderno" (independiente del turno)
     for (const cuenta of todasCuentasEnCuaderno) {
-        console.log('Procesando cuenta En cuaderno:', cuenta.cliente || cuenta.id, 'Turno:', cuenta.turno, 'Total:', cuenta.total);
+        // console.log('Procesando cuenta En cuaderno:', cuenta.cliente || cuenta.id, 'Turno:', cuenta.turno, 'Total:', cuenta.total);
         
         // Recopilar detalles de cada cuenta en cuaderno
         const cuentaDetalle = {
@@ -123,21 +123,21 @@ export async function obtenerResumenTurno(idTurno) {
             turno: cuenta.turno || 'Sin turno'
         };
         
-        console.log('Detalle de cuenta agregado:', cuentaDetalle);
+        // console.log('Detalle de cuenta agregado:', cuentaDetalle);
         cuentasEnCuaderno.push(cuentaDetalle);
     }
     
-    console.log('Total cuentas En cuaderno encontradas:', cuentasEnCuaderno.length);
-    console.log('Array cuentasEnCuaderno:', cuentasEnCuaderno);
+    // console.log('Total cuentas En cuaderno encontradas:', cuentasEnCuaderno.length);
+    // console.log('Array cuentasEnCuaderno:', cuentasEnCuaderno);
 
     // 7. Calcular pago de turno
     const pagoTurno = Math.round(totalCuentasCerradas * 0.10 + 7000);
 
-    console.log('=== RESUMEN FINAL ===');
-    console.log('Total tabaco:', totalTabaco);
-    console.log('Total no cobradas:', totalNoCobradas);
-    console.log('Cuentas en cuaderno:', cuentasEnCuaderno.length);
-    console.log('Total cuentas cerradas:', totalCuentasCerradas);
+    // console.log('=== RESUMEN FINAL ===');
+    // console.log('Total tabaco:', totalTabaco);
+    // console.log('Total no cobradas:', totalNoCobradas);
+    // console.log('Cuentas en cuaderno:', cuentasEnCuaderno.length);
+    // console.log('Total cuentas cerradas:', totalCuentasCerradas);
 
     return {
         totalTabaco,
@@ -158,20 +158,20 @@ export function renderizarResumenTurno(resumen, containerId) {
     const c = document.getElementById(containerId);
     if (!c) return;
     
-    console.log('Renderizando resumen con:', resumen);
-    console.log('Cuentas en cuaderno recibidas:', resumen.cuentasEnCuaderno);
+    // console.log('Renderizando resumen con:', resumen);
+    // console.log('Cuentas en cuaderno recibidas:', resumen.cuentasEnCuaderno);
     
     // Calcular total de cuentas en cuaderno
     const totalEnCuaderno = resumen.cuentasEnCuaderno.reduce((sum, cuenta) => sum + cuenta.total, 0);
-    console.log('Total calculado En cuaderno:', totalEnCuaderno);
+    // console.log('Total calculado En cuaderno:', totalEnCuaderno);
     
     // Generar listado de cuentas en cuaderno
     let listadoCuentasEnCuaderno = '';
     if (resumen.cuentasEnCuaderno.length > 0) {
-        console.log('Generando listado para', resumen.cuentasEnCuaderno.length, 'cuentas');
+        // console.log('Generando listado para', resumen.cuentasEnCuaderno.length, 'cuentas');
         
         const listItems = resumen.cuentasEnCuaderno.map(cuenta => {
-            console.log('Generando item para:', cuenta);
+            // console.log('Generando item para:', cuenta);
             return `<li class="small text-muted mt-1">
                 👤 <strong>${cuenta.cliente}</strong> 
                 <span class="badge bg-secondary ms-1">${cuenta.turno}</span><br>
@@ -189,9 +189,9 @@ export function renderizarResumenTurno(resumen, containerId) {
             </details>
         `;
         
-        console.log('HTML generado para listado:', listadoCuentasEnCuaderno);
+        // console.log('HTML generado para listado:', listadoCuentasEnCuaderno);
     } else {
-        console.log('No hay cuentas En cuaderno para mostrar');
+        // console.log('No hay cuentas En cuaderno para mostrar');
     }
     
     c.innerHTML = `

@@ -42,7 +42,7 @@ function convertirIdTurnoAFecha(idTurno) {
         
         return fecha.toLocaleDateString('es-ES', opciones);
     } catch (error) {
-        console.error('Error al convertir idTurno a fecha:', error);
+        // console.error('Error al convertir idTurno a fecha:', error);
         return 'Fecha inválida';
     }
 }
@@ -125,6 +125,17 @@ export async function cargarDetalleCuenta(clienteId) {
         }
 
         const productosObj = cuenta.productos || {};
+        const esTipoEnCuaderno = cuenta.tipo === 'En cuaderno';
+        
+        // Obtener la fecha de creación real del primer producto
+        let fechaCreacionReal = 'No disponible';
+        if (esTipoEnCuaderno) {
+            const primerProducto = Object.values(productosObj)[0];
+            if (primerProducto && primerProducto.primerPedido) {
+                fechaCreacionReal = primerProducto.primerPedido;
+            }
+        }
+        
         for (const productoId in productosObj) {
             const producto = productosObj[productoId] || {};
             const subtotal = producto.total ?? 0;
@@ -134,27 +145,106 @@ export async function cargarDetalleCuenta(clienteId) {
             const precioUnitarioFormateado = formatearPrecio(precioUnitario);
             const precioTotalFormateado = formatearPrecio(subtotal);
             
-            // Información de fechas
-            const primerPedido = producto.primerPedido ? `<small class="text-muted">Primer pedido: ${producto.primerPedido}</small>` : '';
-            const ultimaFecha = producto.ultimaFecha ? `<small class="text-muted">Último pedido: ${producto.ultimaFecha}</small>` : '';
+            // Botones de cantidad solo para "Consumo en el local"
+            let botonesEdicion = '';
+            if (!esTipoEnCuaderno) {
+                botonesEdicion = `
+                    <div class="mt-2">
+                        <button class="btn btn-cantidad" onclick="window.disminuirCantidadCuenta('${clienteId}','${productoId}')">-</button>
+                        <span class="mx-3 fw-bold fs-5">${cantidad}</span>
+                        <button class="btn btn-cantidad" onclick="window.aumentarCantidadCuenta('${clienteId}','${productoId}')">+</button>
+                    </div>
+                `;
+            } else {
+                botonesEdicion = `<span class="fw-bold fs-5 text-primary">Cantidad: ${cantidad}</span>`;
+            }
 
             productosHtml += `
                 <tr>
-                    <td>
-                        <strong>${producto.nombre || 'Producto sin nombre'}</strong>
-                        <div class="mt-1">
-                            <button class="btn btn-cantidad" onclick="window.disminuirCantidadCuenta('${clienteId}','${productoId}')">-</button>
-                            <span class="mx-2 fw-bold">${cantidad}</span>
-                            <button class="btn btn-cantidad" onclick="window.aumentarCantidadCuenta('${clienteId}','${productoId}')">+</button>
-                        </div>
-                        ${primerPedido ? `<div>${primerPedido}</div>` : ''}
-                        ${ultimaFecha && ultimaFecha !== primerPedido ? `<div>${ultimaFecha}</div>` : ''}
+                    <td class="py-3">
+                        <div class="fw-bold fs-6 mb-1">${producto.nombre || 'Producto sin nombre'}</div>
+                        ${botonesEdicion}
                     </td>
-                    <td class="text-center">${precioUnitarioFormateado}</td>
-                    <td class="text-end fw-bold">${precioTotalFormateado}</td>
+                    <td class="text-center py-3 fs-6">${precioUnitarioFormateado}</td>
+                    <td class="text-end py-3 fw-bold fs-5">${precioTotalFormateado}</td>
                 </tr>
             `;
         }
+
+        const totalFormateado = formatearPrecio(total);
+
+        detalleContainer.innerHTML = `
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">📋 Cuenta: ${cuenta.cliente || 'Cliente'}</h3>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="badge bg-warning text-dark fs-6">${cuenta.tipo || 'Pendiente'}</span>
+                        ${esTipoEnCuaderno ? `<small>📅 Creada: ${fechaCreacionReal}</small>` : ''}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-3 text-center">📦 Productos ordenados:</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="font-size: 1.1rem;">Producto</th>
+                                    <th class="text-center" style="font-size: 1.1rem;">Precio c/u</th>
+                                    <th class="text-end" style="font-size: 1.1rem;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody style="font-size: 1rem;">
+                                ${productosHtml}
+                            </tbody>
+                            <tfoot class="table-success">
+                                <tr>
+                                    <th colspan="3" class="text-center py-3" style="font-size: 1.3rem;">
+                                        💰 TOTAL A PAGAR: ${totalFormateado}
+                                    </th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    ${!esTipoEnCuaderno ? `
+                        <!--<div class="alert alert-info text-center mt-3">
+                            <i class="bi bi-info-circle"></i> <strong>Consumo en el local:</strong> 
+                            Puedes ajustar las cantidades usando los botones + y -
+                        </div>-->
+                    ` : `
+                        <!--<div class="alert alert-warning text-center mt-3">
+                            <i class="bi bi-journal-text"></i> <strong>Cuenta en cuaderno:</strong> 
+                            Solo lectura - No se pueden modificar las cantidades
+                        </div>-->
+                    `}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <button class="btn btn-secondary btn-lg" onclick="mostrarContainer('container2')">
+                            ↩️ Volver
+                        </button>
+
+                        <button class="btn btn-success btn-lg" onclick="cerrarCuenta('${clienteId}')">
+                            💰 Pagar cuenta
+                        </button>
+                        <button class="btn btn-info btn-lg" onclick="pagoAmericano('${clienteId}')">
+                            💳 Pago Americano
+                        </button>
+                        <button class="btn btn-danger btn-lg" onclick="window.borrarCuentaActiva('${clienteId}')">
+                            🗑️ Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        cerrarModal();
+    } catch (error) {
+        mostrarError(`No se pudo cargar el detalle: ${error.message}`);
+        // console.error("Error cargarDetalleCuenta:", error);
+    }
+}
+
 // --- FUNCIONES PARA EDITAR CANTIDAD DE PRODUCTOS EN CUENTAS ACTIVAS ---
 
 async function modificarCantidadProductoCuenta(clienteId, productoId, operacion) {
@@ -270,97 +360,6 @@ window.disminuirCantidadCuenta = function(clienteId, productoId) {
     modificarCantidadProductoCuenta(clienteId, productoId, 'disminuir');
 };
 
-        const totalFormateado = formatearPrecio(total);
-        const fechaActual = new Date().toLocaleDateString('es-CO', { 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-
-        detalleContainer.innerHTML = `
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">📋 Cuenta de ${cuenta.cliente || 'Cliente'}</h3>
-                    <small>Estado: <span class="badge bg-warning text-dark">${cuenta.tipo || 'Pendiente'}</span></small>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <small class="text-muted">Fecha de consulta:</small><br>
-                            <strong>${fechaActual}</strong>
-                        </div>
-                        <div class="col-md-6 text-end">
-                            <small class="text-muted">Fecha del turno:</small><br>
-                            <code>${convertirIdTurnoAFecha(cuenta.turno)}</code>
-                        </div>
-                    </div>
-                    
-                    <h5 class="mb-3">📦 Resumen de productos:</h5>
-                    <div class="table-responsive tabla-resumen-productos">
-                        <table class="table table-striped table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Producto, Cantidad y Fechas</th>
-                                    <th class="text-center">Precio Unit.</th>
-                                    <th class="text-end">Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${productosHtml}
-                            </tbody>
-                            <tfoot class="table-success">
-                                <tr>
-                                    <th colspan="3" class="text-center fs-4">TOTAL A PAGAR: ${totalFormateado}</th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-
-                    ${historialHtml ? `
-                        <div class="mt-4">
-                            <h5 class="mb-3">📋 Historial de pedidos (${historial.length} compras):</h5>
-                            <div class="accordion accordion-flush" id="historialAccordion">
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header">
-                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#historialCollapse">
-                                            Ver historial completo de compras
-                                        </button>
-                                    </h2>
-                                    <div id="historialCollapse" class="accordion-collapse collapse" data-bs-parent="#historialAccordion">
-                                        <div class="accordion-body">
-                                            ${historialHtml}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-                <div class="card-footer">
-                    <div class="d-flex flex-wrap gap-2 justify-content-center">
-                        <button class="btn btn-secondary" onclick="mostrarContainer('container2')">
-                            ↩️ Volver
-                        </button>
-
-                        <button class="btn btn-success btn-lg" onclick="cerrarCuenta('${clienteId}')">
-                            💰 Pagar cuenta
-                        </button>
-                        <button class="btn btn-info" onclick="pagoAmericano('${clienteId}')">
-                            💳 Pago Americano
-                        </button>
-                        <button class="btn btn-danger" onclick="window.borrarCuentaActiva('${clienteId}')">
-                            🗑️ Eliminar Cuenta
-                        </button>
-                    </div>
-                    <small class="text-muted d-block text-center mt-2">
-                        💡 Tip: Use los botones + y - para ajustar cantidades antes del pago. 
-                        📅 Cada producto muestra cuándo fue pedido por primera y última vez.
-                    </small>
-                </div>
-            </div>
-        `;
 // --- BORRAR CUENTA ACTIVA ---
 window.borrarCuentaActiva = async function(clienteId) {
     const confirm = await mostrarConfirmacion(
@@ -378,13 +377,6 @@ window.borrarCuentaActiva = async function(clienteId) {
         mostrarError('No se pudo eliminar la cuenta: ' + error.message);
     }
 };
-
-        cerrarModal();
-    } catch (error) {
-        mostrarError(`No se pudo cargar el detalle: ${error.message}`);
-        console.error("Error cargarDetalleCuenta:", error);
-    }
-}
 
 // ---------- FUNCIONES GLOBALES ----------
 
@@ -506,7 +498,7 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
 
     } catch (error) {
         mostrarError(`No se pudo cerrar la cuenta: ${error.message}`);
-        console.error("Error al cerrar la cuenta:", error);
+        // console.error("Error al cerrar la cuenta:", error);
     }
 };
 

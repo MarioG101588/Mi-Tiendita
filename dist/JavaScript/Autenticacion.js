@@ -22,14 +22,14 @@ const db = getFirestore(app);
  * Verifica automáticamente si hay una sesión activa y un turno activo
  */
 export function verificarSesionAutomatica() {
-    console.log('🔵 verificarSesionAutomatica: Iniciando verificación...');
+    // console.log('🔵 verificarSesionAutomatica: Iniciando verificación...');
     
     return new Promise((resolve) => {
         onAuthStateChanged(auth, async (user) => {
-            console.log('🔵 onAuthStateChanged disparado, user:', user ? user.email : 'null');
+            // console.log('🔵 onAuthStateChanged disparado, user:', user ? user.email : 'null');
             
             if (user) {
-                console.log("✅ Usuario autenticado encontrado:", user.email);
+                // console.log("✅ Usuario autenticado encontrado:", user.email);
                 
                 try {
                     // Buscar turno activo del usuario
@@ -38,10 +38,10 @@ export function verificarSesionAutomatica() {
                         where("usuario", "==", user.email),
                         where("estado", "==", "activo")
                     );
-                    console.log('🔵 Buscando turno activo para:', user.email);
+                    // console.log('🔵 Buscando turno activo para:', user.email);
                     
                     const querySnapshot = await getDocs(q);
-                    console.log('🔵 Resultado query turnos:', querySnapshot.size, 'documentos');
+                    // console.log('🔵 Resultado query turnos:', querySnapshot.size, 'documentos');
                     
                     if (!querySnapshot.empty) {
                         // Turno activo encontrado
@@ -49,8 +49,8 @@ export function verificarSesionAutomatica() {
                         localStorage.setItem("idTurno", turnoActivo.idTurno);
                         localStorage.setItem("usuarioActual", user.email);
                         
-                        console.log("✅ Turno activo encontrado:", turnoActivo.idTurno);
-                        console.log("✅ Datos guardados en localStorage");
+                        // console.log("✅ Turno activo encontrado:", turnoActivo.idTurno);
+                        // console.log("✅ Datos guardados en localStorage");
                         
                         resolve({ 
                             autenticado: true, 
@@ -60,7 +60,7 @@ export function verificarSesionAutomatica() {
                         });
                     } else {
                         // Usuario autenticado pero sin turno activo
-                        console.log("Usuario autenticado pero sin turno activo");
+                        // console.log("Usuario autenticado pero sin turno activo");
                         resolve({ 
                             autenticado: true, 
                             turnoActivo: false, 
@@ -78,7 +78,7 @@ export function verificarSesionAutomatica() {
                     });
                 }
             } else {
-                console.log("No hay usuario autenticado");
+                // console.log("No hay usuario autenticado");
                 // Limpiar datos locales
                 localStorage.removeItem("idTurno");
                 localStorage.removeItem("usuarioActual");

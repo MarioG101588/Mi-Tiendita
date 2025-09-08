@@ -7,19 +7,19 @@ import Swal from "https://cdn.jsdelivr.net/npm/sweetalert2@11.10.5/+esm";
  * Configuración inicial - MODO DIAGNÓSTICO
  */
 function configurarSweetAlert() {
-    console.log('🔵 SweetAlertManager: Configurando en modo diagnóstico');
+    // console.log('🔵 SweetAlertManager: Configurando en modo diagnóstico');
     
     // TEMPORALMENTE: Solo interceptar addEventListener problemático
     const originalAddEventListener = window.addEventListener;
     window.addEventListener = function(type, listener, options) {
         if (type === 'unload' || type === 'beforeunload') {
-            console.log('🟡 SweetAlertManager: Bloqueando evento', type);
+            // console.log('🟡 SweetAlertManager: Bloqueando evento', type);
             return; // Bloquear solo estos eventos problemáticos
         }
         return originalAddEventListener.call(this, type, listener, options);
     };
     
-    console.log('✅ SweetAlertManager: Configuración completada');
+    // console.log('✅ SweetAlertManager: Configuración completada');
 }
 
 // Ejecutar configuración inmediatamente
@@ -266,6 +266,6 @@ export function log(mensaje, tipo = 'info') {
     } else if (tipo === 'warn') {
         console.warn(`🟡 SweetAlertManager: ${mensaje}`);
     } else {
-        console.log(`🔵 SweetAlertManager: ${mensaje}`);
+        // console.log(`🔵 SweetAlertManager: ${mensaje}`);
     }
 }
