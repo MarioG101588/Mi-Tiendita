@@ -341,14 +341,10 @@ details .detalle-content {
 @media (min-width: 576px) {
     .container,
     .container1,
+    .container2,
     .container3,
     .containerPendientes,
     .containerResumenTurno {
-        max-width: 540px;
-        padding: 25px;
-    }
-    
-    .container2 {
         max-width: 650px;
         padding: 25px;
     }
@@ -366,14 +362,10 @@ details .detalle-content {
 @media (min-width: 768px) {
     .container,
     .container1,
+    .container2,
     .container3,
     .containerPendientes,
     .containerResumenTurno {
-        max-width: 720px;
-        padding: 30px;
-    }
-    
-    .container2 {
         max-width: 850px;
         padding: 30px;
     }
@@ -397,14 +389,10 @@ details .detalle-content {
 @media (min-width: 992px) {
     .container,
     .container1,
+    .container2,
     .container3,
     .containerPendientes,
     .containerResumenTurno {
-        max-width: 960px;
-        padding: 35px;
-    }
-    
-    .container2 {
         max-width: 1100px;
         padding: 35px;
     }
@@ -422,14 +410,10 @@ details .detalle-content {
 @media (min-width: 1200px) {
     .container,
     .container1,
+    .container2,
     .container3,
     .containerPendientes,
     .containerResumenTurno {
-        max-width: 1140px;
-        padding: 40px;
-    }
-    
-    .container2 {
         max-width: 1300px;
         padding: 40px;
     }
