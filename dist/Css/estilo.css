@@ -356,6 +356,12 @@ details .detalle-content {
     .table-responsive {
         max-height: 350px;
     }
+    
+    /* Tabla resumen de productos en tablets */
+    .tabla-resumen-productos {
+        margin: 0 -15px;
+        padding: 0 15px;
+    }
 }
 
 /* Tablets grandes */
@@ -467,6 +473,44 @@ details .detalle-content {
     .table-responsive {
         max-height: 250px;
         font-size: 0.85rem;
+    }
+    
+    /* Tabla resumen de productos más ancha en móviles */
+    .tabla-resumen-productos {
+        width: 100% !important;
+        margin: 0 -10px; /* Extiende hacia los bordes */
+        padding: 0 10px;
+        max-width: calc(100vw - 20px); /* Usa casi todo el ancho de la pantalla */
+    }
+    
+    .tabla-resumen-productos .table {
+        margin-bottom: 0;
+        font-size: 0.8rem;
+    }
+    
+    .tabla-resumen-productos th,
+    .tabla-resumen-productos td {
+        padding: 6px 4px;
+        white-space: nowrap;
+    }
+    
+    /* Ajustar columnas para aprovechar el espacio */
+    .tabla-resumen-productos th:first-child,
+    .tabla-resumen-productos td:first-child {
+        width: 50%;
+        white-space: normal;
+    }
+    
+    .tabla-resumen-productos th:nth-child(2),
+    .tabla-resumen-productos td:nth-child(2) {
+        width: 25%;
+        text-align: center;
+    }
+    
+    .tabla-resumen-productos th:nth-child(3),
+    .tabla-resumen-productos td:nth-child(3) {
+        width: 25%;
+        text-align: right;
     }
     
     .inventario-fija thead th {

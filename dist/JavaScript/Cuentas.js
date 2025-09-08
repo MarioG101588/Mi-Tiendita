@@ -297,7 +297,7 @@ window.disminuirCantidadCuenta = function(clienteId, productoId) {
                     </div>
                     
                     <h5 class="mb-3">📦 Resumen de productos:</h5>
-                    <div class="table-responsive">
+                    <div class="table-responsive tabla-resumen-productos">
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
