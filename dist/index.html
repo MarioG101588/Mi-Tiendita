@@ -2,6 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="Permissions-Policy" content="unload=(), camera=(), microphone=(), geolocation=()">YPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Permissions-Policy" content="unload=(), camera=(), microphone=(), geolocation=()">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:;">
@@ -42,24 +47,28 @@
     <!-- Template para modal de medios de pago -->
     <template id="modalMediosPagoTemplate">
         <div class="modal-pago-container">
-            <button type="button" class="pago-btn pago-efectivo" onclick="window.seleccionarMedioPagoModal('Efectivo')">
-                <span class="pago-emoji">💵</span>
-                <span>Efectivo</span>
-            </button>
-            <button type="button" class="pago-btn pago-nequi" onclick="window.seleccionarMedioPagoModal('Nequi')">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nequi_logo.svg/1200px-Nequi_logo.svg.png" 
-                     alt="Nequi" class="icono-pago nequi-logo">
-                <span>Nequi</span>
-            </button>
-            <button type="button" class="pago-btn pago-daviplata" onclick="window.seleccionarMedioPagoModal('Daviplata')">
-                <img src="https://play-lh.googleusercontent.com/EMobDJKabP1eVoxKVuHBGZsO-YMCvSDyyAWGnwh12LqHHPgjRdcOh7rpzrM6-T5Gf8E=w240-h480-rw" 
-                     alt="DaviPlata" class="icono-pago">
-                <span>DaviPlata</span>
-            </button>
+            <div class="pago-opcion" onclick="window.seleccionarMedioPagoModal('Efectivo')">
+                <img src="./pngs/efectivo.png" alt="Efectivo" class="icono-pago-principal">
+                <span class="texto-pago">Efectivo</span>
+            </div>
+            <div class="pago-opcion" onclick="window.seleccionarMedioPagoModal('Nequi')">
+                <img src="./pngs/nequi.png" alt="Nequi" class="icono-pago-principal">
+                <span class="texto-pago">Nequi</span>
+            </div>
+            <div class="pago-opcion" onclick="window.seleccionarMedioPagoModal('Daviplata')">
+                <img src="./pngs/daviplata.png" alt="DaviPlata" class="icono-pago-principal">
+                <span class="texto-pago">DaviPlata</span>
+            </div>
         </div>
     </template>
 
     <div class="containerPendientes d-none" id="containerPendientes">
+    
+    <!-- Logo del local -->
+    <div class="logo-container-pendientes mb-3">
+        <img src="./pngs/LogoLocal.png" alt="Logo El Arrendajo Azul" class="logo-pendientes" />
+    </div>
+    
     <h1 class="titulo-superior">📋 Cuentas Pendientes Por Cobrar</h1>
     <div id="cuentasPendientesTurno" class="mt-1 mb-2"></div>
     <div class="d-flex flex-wrap gap-2 mt-3">
@@ -74,6 +83,12 @@
 
     <div class="container container-login container-visible" id="container">
     <h1>Inicio de Sesión</h1>
+    
+    <!-- Logo del local -->
+    <div class="logo-container mb-4">
+        <img src="./pngs/LogoLocal.png" alt="Logo El Arrendajo Azul" class="logo-login" />
+    </div>
+    
     <button id="loginButton" class="btn-login">Iniciar de sesión</button>
     <div id="loginForm" class="d-none">
         <div class="form-floating mb-3">
@@ -97,26 +112,50 @@
     </div>
 <div class="container1 d-none" id="container1">
     <h1 class="titulo-superior">Ventas</h1>
+    
+    <!-- Logo del local -->
+    <div class="logo-container-ventas mb-3">
+        <img src="./pngs/LogoLocal.png" alt="Logo El Arrendajo Azul" class="logo-ventas" />
+    </div>
+    
     <div class="buscador-container">
-        <input type="text" id="campoBusqueda1" class="form-control" placeholder="Buscar productos...">
+        <div class="mobile-help">
+            💡 Consejo: Use los botones "Listo" y "Limpiar" para manejar el teclado fácilmente
+        </div>
+        <div class="buscador-header">
+            <h5 class="buscador-titulo">🔍 Buscar Productos</h5>
+        </div>
+        <div class="buscador-input-container">
+            <input type="text" id="campoBusqueda1" class="buscador-input" placeholder="Escriba aquí el nombre del producto...">
+            <div class="buscador-icon">🔍</div>
+        </div>
+        <div class="buscador-controles">
+            <button type="button" class="btn-listo" onclick="cerrarTeclado()">✓ Listo</button>
+            <button type="button" class="btn-limpiar" onclick="limpiarBusqueda()">✗ Limpiar</button>
+        </div>
     </div>
     <div id="resultadoBusqueda1" class="resultado-busqueda d-none"></div>
     <div id="carritoVenta"></div>
     <div class="d-flex justify-content-center">
         <button onclick="mostrarContainer('container2')" class="btn btn-primary">
-            📋 Ir a Cuentas INICIO
+            📋 Ir a INICIO
         </button>
     </div>
 </div>
 </div>
 <div class="container2 d-none" id="container2">
-    <h1 class="titulo-superior">Cigarreria y Algo Mas El Arrendajo Azul</h1>
+    <!-- Logo del local -->
+    <div class="logo-container-main mb-3">
+        <img src="./pngs/LogoLocal.png" alt="Logo El Arrendajo Azul" class="logo-main" />
+    </div>
+    
     <h2 class="titulo-superior">INICIO</h2>
+    <h1 class="titulo-superior">Cigarreria y Algo Mas El Arrendajo Azul</h1>
     <h3 class="titulo-superior">Cuentas En Turno</h3>
     <div id="cuentasActivasTurno" class="mt-1 mb-2"></div>
     <div class="d-flex flex-wrap gap-2">
         <button onclick="mostrarContainer('container1')" class="btn btn-success flex-fill">
-            🛒 Nueva Venta
+            🛒 Hacer Venta
         </button>
         <button onclick="mostrarContainer('containerResumenTurno')" class="btn btn-info flex-fill">
             📊 Ver Resumen del Dia
@@ -126,6 +165,11 @@
 </div>
 
 <div class="containerResumenTurno d-none" id="containerResumenTurno">
+            <!-- Logo del local -->
+        <div class="logo-container-resumen mb-3">
+            <img src="./pngs/LogoLocal.png" alt="Logo El Arrendajo Azul" class="logo-resumen" />
+        </div>
+
     <h1 class="titulo-superior">📊 Resumen del Turno</h1>
     <div id="resumenTurnoContent" class="mt-3 mb-3"></div>
     <div class="d-flex flex-wrap gap-2">

@@ -73,16 +73,23 @@ export function renderCarrito() {
     if (!divCarrito) return;
 
     let html = `
-        <table class="table table-sm table-bordered">
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Precio Total</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
+        <!-- Header del carrito con icono -->
+        <div class="carrito-header">
+            <img src="./pngs/CarritoC.png" alt="Carrito de Compras" class="carrito-icon" />
+            <h4 class="carrito-titulo">Carrito de Compras</h4>
+        </div>
+        
+        <div class="carrito-container">
+            <table class="table table-sm table-carrito">
+                <thead class="carrito-thead">
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
     `;
 
     let hayItems = false;
@@ -92,16 +99,18 @@ export function renderCarrito() {
         hayItems = true;
         totalGeneral += window.carrito[id].total;
         html += `
-            <tr>
-                <td>${window.carrito[id].nombre}</td>
-                <td>
-                    ${window.carrito[id].cantidad}
-                    <button class="btn btn-cantidad" onclick="window.disminuirCantidad('${id}')">-</button>
-                    <button class="btn btn-cantidad" onclick="window.aumentarCantidad('${id}')">+</button>
+            <tr class="carrito-row">
+                <td class="producto-cell">${window.carrito[id].nombre}</td>
+                <td class="cantidad-cell">
+                    <div class="cantidad-controls">
+                        <button class="btn-cantidad btn-menos" onclick="window.disminuirCantidad('${id}')">-</button>
+                        <span class="cantidad-display">${window.carrito[id].cantidad}</span>
+                        <button class="btn-cantidad btn-mas" onclick="window.aumentarCantidad('${id}')">+</button>
+                    </div>
                 </td>
-                <td>${formatearPrecio(window.carrito[id].total)}</td>
-                <td>
-                    <button class="btn btn-sm btn-danger" onclick="window.quitarDelCarrito('${id}')">Quitar</button>
+                <td class="total-cell">${formatearPrecio(window.carrito[id].total)}</td>
+                <td class="acciones-cell">
+                    <button class="btn-quitar" onclick="window.quitarDelCarrito('${id}')">Quitar</button>
                 </td>
             </tr>
         `;
@@ -110,11 +119,18 @@ export function renderCarrito() {
     html += `
             </tbody>
         </table>
-        <div class="carrito-total-right">
-            Total general: ${formatearPrecio(totalGeneral)}
+        
+        <div class="carrito-footer">
+            <div class="carrito-total">
+                <span class="total-label">Total General:</span>
+                <span class="total-amount">${formatearPrecio(totalGeneral)}</span>
+            </div>
+            <div class="carrito-actions">
+                <button class="btn-realizar-venta" onclick="window.realizarVenta()">
+                    Realizar Venta
+                </button>
+            </div>
         </div>
-        <div class="carrito-buttons-right">
-            <button class="btn btn-success" onclick="window.realizarVenta()">Realizar venta</button>
         </div>
     `;
 

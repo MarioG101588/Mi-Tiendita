@@ -195,7 +195,8 @@ export function renderizarResumenTurno(resumen, containerId) {
     }
     
     c.innerHTML = `
-        <h2>Resumen del Turno</h2>
+        
+        <!--<h2>Resumen del Turno</h2>-->
         <ul class="list-group mb-3">
             <li class="list-group-item">Total ventas de Cigarrillo: <b>${formatearPrecio(resumen.totalTabaco)}</b></li>
             <li class="list-group-item">Total ventas Consumo en el local no Pagas: <b>${formatearPrecio(resumen.totalNoCobradas)}</b></li>

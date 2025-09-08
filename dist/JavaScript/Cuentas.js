@@ -176,13 +176,18 @@ export async function cargarDetalleCuenta(clienteId) {
         detalleContainer.innerHTML = `
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">📋 Cuenta: ${cuenta.cliente || 'Cliente'}</h3>
+                    <h3 class="mb-0 titulo-cuenta-resaltado">📋 Cuenta: ${cuenta.cliente || 'Cliente'}</h3>
                     <div class="d-flex justify-content-between align-items-center mt-2">
                         <span class="badge bg-warning text-dark fs-6">${cuenta.tipo || 'Pendiente'}</span>
                         ${esTipoEnCuaderno ? `<small>📅 Creada: ${fechaCreacionReal}</small>` : ''}
                     </div>
                 </div>
                 <div class="card-body">
+                    <!-- Logo del local -->
+                    <div class="logo-container-detalle mb-3">
+                        <img src="./pngs/LogoLocal.png" alt="Logo El Arrendajo Azul" class="logo-detalle" />
+                    </div>
+                    
                     <h5 class="mb-3 text-center">📦 Productos ordenados:</h5>
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">

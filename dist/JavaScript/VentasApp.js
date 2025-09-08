@@ -229,3 +229,123 @@ async function procesarVentaEfectivoACerrada(carrito, medioPago) {
     // Usar la función existente procesarVentaDirecta
     return await procesarVentaDirecta(carrito, medioPago);
 }
+
+// ===============================================
+// FUNCIONES DE MEJORA PARA MÓVILES ANDROID
+// ===============================================
+
+/**
+ * Cierra el teclado virtual y quita el foco del campo activo
+ */
+window.cerrarTeclado = function() {
+    const campoActivo = document.activeElement;
+    if (campoActivo && (campoActivo.tagName === 'INPUT' || campoActivo.tagName === 'TEXTAREA')) {
+        campoActivo.blur();
+    }
+    
+    // Remover clase de campo activo
+    document.querySelectorAll('.input-active').forEach(el => {
+        el.classList.remove('input-active');
+    });
+    
+    // Quitar clase del body
+    document.body.classList.remove('keyboard-active');
+    
+    // Scroll suave hacia arriba para reorganizar la vista
+    setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+};
+
+/**
+ * Limpia el contenido del campo de búsqueda
+ */
+window.limpiarBusqueda = function() {
+    const campoBusqueda = document.getElementById('campoBusqueda1');
+    if (campoBusqueda) {
+        campoBusqueda.value = '';
+        campoBusqueda.focus();
+        
+        // Limpiar resultados de búsqueda
+        const resultados = document.getElementById('resultadoBusqueda1');
+        if (resultados) {
+            resultados.innerHTML = '';
+            resultados.classList.add('d-none');
+        }
+    }
+};
+
+/**
+ * Configura los event listeners para mejorar la experiencia en móviles
+ */
+function configurarEventosMobiles() {
+    // Detectar cuando se abre/cierra el teclado
+    const campoBusqueda = document.getElementById('campoBusqueda1');
+    
+    if (campoBusqueda) {
+        // Cuando el campo recibe foco
+        campoBusqueda.addEventListener('focus', function() {
+            this.classList.add('input-active');
+            document.body.classList.add('keyboard-active');
+            
+            // Scroll automático para que el campo sea visible
+            setTimeout(() => {
+                this.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }, 300); // Delay para que el teclado aparezca
+        });
+        
+        // Cuando el campo pierde foco
+        campoBusqueda.addEventListener('blur', function() {
+            this.classList.remove('input-active');
+            document.body.classList.remove('keyboard-active');
+        });
+        
+        // Mejorar la experiencia de escritura
+        campoBusqueda.addEventListener('input', function() {
+            // Esto ayuda a mantener el campo visible mientras se escribe
+            if (this.classList.contains('input-active')) {
+                setTimeout(() => {
+                    this.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                }, 100);
+            }
+        });
+    }
+    
+    // Detectar cambios en el tamaño de viewport (cuando aparece/desaparece el teclado)
+    let lastHeight = window.innerHeight;
+    
+    window.addEventListener('resize', function() {
+        const currentHeight = window.innerHeight;
+        const heightDifference = lastHeight - currentHeight;
+        
+        // Si la altura se reduce significativamente, probablemente apareció el teclado
+        if (heightDifference > 150) {
+            document.body.classList.add('keyboard-active');
+        } 
+        // Si la altura aumenta, probablemente se cerró el teclado
+        else if (heightDifference < -150) {
+            document.body.classList.remove('keyboard-active');
+        }
+        
+        lastHeight = currentHeight;
+    });
+    
+    // Prevenir zoom en doble tap en iOS
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+}
+
+// Inicializar las mejoras para móviles cuando se carga la página
+document.addEventListener('DOMContentLoaded', configurarEventosMobiles);

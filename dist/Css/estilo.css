@@ -127,7 +127,153 @@ button:disabled {
 }
 
 .buscador-container {
+    background: white;
+    border: 2px solid #0d6efd;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 15px 0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.buscador-header {
+    text-align: center;
     margin-bottom: 15px;
+}
+
+.buscador-titulo {
+    color: #0d6efd;
+    font-weight: bold;
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+}
+
+.buscador-instruccion {
+    color: #666;
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+.buscador-input-container {
+    position: relative;
+}
+
+.buscador-input {
+    width: 100%;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.buscador-input:focus {
+    outline: none;
+    border-color: #0d6efd;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.buscador-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: #666;
+    pointer-events: none;
+}
+
+/* Controles del buscador para móviles */
+.buscador-controles {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    justify-content: center;
+}
+
+.btn-listo, .btn-limpiar {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 100px;
+    touch-action: manipulation; /* Mejor respuesta táctil */
+}
+
+.btn-listo {
+    background: #28a745;
+    color: white;
+}
+
+.btn-listo:hover, .btn-listo:active {
+    background: #218838;
+    transform: scale(0.98);
+}
+
+.btn-limpiar {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-limpiar:hover, .btn-limpiar:active {
+    background: #c82333;
+    transform: scale(0.98);
+}
+
+/* MEJORAS PARA MÓVILES ANDROID - TECLADO */
+/* Prevenir zoom automático en inputs en iOS */
+input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea, select {
+    font-size: 16px !important; /* Previene zoom en iOS */
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Comportamiento cuando el teclado está activo */
+body.keyboard-active {
+    position: fixed;
+    width: 100%;
+}
+
+/* Auto-scroll para campos activos */
+.input-active {
+    border: 3px solid #28a745 !important;
+    background: #f8fff9 !important;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.3) !important;
+}
+
+/* Mensaje de ayuda para móviles */
+.mobile-help {
+    display: none;
+    background: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 10px 0;
+    text-align: center;
+    color: #1976d2;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .mobile-help {
+        display: block;
+    }
+    
+    /* Espaciado extra en móviles */
+    .buscador-container {
+        margin-bottom: 80px; /* Espacio para el teclado */
+    }
+    
+    /* Botones más grandes en móviles */
+    .btn-listo, .btn-limpiar {
+        padding: 15px 25px;
+        font-size: 1.1rem;
+        min-height: 50px;
+    }
 }
 
 .buscador-container input {
@@ -215,59 +361,83 @@ button:disabled {
    ========================================== */
 .modal-pago-container {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin: 20px 0;
+    flex-direction: row; /* Cambiar a horizontal */
+    gap: 15px; /* Reducir espacio entre iconos */
+    margin: 15px 0; /* Reducir margen vertical */
+    justify-content: center; /* Centrar los elementos */
+    align-items: center;
+    flex-wrap: wrap; /* Permitir salto de línea en pantallas pequeñas */
+    width: 100%; /* Usar todo el ancho disponible */
 }
 
-.pago-btn {
+.pago-opcion {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 15px;
-    padding: 16px;
-    font-size: 16px;
-    font-weight: 600;
-    border: none;
-    border-radius: 12px;
-    width: 100%;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    min-height: 60px;
+    padding: 12px; /* Reducir padding */
+    border-radius: 15px; /* Bordes más redondeados */
+    border: 2px solid transparent;
+    min-width: 100px; /* Reducir ancho mínimo */
+    text-align: center;
 }
 
-.pago-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+.pago-opcion:hover {
+    background: rgba(0,0,0,0.05);
+    border-color: #007bff;
+    transform: translateY(-3px); /* Reducir elevación en hover */
 }
 
-.pago-efectivo {
-    background: linear-gradient(135deg, #28a745, #20c997);
+.pago-opcion:active {
+    transform: translateY(0);
+    background: rgba(0,0,0,0.1);
 }
 
-.pago-nequi {
-    background: linear-gradient(135deg, #6f42c1, #7c4dff);
+.icono-pago-principal {
+    width: 80px; /* Reducir tamaño de iconos */
+    height: 80px;
+    border-radius: 12px; /* Reducir bordes */
+    object-fit: contain;
+    background: white;
+    padding: 8px; /* Reducir padding interno */
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15); /* Reducir sombra */
+    transition: all 0.3s ease;
+    border: 2px solid #f0f0f0; /* Reducir borde */
+    margin: 0 auto; /* Centrar completamente */
 }
 
-.pago-daviplata {
-    background: linear-gradient(135deg, #fd7e14, #ffc107);
+.pago-opcion:hover .icono-pago-principal {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25); /* Reducir sombra hover */
+    transform: scale(1.05); /* Reducir escalado */
+    border-color: #007bff;
+}
+
+.texto-pago {
+    margin-top: 6px; /* Reducir espacio arriba */
+    font-size: 13px; /* Reducir texto */
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+    width: 100%;
+}
+
+/* Mantener compatibilidad con estilos antiguos pero ocultos */
+.pago-btn {
+    display: none !important;
+}
+
+.pago-efectivo, .pago-nequi, .pago-daviplata {
+    display: none !important;
 }
 
 .icono-pago {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    object-fit: contain;
-}
-
-.icono-pago.nequi-logo {
-    background: white;
-    padding: 4px;
+    display: none !important;
 }
 
 .pago-emoji {
-    font-size: 24px;
+    display: none !important;
 }
 
 /* ===========================================
@@ -435,10 +605,32 @@ details .detalle-content {
         font-size: 2rem;
     }
     
-    .pago-btn {
-        padding: 20px;
-        font-size: 18px;
-        min-height: 70px;
+    /* Nuevos estilos para iconos grandes en móviles */
+    .modal-pago-container {
+        flex-direction: column; /* Vertical en móviles */
+        gap: 10px; /* Reducir espacio entre elementos */
+        margin: 15px auto; /* Reducir margen */
+        width: 100%;
+        align-items: center;
+    }
+    
+    .pago-opcion {
+        padding: 15px; /* Reducir padding en móviles */
+        min-width: 120px; /* Reducir ancho en móviles */
+        width: 100%;
+        max-width: 160px; /* Reducir ancho máximo */
+    }
+    
+    .icono-pago-principal {
+        width: 85px; /* Reducir iconos en móviles */
+        height: 85px;
+        padding: 10px; /* Reducir padding interno */
+        border-radius: 12px; /* Reducir bordes */
+    }
+    
+    .texto-pago {
+        font-size: 15px; /* Reducir texto en móviles */
+        margin-top: 8px; /* Reducir espacio arriba */
     }
     
     .table-responsive {
@@ -513,16 +705,27 @@ details .detalle-content {
         width: 100%;
     }
     
-    .pago-btn {
-        padding: 14px;
-        font-size: 16px;
-        min-height: 55px;
-        gap: 10px;
+    /* Nuevos estilos para iconos en tabletas */
+    .modal-pago-container {
+        gap: 12px; /* Reducir espacio en tabletas */
+        margin: 20px auto; /* Reducir margen */
     }
     
-    .icono-pago {
-        width: 28px;
-        height: 28px;
+    .pago-opcion {
+        padding: 15px; /* Reducir padding en tabletas */
+        min-width: 110px; /* Reducir ancho en tabletas */
+    }
+    
+    .icono-pago-principal {
+        width: 75px; /* Reducir iconos en tabletas */
+        height: 75px;
+        padding: 8px; /* Reducir padding */
+        border-radius: 12px;
+    }
+    
+    .texto-pago {
+        font-size: 14px; /* Reducir texto */
+        margin-top: 8px; /* Reducir espacio */
     }
     
     .table-responsive {
@@ -665,9 +868,30 @@ details .detalle-content {
         max-height: 180px;
     }
     
-    .pago-btn {
-        min-height: 45px;
-        padding: 10px;
+    /* Estilos para iconos en landscape móvil */
+    .modal-pago-container {
+        flex-direction: row; /* Horizontal en landscape */
+        gap: 15px; /* Espacio compacto */
+        max-width: 100%;
+        justify-content: center; /* Centrar perfectamente */
+        margin: 10px auto; /* Margen muy reducido */
+    }
+    
+    .pago-opcion {
+        padding: 8px; /* Padding muy compacto */
+        min-width: 80px; /* Ancho reducido */
+    }
+    
+    .icono-pago-principal {
+        width: 55px; /* Iconos más compactos para landscape */
+        height: 55px;
+        padding: 6px;
+        border-radius: 10px;
+    }
+    
+    .texto-pago {
+        font-size: 12px; /* Texto compacto */
+        margin-top: 4px; /* Espacio mínimo */
     }
     
     h1, .titulo-superior {
@@ -1032,9 +1256,37 @@ th {
     font-size: 24px !important;
 }
 
+/* Contenedor y estilo del logo en el login */
+.logo-container {
+    text-align: center !important;
+    margin: 20px 0 !important;
+}
+
+.logo-login {
+    max-width: 150px !important;
+    max-height: 150px !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    transition: transform 0.3s ease !important;
+}
+
+.logo-login:hover {
+    transform: scale(1.05) !important;
+}
+
+/* Responsive para el logo en pantallas pequeñas */
+@media (max-width: 576px) {
+    .logo-login {
+        max-width: 120px !important;
+        max-height: 120px !important;
+    }
+}
+
 /* Botón de login estilizado */
 .btn-login {
-    display: inline-block !important;
+    display: block !important;
     visibility: visible !important;
     padding: 10px 20px !important;
     background: #007bff !important;
@@ -1042,6 +1294,121 @@ th {
     border: none !important;
     border-radius: 5px !important;
     cursor: pointer !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+    width: fit-content !important;
+}
+
+/* Contenedor y estilo del logo en la página principal */
+.logo-container-main {
+    text-align: center !important;
+    margin: 10px 0 20px 0 !important;
+}
+
+.logo-main {
+    max-width: 100px !important;
+    max-height: 100px !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    transition: transform 0.3s ease !important;
+}
+
+.logo-main:hover {
+    transform: scale(1.05) !important;
+}
+
+/* Responsive para el logo principal en pantallas pequeñas */
+@media (max-width: 576px) {
+    .logo-main {
+        max-width: 80px !important;
+        max-height: 80px !important;
+    }
+}
+
+/* Contenedor y estilo del logo en la sección de ventas */
+.logo-container-ventas {
+    text-align: center !important;
+    margin: 10px 0 20px 0 !important;
+}
+
+.logo-ventas {
+    max-width: 90px !important;
+    max-height: 90px !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    transition: transform 0.3s ease !important;
+}
+
+.logo-ventas:hover {
+    transform: scale(1.05) !important;
+}
+
+/* Responsive para el logo de ventas en pantallas pequeñas */
+@media (max-width: 576px) {
+    .logo-ventas {
+        max-width: 70px !important;
+        max-height: 70px !important;
+    }
+}
+
+/* Contenedor y estilo del logo en la sección de cuentas pendientes */
+.logo-container-pendientes {
+    text-align: center !important;
+    margin: 10px 0 20px 0 !important;
+}
+
+.logo-pendientes {
+    max-width: 90px !important;
+    max-height: 90px !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    transition: transform 0.3s ease !important;
+}
+
+.logo-pendientes:hover {
+    transform: scale(1.05) !important;
+}
+
+/* Responsive para el logo de cuentas pendientes en pantallas pequeñas */
+@media (max-width: 576px) {
+    .logo-pendientes {
+        max-width: 70px !important;
+        max-height: 70px !important;
+    }
+}
+
+/* Contenedor y estilo del logo en los detalles de cuentas */
+.logo-container-detalle {
+    text-align: center !important;
+    margin: 10px 0 15px 0 !important;
+}
+
+.logo-detalle {
+    max-width: 80px !important;
+    max-height: 80px !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    transition: transform 0.3s ease !important;
+}
+
+.logo-detalle:hover {
+    transform: scale(1.05) !important;
+}
+
+/* Responsive para el logo de detalles en pantallas pequeñas */
+@media (max-width: 576px) {
+    .logo-detalle {
+        max-width: 60px !important;
+        max-height: 60px !important;
+    }
 }
 
 /* Estilos para elementos de inventario */
@@ -1052,6 +1419,43 @@ th {
 
 .inventario-row-clickable {
     cursor: pointer;
+}
+
+/* Título de cuenta resaltado en los detalles */
+.titulo-cuenta-resaltado {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5) !important;
+    font-size: 1.5rem !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Contenedor y estilo del logo en el resumen del turno */
+.logo-container-resumen {
+    text-align: center !important;
+    margin: 10px 0 20px 0 !important;
+}
+
+.logo-resumen {
+    max-width: 100px !important;
+    max-height: 100px !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    transition: transform 0.3s ease !important;
+}
+
+.logo-resumen:hover {
+    transform: scale(1.05) !important;
+}
+
+/* Responsive para el logo de resumen en pantallas pequeñas */
+@media (max-width: 576px) {
+    .logo-resumen {
+        max-width: 80px !important;
+        max-height: 80px !important;
+    }
 }
 
 /* Estilos para alertas y elementos interactivos */
@@ -1274,5 +1678,207 @@ th {
     }
     .error-404-body {
         border-top: 16px solid #ffa100;
+    }
+}
+
+/* ===============================================
+   ESTILOS SIMPLES Y CLAROS PARA EL CARRITO 
+   ============================================= */
+
+/* Header del carrito - más simple */
+.carrito-header {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px 8px 0 0;
+    text-align: center;
+    border: 2px solid #007bff;
+    border-bottom: none;
+}
+
+.carrito-icon {
+    width: 35px;
+    height: 35px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.carrito-titulo {
+    display: inline-block;
+    color: #333;
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.2rem;
+    vertical-align: middle;
+}
+
+/* Contenedor del carrito */
+.carrito-container {
+    background: white;
+    border-radius: 0 0 8px 8px;
+    border: 2px solid #007bff;
+    border-top: none;
+}
+
+/* Tabla del carrito - más simple */
+.table-carrito {
+    margin-bottom: 0;
+    border: none;
+    font-size: 1rem;
+}
+
+.carrito-thead {
+    background: #007bff;
+}
+
+.carrito-thead th {
+    color: white !important;
+    font-weight: 600;
+    border: none;
+    padding: 12px;
+    text-align: center;
+    font-size: 1rem;
+}
+
+/* Filas del carrito - sin animaciones */
+.carrito-row {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.carrito-row:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.carrito-row td {
+    vertical-align: middle;
+    padding: 12px;
+    text-align: center;
+}
+
+.producto-cell {
+    font-weight: 600;
+    color: #333;
+    text-align: left;
+}
+
+/* Controles de cantidad - más simples */
+.cantidad-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-cantidad {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    background: white;
+    color: #007bff;
+}
+
+.btn-menos:hover, .btn-mas:hover {
+    background: #007bff;
+    color: white;
+}
+
+.cantidad-display {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #333;
+    min-width: 30px;
+    text-align: center;
+    padding: 5px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background: #f8f9fa;
+}
+
+/* Celda de total */
+.total-cell {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 1.1rem;
+}
+
+/* Botón quitar - más simple */
+.btn-quitar {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.btn-quitar:hover {
+    background: #c82333;
+}
+
+/* Footer del carrito */
+.carrito-footer {
+    background: #f8f9fa;
+    padding: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.carrito-total {
+    text-align: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.total-label {
+    font-size: 1.1rem;
+    color: #333;
+    margin-right: 10px;
+}
+
+.total-amount {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #28a745;
+}
+
+.carrito-actions {
+    text-align: center;
+}
+
+.btn-realizar-venta {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-realizar-venta:hover {
+    background: #218838;
+}
+
+/* Responsive para el carrito */
+@media (max-width: 576px) {
+    .carrito-icon {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .carrito-titulo {
+        font-size: 1.1rem;
+    }
+    
+    .btn-cantidad {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
     }
 }
