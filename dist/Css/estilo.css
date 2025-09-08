@@ -282,32 +282,56 @@ body.keyboard-active {
 }
 
 /* ===========================================
-   6. TABLAS RESPONSIVAS
+   6. TABLAS RESPONSIVAS - SIN SCROLL HORIZONTAL
    ========================================== */
 .table-responsive {
     max-height: 300px;
     overflow-y: auto;
+    overflow-x: hidden; /* Eliminar scroll horizontal */
     border-radius: 8px;
     border: 1px solid #dee2e6;
+    width: 100%;
 }
 
 /* Configuración general para todas las tablas */
 .table {
-    table-layout: auto !important; /* Permite ajuste automático de columnas */
+    table-layout: fixed !important; /* Ancho fijo para controlar columnas */
     width: 100%;
+    word-wrap: break-word; /* Permitir corte de palabras largas */
 }
 
 .table th,
 .table td {
-    width: auto !important; /* Ancho automático basado en contenido */
-    white-space: nowrap; /* Evita que el texto se corte */
-    max-width: none !important; /* Elimina restricciones de Bootstrap */
+    padding: 8px 4px; /* Reducir padding para más espacio */
+    white-space: normal !important; /* Permitir wrap en todas las celdas */
+    word-wrap: break-word; /* Cortar palabras largas */
+    overflow: hidden; /* Ocultar contenido desbordante */
+    text-overflow: ellipsis; /* Mostrar ... cuando se corta */
+    vertical-align: middle;
 }
 
-/* Permite que la primera columna haga wrap si es necesario */
+/* Distribución de columnas más inteligente */
 .table th:first-child,
 .table td:first-child {
-    white-space: normal;
+    width: 40%; /* Producto/Descripción - más espacio */
+}
+
+.table th:nth-child(2),
+.table td:nth-child(2) {
+    width: 20%; /* Cantidad - menos espacio */
+    text-align: center;
+}
+
+.table th:nth-child(3),
+.table td:nth-child(3) {
+    width: 25%; /* Precio - espacio medio */
+    text-align: right;
+}
+
+.table th:last-child,
+.table td:last-child {
+    width: 15%; /* Acciones - mínimo espacio */
+    text-align: center;
 }
 
 /* Forzar ajuste automático para todas las tablas del proyecto */
@@ -635,6 +659,57 @@ details .detalle-content {
     
     .table-responsive {
         max-height: 400px;
+        overflow-x: hidden !important; /* Forzar eliminación de scroll horizontal */
+    }
+    
+    /* Mejoras específicas para carrito en móviles */
+    .table-carrito {
+        font-size: 0.75rem; /* Fuente aún más pequeña en móviles */
+    }
+    
+    .table-carrito th,
+    .table-carrito td {
+        padding: 6px 2px; /* Padding muy reducido */
+        font-size: 0.75rem;
+    }
+    
+    /* Distribución específica para móviles - carrito */
+    .table-carrito th:first-child,
+    .table-carrito td:first-child {
+        width: 30%; /* Menos espacio para producto en móviles */
+    }
+    
+    .table-carrito th:nth-child(2),
+    .table-carrito td:nth-child(2) {
+        width: 12%; /* Cantidad muy reducida */
+    }
+    
+    .table-carrito th:nth-child(3),
+    .table-carrito td:nth-child(3) {
+        width: 23%; /* Precio */
+    }
+    
+    .table-carrito th:nth-child(4),
+    .table-carrito td:nth-child(4) {
+        width: 25%; /* Subtotal */
+    }
+    
+    .table-carrito th:last-child,
+    .table-carrito td:last-child {
+        width: 10%; /* Botón eliminar */
+    }
+    
+    /* Botones en carrito móvil aún más compactos */
+    .carrito-row .btn {
+        padding: 2px 4px;
+        font-size: 0.6rem;
+    }
+    
+    /* Tablas generales en móviles */
+    .table th,
+    .table td {
+        padding: 6px 2px !important; /* Padding muy reducido */
+        font-size: 0.8rem !important;
     }
 }
 
@@ -1711,19 +1786,21 @@ th {
     vertical-align: middle;
 }
 
-/* Contenedor del carrito */
+/* Contenedor del carrito - igual estilo que inventario */
 .carrito-container {
     background: white;
-    border-radius: 0 0 8px 8px;
-    border: 2px solid #007bff;
-    border-top: none;
+    border-radius: 8px;
+    border: 1px solid #dee2e6; /* Igual que table-responsive */
+    overflow: hidden; /* Evitar desbordamiento */
 }
 
-/* Tabla del carrito - más simple */
+/* Tabla del carrito - estilo unificado con inventario */
 .table-carrito {
     margin-bottom: 0;
     border: none;
-    font-size: 1rem;
+    font-size: 0.9rem; /* Reducir tamaño de fuente */
+    table-layout: fixed !important; /* Control de columnas */
+    width: 100%;
 }
 
 .carrito-thead {
@@ -1734,18 +1811,74 @@ th {
     color: white !important;
     font-weight: 600;
     border: none;
-    padding: 12px;
+    padding: 8px 4px; /* Reducir padding como las otras tablas */
     text-align: center;
-    font-size: 1rem;
+    font-size: 0.85rem; /* Fuente más pequeña */
+    white-space: normal !important; /* Permitir wrap */
+    word-wrap: break-word;
+    overflow: hidden;
 }
 
-/* Filas del carrito - sin animaciones */
+/* Distribución específica para columnas del carrito */
+.table-carrito th:first-child,
+.table-carrito td:first-child {
+    width: 35%; /* Producto */
+}
+
+.table-carrito th:nth-child(2),
+.table-carrito td:nth-child(2) {
+    width: 15%; /* Cantidad */
+    text-align: center;
+}
+
+.table-carrito th:nth-child(3),
+.table-carrito td:nth-child(3) {
+    width: 20%; /* Precio */
+    text-align: right;
+}
+
+.table-carrito th:nth-child(4),
+.table-carrito td:nth-child(4) {
+    width: 20%; /* Subtotal */
+    text-align: right;
+}
+
+.table-carrito th:last-child,
+.table-carrito td:last-child {
+    width: 10%; /* Eliminar */
+    text-align: center;
+}
+
+/* Filas del carrito - estilo unificado */
 .carrito-row {
     border-bottom: 1px solid #dee2e6;
 }
 
 .carrito-row:nth-child(even) {
     background-color: #f8f9fa;
+}
+
+.carrito-row td {
+    padding: 8px 4px; /* Padding consistente */
+    font-size: 0.85rem; /* Fuente más pequeña */
+    white-space: normal !important; /* Permitir wrap */
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+/* Botones en el carrito más compactos */
+.carrito-row .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: 4px;
+}
+
+.carrito-row .btn-danger {
+    background: #dc3545;
+    border: none;
+    color: white;
 }
 
 .carrito-row td {
@@ -1881,4 +2014,57 @@ th {
         height: 28px;
         font-size: 14px;
     }
+}
+
+/* ===========================================
+   REGLAS GLOBALES FINALES - ELIMINAR SCROLL HORIZONTAL
+   ========================================== */
+   
+/* Forzar que ninguna tabla genere scroll horizontal */
+.table-responsive,
+.carrito-container,
+.inventario-table-container,
+.tabla-resumen-productos {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Forzar que todas las tablas usen layout fijo */
+.table,
+.table-carrito,
+.inventario-fija {
+    table-layout: fixed !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Forzar wrap en todas las celdas */
+.table th,
+.table td,
+.table-carrito th,
+.table-carrito td,
+.inventario-fija th,
+.inventario-fija td {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Prevenir que el body genere scroll horizontal */
+body {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+/* Contenedores principales sin desbordamiento */
+.container,
+.container1,
+.container2,
+.container3,
+.containerPendientes,
+.containerResumenTurno {
+    overflow-x: hidden;
+    max-width: 100%;
 }
