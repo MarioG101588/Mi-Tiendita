@@ -157,8 +157,8 @@ export function mostrarFormularioVenta() {
                 <select id="swal-select-clase-venta" 
                         class="swal2-select"
                         style="margin-bottom: 10px;">
-                    <option value="Pago en efectivo" selected>Pago en efectivo</option>
-                    <option value="Consumo en el local">Consumo en el local</option>
+                    <option value="Pago en efectivo">Pago en efectivo</option>
+                    <option value="Consumo en el local" selected>Consumo en el local</option>
                     <option value="En cuaderno">En cuaderno</option>
                 </select>
             </div>

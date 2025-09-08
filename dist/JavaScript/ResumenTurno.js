@@ -197,17 +197,17 @@ export function renderizarResumenTurno(resumen, containerId) {
     c.innerHTML = `
         <h2>Resumen del Turno</h2>
         <ul class="list-group mb-3">
-            <li class="list-group-item">Total ventas de tabaco: <b>${formatearPrecio(resumen.totalTabaco)}</b></li>
-            <li class="list-group-item">Total ventas no Pagas (Consumo en el local): <b>${formatearPrecio(resumen.totalNoCobradas)}</b></li>
+            <li class="list-group-item">Total ventas de Cigarrillo: <b>${formatearPrecio(resumen.totalTabaco)}</b></li>
+            <li class="list-group-item">Total ventas Consumo en el local no Pagas: <b>${formatearPrecio(resumen.totalNoCobradas)}</b></li>
             <li class="list-group-item">
-                Cuentas En cuaderno: <b>${formatearPrecio(totalEnCuaderno)}</b>
+                Cuentas Anotadas En El Cuaderno: <b>${formatearPrecio(totalEnCuaderno)}</b>
                 ${listadoCuentasEnCuaderno}
             </li>
-            <li class="list-group-item">Total cuentas cerradas: <b>${formatearPrecio(resumen.totalCuentasCerradas)}</b></li>
             <li class="list-group-item">Efectivo: <b>${formatearPrecio(resumen.tipoVenta.efectivo)}</b></li>
             <li class="list-group-item">Nequi: <b>${formatearPrecio(resumen.tipoVenta.nequi)}</b></li>
             <li class="list-group-item">Daviplata: <b>${formatearPrecio(resumen.tipoVenta.daviplata)}</b></li>
-        </ul>
+            <li class="list-group-item">Total Pagos Recibidos: <b>${formatearPrecio(resumen.totalCuentasCerradas)}</b></li>
+            </ul>
         <div class="alert alert-info">
             Pago de turno (10% ventas cerradas + aseo $ 7.000): <b>${formatearPrecio(resumen.pagoTurno)}</b>
         </div>
