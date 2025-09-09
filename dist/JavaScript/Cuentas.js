@@ -22,6 +22,134 @@ import { mostrarModalMedioPago } from "./Engranaje.js";
 
 const db = getFirestore(app);
 
+// **FUNCIÓN DE DIAGNÓSTICO COMPLETO PARA FIRESTORE**
+window.diagnosticarFirestore = async function() {
+    console.log('🔧 ==================== DIAGNÓSTICO FIRESTORE ====================');
+    
+    try {
+        // 1. Verificar conectividad básica
+        console.log('1️⃣ Verificando conectividad básica...');
+        const collectionRef = collection(db, "cuentasActivas");
+        const q = query(collectionRef, limit(1));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+            console.error('❌ No hay documentos en cuentasActivas');
+            return;
+        }
+        
+        const primeraCtasnapshot = snapshot.docs[0];
+        const primerDocId = primeraCtasnapshot.id;
+        const datosOriginales = primeraCtasnapshot.data();
+        
+        console.log('✅ Documento encontrado:', primerDocId);
+        console.log('📄 Datos originales:', datosOriginales);
+        
+        // 2. Intentar escritura simple
+        console.log('2️⃣ Intentando escritura simple...');
+        const testRef = doc(db, "cuentasActivas", primerDocId);
+        
+        try {
+            await updateDoc(testRef, {
+                pruebaEscritura: new Date().toISOString(),
+                contadorPruebas: (datosOriginales.contadorPruebas || 0) + 1
+            });
+            console.log('✅ Escritura simple exitosa');
+        } catch (writeError) {
+            console.error('❌ Error en escritura simple:', writeError);
+            console.error('❌ Código de error:', writeError.code);
+            console.error('❌ Mensaje:', writeError.message);
+            return;
+        }
+        
+        // 3. Verificar que se guardó
+        console.log('3️⃣ Verificando que se guardó...');
+        const docActualizado = await getDoc(testRef);
+        const datosNuevos = docActualizado.data();
+        
+        if (datosNuevos.pruebaEscritura) {
+            console.log('✅ Verificación exitosa - datos actualizados:', {
+                pruebaEscritura: datosNuevos.pruebaEscritura,
+                contadorPruebas: datosNuevos.contadorPruebas
+            });
+        } else {
+            console.error('❌ Los datos NO se guardaron en Firestore');
+        }
+        
+        // 4. Probar operación compleja (similar a editar producto)
+        console.log('4️⃣ Probando operación compleja...');
+        try {
+            await updateDoc(testRef, {
+                'productos.productoPrueba': {
+                    nombre: 'Producto de Prueba',
+                    precio: 1000,
+                    cantidad: 1
+                },
+                ultimaModificacion: new Date().toISOString()
+            });
+            console.log('✅ Operación compleja exitosa');
+        } catch (complexError) {
+            console.error('❌ Error en operación compleja:', complexError);
+        }
+        
+        console.log('🎯 ================ DIAGNÓSTICO COMPLETADO ================');
+        
+    } catch (error) {
+        console.error('❌ Error general en diagnóstico:', error);
+        console.error('❌ Stack trace:', error.stack);
+    }
+};
+
+// **FUNCIÓN DE PRUEBA ESPECÍFICA PARA CAMBIO DE NOMBRES**
+window.probarCambioNombre = async function(clienteId, nuevoNombre) {
+    console.log('🧪 ==================== PRUEBA CAMBIO DE NOMBRE ====================');
+    console.log('🆔 ClienteId:', clienteId);
+    console.log('📝 Nuevo nombre:', nuevoNombre);
+    
+    try {
+        const cuentaRef = doc(db, "cuentasActivas", clienteId);
+        
+        // 1. Verificar documento actual
+        console.log('1️⃣ Verificando documento actual...');
+        const docActual = await getDoc(cuentaRef);
+        if (!docActual.exists()) {
+            console.error('❌ El documento no existe');
+            return;
+        }
+        
+        const datosActuales = docActual.data();
+        console.log('📄 Nombre actual en BD:', datosActuales.cliente);
+        
+        // 2. Actualizar nombre
+        console.log('2️⃣ Actualizando nombre...');
+        await updateDoc(cuentaRef, {
+            cliente: nuevoNombre,
+            ultimaModificacion: new Date().toISOString(),
+            pruebaTimestamp: Date.now()
+        });
+        console.log('✅ updateDoc ejecutado');
+        
+        // 3. Verificar cambio inmediatamente
+        console.log('3️⃣ Verificando cambio...');
+        const docVerificacion = await getDoc(cuentaRef);
+        const datosVerificacion = docVerificacion.data();
+        
+        console.log('📄 Nombre después de actualizar:', datosVerificacion.cliente);
+        console.log('📄 Timestamp de prueba:', datosVerificacion.pruebaTimestamp);
+        
+        if (datosVerificacion.cliente === nuevoNombre) {
+            console.log('✅ ÉXITO: El cambio de nombre SÍ funcionó');
+        } else {
+            console.error('❌ FALLO: El cambio de nombre NO funcionó');
+        }
+        
+        console.log('🎯 ================ PRUEBA COMPLETADA ================');
+        
+    } catch (error) {
+        console.error('❌ Error en prueba de cambio de nombre:', error);
+    }
+};
+
 // **FUNCIÓN UTILITARIA PARA CONVERTIR idTurno A FECHA LEGIBLE**
 function convertirIdTurnoAFecha(idTurno) {
     if (!idTurno || idTurno === 'Sin turno') return 'Sin fecha';
@@ -167,37 +295,43 @@ export async function cargarDetalleCuenta(clienteId) {
             const precioUnitarioFormateado = formatearPrecio(precioUnitario);
             const precioTotalFormateado = formatearPrecio(subtotal);
             
-            // Botones de cantidad solo para "Consumo en el local"
+            // Mostrar cantidad: con botones para "Consumo en el local", solo display para "En cuaderno"
             let botonesEdicion = '';
             if (!esTipoEnCuaderno) {
+                // Vista completa con botones de edición
                 botonesEdicion = `
-                    <div class="mt-2 d-flex align-items-center justify-content-center">
-                        <button class="btn btn-danger btn-cantidad-mejorado me-2" onclick="window.disminuirCantidadCuenta('${clienteId}','${productoId}')" 
-                                style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; border: 2px solid #dc3545;">
+                    <div class="mt-3 d-flex align-items-center justify-content-center">
+                        <button class="btn btn-cantidad btn-menos" onclick="window.disminuirCantidadCuenta('${clienteId}','${productoId}')" 
+                                title="Quitar uno">
                             −
                         </button>
-                        <span class="mx-3 fw-bold text-primary" style="font-size: 1.5rem; min-width: 30px; text-align: center; background: #e3f2fd; padding: 8px 16px; border-radius: 8px; border: 2px solid #2196f3;">${cantidad}</span>
-                        <button class="btn btn-success btn-cantidad-mejorado ms-2" onclick="window.aumentarCantidadCuenta('${clienteId}','${productoId}')" 
-                                style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; border: 2px solid #28a745;">
+                        <span class="cantidad-display">${cantidad}</span>
+                        <button class="btn btn-cantidad btn-mas" onclick="window.aumentarCantidadCuenta('${clienteId}','${productoId}')" 
+                                title="Agregar uno">
                             +
                         </button>
                     </div>
                 `;
             } else {
-                botonesEdicion = `<span class="fw-bold fs-5 text-primary">Cantidad: ${cantidad}</span>`;
+                // Vista solo de cantidad (misma apariencia, sin botones)
+                botonesEdicion = `
+                    <div class="mt-3 d-flex align-items-center justify-content-center">
+                        <span class="cantidad-display" style="margin: 0 10px;">${cantidad}</span>
+                    </div>
+                `;
             }
 
             productosHtml += `
-                <tr style="height: 80px;">
-                    <td class="py-4 align-middle">
-                        <div class="fw-bold fs-5 mb-2 text-dark">${producto.nombre || 'Producto sin nombre'}</div>
+                <tr style="height: 70px;">
+                    <td class="py-3 align-middle">
+                        <div class="fw-bold mb-2 text-dark" style="font-size: 1rem;">${producto.nombre || 'Producto sin nombre'}</div>
                         ${botonesEdicion}
                     </td>
-                    <td class="text-center py-4 align-middle">
-                        <span class="fs-5 fw-semibold text-success">${precioUnitarioFormateado}</span>
+                    <td class="text-center py-3 align-middle">
+                        <span class="precio-producto">${precioUnitarioFormateado}</span>
                     </td>
-                    <td class="text-end py-4 align-middle">
-                        <span class="fs-4 fw-bold text-primary">${precioTotalFormateado}</span>
+                    <td class="text-end py-3 align-middle">
+                        <span class="precio-destacado">${precioTotalFormateado}</span>
                     </td>
                 </tr>
             `;
@@ -208,7 +342,19 @@ export async function cargarDetalleCuenta(clienteId) {
         detalleContainer.innerHTML = `
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0 titulo-cuenta-resaltado">📋 Cuenta: ${cuenta.cliente || 'Cliente'}</h3>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-0 titulo-cuenta-resaltado">📋 Cuenta: 
+                                <span id="nombreCliente" class="nombre-editable" 
+                                      onclick="editarNombreCliente('${clienteId}', '${cuenta.cliente || 'Cliente'}')"
+                                      title="¿Quién es este cliente? Clic para cambiar el nombre"
+                                      style="cursor: pointer; text-decoration: underline; text-decoration-style: dashed;">
+                                    ${cuenta.cliente || 'Cliente'}
+                                </span>
+                                <small class="ms-2">✏️</small>
+                            </h3>
+                        </div>
+                    </div>
                     <div class="d-flex justify-content-between align-items-center mt-2">
                         <span class="badge bg-warning text-dark fs-6">${cuenta.tipo || 'Pendiente'}</span>
                         ${esTipoEnCuaderno ? `<small>📅 Creada: ${fechaCreacionReal}</small>` : ''}
@@ -220,13 +366,11 @@ export async function cargarDetalleCuenta(clienteId) {
                         <img src="./pngs/LogoLocal.png" alt="Logo El Arrendajo Azul" class="logo-detalle" />
                     </div>
                     
-                    ${!esTipoEnCuaderno ? `
-                        <div class="text-center mb-3">
-                            <button class="btn btn-primary btn-lg" onclick="agregarProductoACuenta('${clienteId}')">
-                                ➕ Agregar Producto
-                            </button>
-                        </div>
-                    ` : ''}
+                    <div class="text-center mb-3">
+                        <button class="btn btn-primary btn-lg" onclick="agregarProductoACuenta('${clienteId}')">
+                            ➕ Agregar Producto
+                        </button>
+                    </div>
                     
                     <h5 class="mb-3 text-center">📦 Productos ordenados:</h5>
                     
@@ -241,9 +385,9 @@ export async function cargarDetalleCuenta(clienteId) {
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
-                                    <th style="font-size: 1.1rem; width: 50%;">Producto</th>
-                                    <th class="text-center" style="font-size: 1.1rem; width: 25%;">Precio c/u</th>
-                                    <th class="text-end" style="font-size: 1.1rem; width: 25%;">Total</th>
+                                    <th style="font-size: 0.95rem; width: 50%;">Producto</th>
+                                    <th class="text-center" style="font-size: 0.95rem; width: 25%;">Precio c/u</th>
+                                    <th class="text-end" style="font-size: 0.95rem; width: 25%;">Total</th>
                                 </tr>
                             </thead>
                             <tbody style="font-size: 1rem;">
@@ -376,12 +520,26 @@ async function modificarCantidadProductoCuenta(clienteId, productoId, operacion)
             totalCuenta += productos[pid].total ?? 0;
         }
 
-        await updateDoc(cuentaRef, {
-            productos,
-            historial,
-            total: totalCuenta,
-            ultimaActualizacion: new Date()
-        });
+        console.log('📝 INTENTANDO ACTUALIZAR FIRESTORE - modificarCantidadProductoCuenta');
+        console.log('🆔 ClienteId:', clienteId);
+        console.log('📦 Productos a guardar:', productos);
+        console.log('📋 Historial a guardar:', historial);
+        console.log('💰 Total calculado:', totalCuenta);
+
+        try {
+            await updateDoc(cuentaRef, {
+                productos,
+                historial,
+                total: totalCuenta,
+                ultimaActualizacion: new Date()
+            });
+            console.log('✅ FIRESTORE ACTUALIZADO EXITOSAMENTE - modificarCantidadProductoCuenta');
+        } catch (firestoreError) {
+            console.error('❌ ERROR ESPECÍFICO DE FIRESTORE:', firestoreError);
+            console.error('❌ Código de error:', firestoreError.code);
+            console.error('❌ Mensaje de error:', firestoreError.message);
+            throw firestoreError; // Re-lanzar para que el catch principal lo capture
+        }
 
         // Recargar detalle
         await cargarDetalleCuenta(clienteId);
@@ -394,6 +552,7 @@ async function modificarCantidadProductoCuenta(clienteId, productoId, operacion)
         mostrarExito(mensaje);
 
     } catch (error) {
+        console.error('❌ ERROR COMPLETO EN modificarCantidadProductoCuenta:', error);
         mostrarError('No se pudo modificar la cantidad: ' + error.message);
     }
 }
@@ -557,6 +716,87 @@ window.agregarProductoACuenta = async function(clienteId) {
     }
 };
 
+// **FUNCIÓN PARA EDITAR EL NOMBRE DEL CLIENTE**
+window.editarNombreCliente = async function(clienteId, nombreActual) {
+    try {
+        const resultado = await mostrarPersonalizado({
+            title: '👤 ¿Quién es el cliente?',
+            text: `Cambie el nombre de "${nombreActual}" por el nombre real del cliente`,
+            input: 'text',
+            inputPlaceholder: 'Escriba el nombre del cliente...',
+            inputValue: nombreActual,
+            showCancelButton: true,
+            confirmButtonText: '✅ Cambiar Nombre',
+            cancelButtonText: '❌ Cancelar',
+            inputValidator: (value) => {
+                if (!value || value.trim().length === 0) {
+                    return 'El nombre no puede estar vacío';
+                }
+                if (value.trim().length > 50) {
+                    return 'el nombre no puede tener más de 50 caracteres';
+                }
+                return null;
+            }
+        });
+
+        if (resultado.isConfirmed && resultado.value) {
+            const nuevoNombre = resultado.value.trim();
+            console.log('🔄 Intentando cambiar nombre de:', nombreActual, 'a:', nuevoNombre);
+            
+            if (nuevoNombre !== nombreActual) {
+                mostrarCargando('Actualizando nombre...');
+                
+                try {
+                    console.log('📝 Actualizando en Firestore - clienteId:', clienteId);
+                    
+                    // Verificar que el documento existe antes de actualizar
+                    const cuentaRef = doc(db, "cuentasActivas", clienteId);
+                    const docSnapshot = await getDoc(cuentaRef);
+                    
+                    if (!docSnapshot.exists()) {
+                        throw new Error(`El documento con ID ${clienteId} no existe en cuentasActivas`);
+                    }
+                    
+                    console.log('📄 Documento encontrado, datos actuales:', docSnapshot.data());
+                    
+                    // Actualizar en la base de datos
+                    console.log('🚀 EJECUTANDO updateDoc para cambio de nombre...');
+                    await updateDoc(cuentaRef, {
+                        cliente: nuevoNombre,
+                        ultimaModificacion: new Date().toISOString()
+                    });
+                    
+                    console.log('✅ NOMBRE ACTUALIZADO EN FIRESTORE');
+                    
+                    // Actualizar la vista inmediatamente en el detalle de la cuenta
+                    const spanNombre = document.getElementById('nombreCliente');
+                    if (spanNombre) {
+                        spanNombre.textContent = nuevoNombre;
+                        spanNombre.onclick = () => editarNombreCliente(clienteId, nuevoNombre);
+                    }
+                    
+                    mostrarExito(`✅ Cliente identificado como: "${nuevoNombre}"`);
+                    
+                    // El listener onSnapshot actualizará automáticamente la lista principal
+                    console.log('📡 El listener actualizará la lista principal automáticamente');
+                    
+                } catch (firestoreError) {
+                    console.error('❌ Error específico de Firestore:', firestoreError);
+                    mostrarError(`Error al guardar en la base de datos: ${firestoreError.message}`);
+                    throw firestoreError;
+                }
+                
+            } else {
+                console.log('El nombre no cambió');
+            }
+        }
+        
+    } catch (error) {
+        mostrarError(`Error al actualizar el nombre: ${error.message}`);
+        console.error("Error editarNombreCliente:", error);
+    }
+};
+
 // **FUNCIÓN PARA MOSTRAR MODAL DE BÚSQUEDA DE PRODUCTOS**
 async function mostrarModalBusquedaProductos(clienteId) {
     const resultado = await mostrarPersonalizado({
@@ -630,9 +870,17 @@ async function buscarProductosEnInventario(termino, resultadosDiv, clienteId) {
             const precio = formatearPrecio(producto.precio);
             html += `
                 <button type="button" class="list-group-item list-group-item-action text-start" 
-                        onclick="seleccionarProductoParaAgregar('${clienteId}', '${producto.id}', ${producto.precio})">
-                    <div class="fw-bold">${producto.nombre}</div>
-                    <small class="text-muted">Precio: ${precio} | Stock: ${producto.cantidad}</small>
+                        onclick="seleccionarProductoParaAgregar('${clienteId}', '${producto.id}', ${producto.precio})"
+                        style="min-height: 55px; border-left: 3px solid #28a745;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-bold" style="color: #333; font-size: 1rem;">${producto.nombre}</div>
+                            <small style="color: #666; font-size: 0.85rem;">Stock: ${producto.cantidad} disponibles</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold" style="color: #fff; background: #28a745; padding: 3px 8px; border-radius: 4px; font-size: 1rem;">${precio}</div>
+                        </div>
+                    </div>
                 </button>
             `;
         });
@@ -687,6 +935,12 @@ window.seleccionarProductoParaAgregar = async function(clienteId, nombreProducto
 
 // **FUNCIÓN PARA AGREGAR FÍSICAMENTE EL PRODUCTO A LA BASE DE DATOS**
 async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta, cantidad) {
+    console.log('🚀 INICIANDO agregarProductoACuentaEnBD');
+    console.log('🆔 ClienteId:', clienteId);
+    console.log('📦 Producto:', nombreProducto);
+    console.log('💰 Precio:', precioVenta);
+    console.log('🔢 Cantidad:', cantidad);
+    
     const cuentaRef = doc(db, "cuentasActivas", clienteId);
     const idTurno = localStorage.getItem("idTurno") || null;
     const fechaActual = new Date();
@@ -699,7 +953,9 @@ async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta
         minute: '2-digit'
     });
 
-    await runTransaction(db, async (transaction) => {
+    try {
+        console.log('📝 INICIANDO TRANSACTION...');
+        await runTransaction(db, async (transaction) => {
         const cuentaDoc = await transaction.get(cuentaRef);
         
         if (!cuentaDoc.exists()) {
@@ -753,13 +1009,29 @@ async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta
         historialCuenta.push(registroHistorial);
         
         // Actualizar la cuenta
+        console.log('📝 ACTUALIZANDO DOCUMENTO CON TRANSACTION...');
+        console.log('📦 Productos finales:', productosCuenta);
+        console.log('💰 Total final:', totalCuenta);
+        
         transaction.update(cuentaRef, {
             productos: productosCuenta,
             total: totalCuenta,
             historial: historialCuenta,
             ultimaModificacion: fechaFormateada
         });
+        
+        console.log('✅ TRANSACTION UPDATE EJECUTADO');
     });
+    
+    console.log('✅ TRANSACTION COMPLETADA EXITOSAMENTE');
+    
+    } catch (error) {
+        console.error('❌ ERROR EN agregarProductoACuentaEnBD:', error);
+        console.error('❌ Código de error:', error.code);
+        console.error('❌ Mensaje de error:', error.message);
+        console.error('❌ Stack trace:', error.stack);
+        throw error; // Re-lanzar el error
+    }
 }
 
 

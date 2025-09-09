@@ -66,6 +66,8 @@ window.renderCarrito = renderCarrito;
 window.realizarVenta = () => realizarVenta(window.carrito);
 
 // **FUNCIÓN PARA CARGAR CUENTAS ABIERTAS**
+let debounceTimer = null;
+
 function cargarCuentasAbiertas() {
     const q = query(collection(db, "cuentasActivas"));
     const container = document.getElementById('cuentasActivasTurno');
@@ -80,6 +82,12 @@ function cargarCuentasAbiertas() {
         return;
     }
     onSnapshot(q, async (querySnapshot) => {
+        // Debounce para evitar actualizaciones muy frecuentes
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
+        
+        debounceTimer = setTimeout(async () => {
         const execTimestamp = new Date().toISOString().slice(-13, -5);
         console.log('🔄 [CARGAR CUENTAS ABIERTAS] - Ejecutándose... TIMESTAMP:', execTimestamp);
         console.log('🆔 [TURNO ACTUAL] - localStorage:', idTurno);
@@ -186,11 +194,16 @@ function cargarCuentasAbiertas() {
             // console.log('📋 Generando lista para', activas.length, 'cuentas activas');
             activas.forEach((cuenta) => {
                 const totalFormateado = formatearPrecio(cuenta.total);
+                
+                // Usar SIEMPRE el campo cliente de la base de datos
+                const nombreMostrar = cuenta.cliente || cuenta.id;
+                console.log('📄 Mostrando cliente:', cuenta.id, '→', nombreMostrar);
+                
                 htmlContent += `
                     <div class="list-group-item d-flex justify-content-between align-items-center" 
                          onclick="mostrarDetalleCuenta('${cuenta.id}')"> 
                          <div>
-                            <h6 class="mb-0">${cuenta.cliente}</h6>
+                            <h6 class="mb-0">${nombreMostrar}</h6>
                             <small class="text-muted">${cuenta.tipo}</small>
                         </div>
                         <span class="badge bg-success rounded-pill fs-6">
@@ -215,6 +228,8 @@ function cargarCuentasAbiertas() {
         setTimeout(() => {
             // console.log('🔍 Verificación post-asignación - container.innerHTML length:', container.innerHTML.length);
         }, 100);
+        
+        }, 300); // Debounce de 300ms
     });
 }
 // Mostrar cuentas pendientes en containerPendientes
@@ -278,11 +293,15 @@ window.mostrarCuentasPendientes = function() {
             const turnoInfo = cuenta.turno ? convertirIdTurnoAFecha(cuenta.turno) : 'Sin fecha';
             const tipoClase = cuenta.tipo === 'En cuaderno' ? 'text-warning' : 'text-muted';
             
+            // Usar SIEMPRE el campo cliente de la base de datos
+            const nombreMostrar = cuenta.cliente || cuenta.id || 'Cliente sin nombre';
+            console.log('📄 Mostrando cliente (pendientes):', cuenta.id, '→', nombreMostrar);
+            
             htmlContent += `
                 <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" 
                      onclick="mostrarDetalleCuenta('${cuenta.id}')" class="cuenta-row-clickable"> 
                      <div>
-                        <h6 class="mb-1">${cuenta.cliente || 'Cliente sin nombre'}</h6>
+                        <h6 class="mb-1">${nombreMostrar}</h6>
                         <p class="mb-1 ${tipoClase}"><strong>${cuenta.tipo || 'Sin tipo'}</strong></p>
                         <small class="text-muted">${turnoInfo}</small>
                     </div>
@@ -327,7 +346,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         campoBusqueda1.addEventListener("click", function(e) {
             e.preventDefault(); // Prevenir comportamiento por defecto
             e.stopPropagation(); // Evitar propagación
-            abrirModalBusquedaCarrito();
+            
+            // FORZAR BLUR inmediato para evitar focus pegado
+            this.blur();
+            
+            // Pequeño delay para asegurar que el blur se aplique
+            setTimeout(() => {
+                abrirModalBusquedaCarrito();
+            }, 50);
+        });
+        
+        // Evento adicional para prevenir focus accidental
+        campoBusqueda1.addEventListener("focus", function(e) {
+            this.blur(); // Quitar focus inmediatamente
         });
         
         // console.log("✅ Nuevo sistema de búsqueda modal configurado");
@@ -737,14 +768,14 @@ async function buscarProductosParaCarrito(termino, resultadosDiv) {
             html += `
                 <button type="button" class="list-group-item list-group-item-action text-start d-flex justify-content-between align-items-center" 
                         onclick="seleccionarProductoParaCarrito('${producto.id}', ${producto.precio})"
-                        style="min-height: 60px;">
+                        style="min-height: 60px; border-left: 3px solid #28a745;">
                     <div>
-                        <div class="fw-bold">${producto.nombre}</div>
-                        <small class="text-muted">Stock: ${producto.cantidad} disponibles</small>
+                        <div class="fw-bold" style="color: #333; font-size: 1rem;">${producto.nombre}</div>
+                        <small style="color: #666; font-size: 0.85rem;">Stock: ${producto.cantidad} disponibles</small>
                     </div>
                     <div class="text-end">
-                        <div class="fw-bold text-success">${precio}</div>
-                        <small class="text-muted">por unidad</small>
+                        <div class="fw-bold" style="color: #fff; background: #28a745; padding: 4px 8px; border-radius: 4px; font-size: 1rem;">${precio}</div>
+                        <small style="color: #28a745; font-weight: bold; font-size: 0.8rem;">por unidad</small>
                     </div>
                 </button>
             `;
