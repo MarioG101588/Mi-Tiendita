@@ -74,9 +74,9 @@ function cargarCuentasAbiertas() {
     const idTurno = localStorage.getItem("idTurno");
     const timestamp = new Date().toISOString().slice(-13, -5); // HH:MM:SS.mmm
     
-    console.log('🚀 [INICIAR CARGA CUENTAS] - Función cargarCuentasAbiertas iniciada - TIMESTAMP:', timestamp);
-    console.log('🆔 [TURNO DESDE localStorage] - Valor:', idTurno);
-    console.log('📅 [FORMATO TURNO] - Tipo:', typeof idTurno, '- Longitud:', idTurno?.length);
+    // console.log('🚀 [INICIAR CARGA CUENTAS] - Función cargarCuentasAbiertas iniciada - TIMESTAMP:', timestamp);
+    // console.log('🆔 [TURNO DESDE localStorage] - Valor:', idTurno);
+    // console.log('📅 [FORMATO TURNO] - Tipo:', typeof idTurno, '- Longitud:', idTurno?.length);
     if (!container) {
         console.error("El contenedor para las cuentas activas no fue encontrado.");
         return;
@@ -89,9 +89,9 @@ function cargarCuentasAbiertas() {
         
         debounceTimer = setTimeout(async () => {
         const execTimestamp = new Date().toISOString().slice(-13, -5);
-        console.log('🔄 [CARGAR CUENTAS ABIERTAS] - Ejecutándose... TIMESTAMP:', execTimestamp);
-        console.log('🆔 [TURNO ACTUAL] - localStorage:', idTurno);
-        console.log('📊 [TOTAL DOCUMENTOS] - Encontrados:', querySnapshot.size);
+        // console.log('🔄 [CARGAR CUENTAS ABIERTAS] - Ejecutándose... TIMESTAMP:', execTimestamp);
+        // console.log('🆔 [TURNO ACTUAL] - localStorage:', idTurno);
+        // console.log('📊 [TOTAL DOCUMENTOS] - Encontrados:', querySnapshot.size);
         
         let htmlContent = '';
         let pendientes = [];
@@ -102,58 +102,63 @@ function cargarCuentasAbiertas() {
             const cuenta = docSnap.data();
             const clienteId = docSnap.id;
             
-            console.log('👤 [PROCESANDO CUENTA]', clienteId, ':', {
-                turnoEnCuenta: cuenta.turno,
-                turnoActual: idTurno,
-                tipoActual: cuenta.tipo,
-                total: cuenta.total
-            });
+            // Filtrar el documento especial de historial de abonos
+            if (clienteId === 'historial_abonos') {
+                continue;
+            }
+            
+            // console.log('👤 [PROCESANDO CUENTA]', clienteId, ':', {
+            //     turnoEnCuenta: cuenta.turno,
+            //     turnoActual: idTurno,
+            //     tipoActual: cuenta.tipo,
+            //     total: cuenta.total
+            // });
             
             // Comparación de turnos
             const esTurnoAnterior = cuenta.turno && cuenta.turno !== idTurno;
             const noEsEnCuaderno = cuenta.tipo !== 'En cuaderno';
             
-            console.log('🔍 [COMPARACIÓN]', clienteId, ':', {
-                turnoEnCuenta: cuenta.turno,
-                turnoActual: idTurno,
-                sonTurnosDiferentes: esTurnoAnterior,
-                tipoActual: cuenta.tipo,
-                noEsEnCuaderno: noEsEnCuaderno,
-                DEBE_CONVERTIRSE: esTurnoAnterior && noEsEnCuaderno
-            });
+            // console.log('🔍 [COMPARACIÓN]', clienteId, ':', {
+            //     turnoEnCuenta: cuenta.turno,
+            //     turnoActual: idTurno,
+            //     sonTurnosDiferentes: esTurnoAnterior,
+            //     tipoActual: cuenta.tipo,
+            //     noEsEnCuaderno: noEsEnCuaderno,
+            //     DEBE_CONVERTIRSE: esTurnoAnterior && noEsEnCuaderno
+            // });
             
-            // 🚨 DETECCIÓN ESPECÍFICA PARA DEBUGGING
-            if (clienteId === 'prueba3' && cuenta.tipo === 'En cuaderno') {
-                console.error('🚨 [DETECTIVE] prueba3 YA ESTÁ EN CUADERNO - ¿QUIÉN LO CONVIRTIÓ?');
-                console.error('🔍 [DETECTIVE] Datos de la cuenta:', {
-                    cliente: clienteId,
-                    tipoActual: cuenta.tipo,
-                    turnoEnCuenta: cuenta.turno,
-                    turnoActual: idTurno,
-                    timestamp: execTimestamp,
-                    stackTrace: new Error().stack
-                });
-            }
+            // 🚨 DETECCIÓN ESPECÍFICA PARA DEBUGGING (COMENTADO PARA PRODUCCIÓN)
+            // if (clienteId === 'prueba3' && cuenta.tipo === 'En cuaderno') {
+            //     console.error('🚨 [DETECTIVE] prueba3 YA ESTÁ EN CUADERNO - ¿QUIÉN LO CONVIRTIÓ?');
+            //     console.error('🔍 [DETECTIVE] Datos de la cuenta:', {
+            //         cliente: clienteId,
+            //         tipoActual: cuenta.tipo,
+            //         turnoEnCuenta: cuenta.turno,
+            //         turnoActual: idTurno,
+            //         timestamp: execTimestamp,
+            //         stackTrace: new Error().stack
+            //     });
+            // }
             
             // Lógica corregida: solo actualizar cuentas de turnos anteriores
             if (esTurnoAnterior && noEsEnCuaderno) {
-                console.log('⚠️ [CONVERSIÓN AUTOMÁTICA] TIMESTAMP:', execTimestamp, '-', clienteId, '- DE:', cuenta.tipo, '→ A: "En cuaderno"');
-                console.log('🔍 [CONVERSIÓN - DETALLES]', clienteId, ':', {
-                    turnoEnCuenta: cuenta.turno,
-                    turnoActual: idTurno,
-                    tipoOriginal: cuenta.tipo,
-                    ejecutor: 'cargarCuentasAbiertas',
-                    timestamp: execTimestamp
-                });
+                // console.log('⚠️ [CONVERSIÓN AUTOMÁTICA] TIMESTAMP:', execTimestamp, '-', clienteId, '- DE:', cuenta.tipo, '→ A: "En cuaderno"');
+                // console.log('🔍 [CONVERSIÓN - DETALLES]', clienteId, ':', {
+                //     turnoEnCuenta: cuenta.turno,
+                //     turnoActual: idTurno,
+                //     tipoOriginal: cuenta.tipo,
+                //     ejecutor: 'cargarCuentasAbiertas',
+                //     timestamp: execTimestamp
+                // });
                 try {
                     await updateDoc(doc(collection(db, "cuentasActivas"), clienteId), { tipo: 'En cuaderno' });
                     cuenta.tipo = 'En cuaderno';
-                    console.log('✅ [CONVERSIÓN EXITOSA] TIMESTAMP:', execTimestamp, '-', clienteId, '- Actualizada en Firebase');
+                    // console.log('✅ [CONVERSIÓN EXITOSA] TIMESTAMP:', execTimestamp, '-', clienteId, '- Actualizada en Firebase');
                 } catch (error) {
                     console.error('❌ [ERROR CONVERSIÓN] TIMESTAMP:', execTimestamp, '-', clienteId, '- Error:', error);
                 }
             } else {
-                console.log('🟢 [SIN CAMBIOS] TIMESTAMP:', execTimestamp, '-', clienteId, '- Mantiene tipo:', cuenta.tipo);
+                // console.log('🟢 [SIN CAMBIOS] TIMESTAMP:', execTimestamp, '-', clienteId, '- Mantiene tipo:', cuenta.tipo);
             }
             
             // Clasificar cuentas: las del turno actual van a activas, el resto a pendientes
@@ -197,7 +202,7 @@ function cargarCuentasAbiertas() {
                 
                 // Usar SIEMPRE el campo cliente de la base de datos
                 const nombreMostrar = cuenta.cliente || cuenta.id;
-                console.log('📄 Mostrando cliente:', cuenta.id, '→', nombreMostrar);
+                // console.log('📄 Mostrando cliente:', cuenta.id, '→', nombreMostrar);
                 
                 htmlContent += `
                     <div class="list-group-item d-flex justify-content-between align-items-center" 
@@ -295,7 +300,7 @@ window.mostrarCuentasPendientes = function() {
             
             // Usar SIEMPRE el campo cliente de la base de datos
             const nombreMostrar = cuenta.cliente || cuenta.id || 'Cliente sin nombre';
-            console.log('📄 Mostrando cliente (pendientes):', cuenta.id, '→', nombreMostrar);
+            // console.log('📄 Mostrando cliente (pendientes):', cuenta.id, '→', nombreMostrar);
             
             htmlContent += `
                 <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" 
@@ -662,7 +667,7 @@ let modalBusquedaAbierto = false;
 window.abrirModalBusquedaCarrito = async function() {
     // Prevenir apertura múltiple
     if (modalBusquedaAbierto) {
-        console.log('🛑 Modal ya está abierto, ignorando nueva apertura');
+        // console.log('🛑 Modal ya está abierto, ignorando nueva apertura');
         return;
     }
     
@@ -771,7 +776,7 @@ async function buscarProductosParaCarrito(termino, resultadosDiv) {
                         style="min-height: 60px; border-left: 3px solid #28a745;">
                     <div>
                         <div class="fw-bold" style="color: #333; font-size: 1rem;">${producto.nombre}</div>
-                        <small style="color: #666; font-size: 0.85rem;">Stock: ${producto.cantidad} disponibles</small>
+                        <small style="color: #ffffff; font-size: 0.85rem;">Stock: ${producto.cantidad} disponibles</small>
                     </div>
                     <div class="text-end">
                         <div class="fw-bold" style="color: #fff; background: #28a745; padding: 4px 8px; border-radius: 4px; font-size: 1rem;">${precio}</div>
@@ -817,3 +822,44 @@ window.seleccionarProductoParaCarrito = async function(nombreProducto, precioVen
 window.cerrarSesion = cerrarSesion;
 window.mostrarContainer = mostrarContainer;
 window.mostrarDetalleCuenta = mostrarDetalleCuenta;
+
+// Funciones globales para historial de abonos
+window.mostrarHistorialAbonosGeneral = async function() {
+    try {
+        mostrarCargando('Cargando historial de abonos...');
+        
+        // Importar funciones necesarias
+        const { obtenerClientesConAbonos } = await import('./Abonos.js');
+        const { mostrarModalClientesConAbonos } = await import('./SweetAlertManager.js');
+        
+        const clientesConAbonos = await obtenerClientesConAbonos();
+        
+        cerrarModal();
+        await mostrarModalClientesConAbonos(clientesConAbonos);
+        
+    } catch (error) {
+        cerrarModal();
+        mostrarError('Error al cargar historial de abonos', error.message);
+        console.error('Error en mostrarHistorialAbonosGeneral:', error);
+    }
+};
+
+window.verHistorialCliente = async function(clienteId, nombreCliente) {
+    try {
+        mostrarCargando('Cargando historial del cliente...');
+        
+        // Importar funciones necesarias
+        const { obtenerHistorialAbono } = await import('./Abonos.js');
+        const { mostrarModalHistorialCliente } = await import('./SweetAlertManager.js');
+        
+        const historialAbonos = await obtenerHistorialAbono(clienteId);
+        
+        cerrarModal();
+        await mostrarModalHistorialCliente(historialAbonos, nombreCliente);
+        
+    } catch (error) {
+        cerrarModal();
+        mostrarError('Error al cargar historial del cliente', error.message);
+        console.error('Error en verHistorialCliente:', error);
+    }
+};

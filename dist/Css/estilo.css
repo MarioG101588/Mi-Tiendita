@@ -873,6 +873,58 @@ details .detalle-content {
         padding: 12px 8px;
         border: none;
     }
+
+/* ESTILOS ESPECÍFICOS PARA RESUMEN DE TURNO - SIN FONDOS VERDES */
+.containerResumenTurno .card-header.bg-light,
+#resumenTurnoContent .card-header.bg-light {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+}
+
+.containerResumenTurno .p-3.rounded,
+#resumenTurnoContent .p-3.rounded {
+    background-color: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+.containerResumenTurno .bg-warning,
+#resumenTurnoContent .bg-warning {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+}
+
+.containerResumenTurno .bg-secondary,
+#resumenTurnoContent .bg-secondary {
+    background-color: #6c757d !important;
+    color: #ffffff !important;
+}
+
+.containerResumenTurno .bg-primary,
+#resumenTurnoContent .bg-primary {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+/* Específicamente para sobrescribir cualquier bg-success en resumen */
+.containerResumenTurno .bg-success,
+#resumenTurnoContent .bg-success {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+}
+
+/* Específicamente para los elementos que se ven verdes */
+.containerResumenTurno .card-header,
+#resumenTurnoContent .card-header {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+.containerResumenTurno .table-success th,
+#resumenTurnoContent .table-success th {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+}
     
     .inventario-fija thead th {
         padding: 8px 4px;

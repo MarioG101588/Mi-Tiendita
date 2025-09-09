@@ -16,19 +16,21 @@ import {
     mostrarInputNumerico,
     mostrarAdvertencia,
     cerrarModal,
-    mostrarPersonalizado
+    mostrarPersonalizado,
+    mostrarModalAbono
 } from "./SweetAlertManager.js";
+import { procesarAbono, obtenerHistorialAbono, renderizarHistorialAbonos, puedeRecibirAbono } from "./Abonos.js";
 import { mostrarModalMedioPago } from "./Engranaje.js";
 
 const db = getFirestore(app);
 
 // **FUNCIÓN DE DIAGNÓSTICO COMPLETO PARA FIRESTORE**
 window.diagnosticarFirestore = async function() {
-    console.log('🔧 ==================== DIAGNÓSTICO FIRESTORE ====================');
+    // console.log('🔧 ==================== DIAGNÓSTICO FIRESTORE ====================');
     
     try {
         // 1. Verificar conectividad básica
-        console.log('1️⃣ Verificando conectividad básica...');
+// console.log('1️⃣ Verificando conectividad básica...');
         const collectionRef = collection(db, "cuentasActivas");
         const q = query(collectionRef, limit(1));
         const snapshot = await getDocs(q);
@@ -42,11 +44,11 @@ window.diagnosticarFirestore = async function() {
         const primerDocId = primeraCtasnapshot.id;
         const datosOriginales = primeraCtasnapshot.data();
         
-        console.log('✅ Documento encontrado:', primerDocId);
-        console.log('📄 Datos originales:', datosOriginales);
+// console.log('✅ Documento encontrado:', primerDocId);
+// console.log('📄 Datos originales:', datosOriginales);
         
         // 2. Intentar escritura simple
-        console.log('2️⃣ Intentando escritura simple...');
+// console.log('2️⃣ Intentando escritura simple...');
         const testRef = doc(db, "cuentasActivas", primerDocId);
         
         try {
@@ -54,7 +56,7 @@ window.diagnosticarFirestore = async function() {
                 pruebaEscritura: new Date().toISOString(),
                 contadorPruebas: (datosOriginales.contadorPruebas || 0) + 1
             });
-            console.log('✅ Escritura simple exitosa');
+// console.log('✅ Escritura simple exitosa');
         } catch (writeError) {
             console.error('❌ Error en escritura simple:', writeError);
             console.error('❌ Código de error:', writeError.code);
@@ -63,21 +65,21 @@ window.diagnosticarFirestore = async function() {
         }
         
         // 3. Verificar que se guardó
-        console.log('3️⃣ Verificando que se guardó...');
+// console.log('3️⃣ Verificando que se guardó...');
         const docActualizado = await getDoc(testRef);
         const datosNuevos = docActualizado.data();
         
         if (datosNuevos.pruebaEscritura) {
-            console.log('✅ Verificación exitosa - datos actualizados:', {
-                pruebaEscritura: datosNuevos.pruebaEscritura,
-                contadorPruebas: datosNuevos.contadorPruebas
-            });
+            // console.log('✅ Verificación exitosa - datos actualizados:', {
+            //     pruebaEscritura: datosNuevos.pruebaEscritura,
+            //     contadorPruebas: datosNuevos.contadorPruebas
+            // });
         } else {
             console.error('❌ Los datos NO se guardaron en Firestore');
         }
         
         // 4. Probar operación compleja (similar a editar producto)
-        console.log('4️⃣ Probando operación compleja...');
+// console.log('4️⃣ Probando operación compleja...');
         try {
             await updateDoc(testRef, {
                 'productos.productoPrueba': {
@@ -87,12 +89,12 @@ window.diagnosticarFirestore = async function() {
                 },
                 ultimaModificacion: new Date().toISOString()
             });
-            console.log('✅ Operación compleja exitosa');
+// console.log('✅ Operación compleja exitosa');
         } catch (complexError) {
             console.error('❌ Error en operación compleja:', complexError);
         }
         
-        console.log('🎯 ================ DIAGNÓSTICO COMPLETADO ================');
+// console.log('🎯 ================ DIAGNÓSTICO COMPLETADO ================');
         
     } catch (error) {
         console.error('❌ Error general en diagnóstico:', error);
@@ -102,15 +104,15 @@ window.diagnosticarFirestore = async function() {
 
 // **FUNCIÓN DE PRUEBA ESPECÍFICA PARA CAMBIO DE NOMBRES**
 window.probarCambioNombre = async function(clienteId, nuevoNombre) {
-    console.log('🧪 ==================== PRUEBA CAMBIO DE NOMBRE ====================');
-    console.log('🆔 ClienteId:', clienteId);
-    console.log('📝 Nuevo nombre:', nuevoNombre);
+// console.log('🧪 ==================== PRUEBA CAMBIO DE NOMBRE ====================');
+// console.log('🆔 ClienteId:', clienteId);
+// console.log('📝 Nuevo nombre:', nuevoNombre);
     
     try {
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
         
         // 1. Verificar documento actual
-        console.log('1️⃣ Verificando documento actual...');
+// console.log('1️⃣ Verificando documento actual...');
         const docActual = await getDoc(cuentaRef);
         if (!docActual.exists()) {
             console.error('❌ El documento no existe');
@@ -118,32 +120,32 @@ window.probarCambioNombre = async function(clienteId, nuevoNombre) {
         }
         
         const datosActuales = docActual.data();
-        console.log('📄 Nombre actual en BD:', datosActuales.cliente);
+// console.log('📄 Nombre actual en BD:', datosActuales.cliente);
         
         // 2. Actualizar nombre
-        console.log('2️⃣ Actualizando nombre...');
+// console.log('2️⃣ Actualizando nombre...');
         await updateDoc(cuentaRef, {
             cliente: nuevoNombre,
             ultimaModificacion: new Date().toISOString(),
             pruebaTimestamp: Date.now()
         });
-        console.log('✅ updateDoc ejecutado');
+// console.log('✅ updateDoc ejecutado');
         
         // 3. Verificar cambio inmediatamente
-        console.log('3️⃣ Verificando cambio...');
+// console.log('3️⃣ Verificando cambio...');
         const docVerificacion = await getDoc(cuentaRef);
         const datosVerificacion = docVerificacion.data();
         
-        console.log('📄 Nombre después de actualizar:', datosVerificacion.cliente);
-        console.log('📄 Timestamp de prueba:', datosVerificacion.pruebaTimestamp);
+// console.log('📄 Nombre después de actualizar:', datosVerificacion.cliente);
+// console.log('📄 Timestamp de prueba:', datosVerificacion.pruebaTimestamp);
         
         if (datosVerificacion.cliente === nuevoNombre) {
-            console.log('✅ ÉXITO: El cambio de nombre SÍ funcionó');
+// console.log('✅ ÉXITO: El cambio de nombre SÍ funcionó');
         } else {
             console.error('❌ FALLO: El cambio de nombre NO funcionó');
         }
         
-        console.log('🎯 ================ PRUEBA COMPLETADA ================');
+// console.log('🎯 ================ PRUEBA COMPLETADA ================');
         
     } catch (error) {
         console.error('❌ Error en prueba de cambio de nombre:', error);
@@ -338,6 +340,15 @@ export async function cargarDetalleCuenta(clienteId) {
         }
 
         const totalFormateado = formatearPrecio(total);
+        
+        // Obtener historial de abonos si la cuenta es "En cuaderno"
+        let historialHTML = '';
+        if (cuenta.tipo === 'En cuaderno') {
+            const historialAbonos = await obtenerHistorialAbono(clienteId);
+            if (historialAbonos.length > 0) {
+                historialHTML = renderizarHistorialAbonos(historialAbonos);
+            }
+        }
 
         detalleContainer.innerHTML = `
             <div class="card">
@@ -407,6 +418,8 @@ export async function cargarDetalleCuenta(clienteId) {
                             Solo lectura - No se pueden modificar las cantidades
                         </div>-->
                     `}
+                    
+                    ${historialHTML}
                 </div>
                 <div class="card-footer">
                     <div class="d-flex flex-wrap gap-2 justify-content-center">
@@ -416,6 +429,9 @@ export async function cargarDetalleCuenta(clienteId) {
 
                         <button class="btn btn-success btn-lg" onclick="cerrarCuenta('${clienteId}')">
                             💰 Pagar cuenta
+                        </button>
+                        <button class="btn btn-warning btn-lg" onclick="window.procesarAbonoCliente('${clienteId}')">
+                            💵 Abono
                         </button>
                         <button class="btn btn-info btn-lg" onclick="pagoAmericano('${clienteId}')">
                             💳 Pago Americano
@@ -520,11 +536,11 @@ async function modificarCantidadProductoCuenta(clienteId, productoId, operacion)
             totalCuenta += productos[pid].total ?? 0;
         }
 
-        console.log('📝 INTENTANDO ACTUALIZAR FIRESTORE - modificarCantidadProductoCuenta');
-        console.log('🆔 ClienteId:', clienteId);
-        console.log('📦 Productos a guardar:', productos);
-        console.log('📋 Historial a guardar:', historial);
-        console.log('💰 Total calculado:', totalCuenta);
+// console.log('📝 INTENTANDO ACTUALIZAR FIRESTORE - modificarCantidadProductoCuenta');
+// console.log('🆔 ClienteId:', clienteId);
+// console.log('📦 Productos a guardar:', productos);
+// console.log('📋 Historial a guardar:', historial);
+// console.log('💰 Total calculado:', totalCuenta);
 
         try {
             await updateDoc(cuentaRef, {
@@ -533,7 +549,7 @@ async function modificarCantidadProductoCuenta(clienteId, productoId, operacion)
                 total: totalCuenta,
                 ultimaActualizacion: new Date()
             });
-            console.log('✅ FIRESTORE ACTUALIZADO EXITOSAMENTE - modificarCantidadProductoCuenta');
+// console.log('✅ FIRESTORE ACTUALIZADO EXITOSAMENTE - modificarCantidadProductoCuenta');
         } catch (firestoreError) {
             console.error('❌ ERROR ESPECÍFICO DE FIRESTORE:', firestoreError);
             console.error('❌ Código de error:', firestoreError.code);
@@ -741,13 +757,13 @@ window.editarNombreCliente = async function(clienteId, nombreActual) {
 
         if (resultado.isConfirmed && resultado.value) {
             const nuevoNombre = resultado.value.trim();
-            console.log('🔄 Intentando cambiar nombre de:', nombreActual, 'a:', nuevoNombre);
+// console.log('🔄 Intentando cambiar nombre de:', nombreActual, 'a:', nuevoNombre);
             
             if (nuevoNombre !== nombreActual) {
                 mostrarCargando('Actualizando nombre...');
                 
                 try {
-                    console.log('📝 Actualizando en Firestore - clienteId:', clienteId);
+// console.log('📝 Actualizando en Firestore - clienteId:', clienteId);
                     
                     // Verificar que el documento existe antes de actualizar
                     const cuentaRef = doc(db, "cuentasActivas", clienteId);
@@ -757,16 +773,16 @@ window.editarNombreCliente = async function(clienteId, nombreActual) {
                         throw new Error(`El documento con ID ${clienteId} no existe en cuentasActivas`);
                     }
                     
-                    console.log('📄 Documento encontrado, datos actuales:', docSnapshot.data());
+// console.log('📄 Documento encontrado, datos actuales:', docSnapshot.data());
                     
                     // Actualizar en la base de datos
-                    console.log('🚀 EJECUTANDO updateDoc para cambio de nombre...');
+// console.log('🚀 EJECUTANDO updateDoc para cambio de nombre...');
                     await updateDoc(cuentaRef, {
                         cliente: nuevoNombre,
                         ultimaModificacion: new Date().toISOString()
                     });
                     
-                    console.log('✅ NOMBRE ACTUALIZADO EN FIRESTORE');
+// console.log('✅ NOMBRE ACTUALIZADO EN FIRESTORE');
                     
                     // Actualizar la vista inmediatamente en el detalle de la cuenta
                     const spanNombre = document.getElementById('nombreCliente');
@@ -778,7 +794,7 @@ window.editarNombreCliente = async function(clienteId, nombreActual) {
                     mostrarExito(`✅ Cliente identificado como: "${nuevoNombre}"`);
                     
                     // El listener onSnapshot actualizará automáticamente la lista principal
-                    console.log('📡 El listener actualizará la lista principal automáticamente');
+// console.log('📡 El listener actualizará la lista principal automáticamente');
                     
                 } catch (firestoreError) {
                     console.error('❌ Error específico de Firestore:', firestoreError);
@@ -787,7 +803,7 @@ window.editarNombreCliente = async function(clienteId, nombreActual) {
                 }
                 
             } else {
-                console.log('El nombre no cambió');
+// console.log('El nombre no cambió');
             }
         }
         
@@ -875,7 +891,7 @@ async function buscarProductosEnInventario(termino, resultadosDiv, clienteId) {
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <div class="fw-bold" style="color: #333; font-size: 1rem;">${producto.nombre}</div>
-                            <small style="color: #666; font-size: 0.85rem;">Stock: ${producto.cantidad} disponibles</small>
+                            <small style="color: #ffffff; font-size: 0.85rem;">Stock: ${producto.cantidad} disponibles</small>
                         </div>
                         <div class="text-end">
                             <div class="fw-bold" style="color: #fff; background: #28a745; padding: 3px 8px; border-radius: 4px; font-size: 1rem;">${precio}</div>
@@ -935,11 +951,11 @@ window.seleccionarProductoParaAgregar = async function(clienteId, nombreProducto
 
 // **FUNCIÓN PARA AGREGAR FÍSICAMENTE EL PRODUCTO A LA BASE DE DATOS**
 async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta, cantidad) {
-    console.log('🚀 INICIANDO agregarProductoACuentaEnBD');
-    console.log('🆔 ClienteId:', clienteId);
-    console.log('📦 Producto:', nombreProducto);
-    console.log('💰 Precio:', precioVenta);
-    console.log('🔢 Cantidad:', cantidad);
+// console.log('🚀 INICIANDO agregarProductoACuentaEnBD');
+// console.log('🆔 ClienteId:', clienteId);
+// console.log('📦 Producto:', nombreProducto);
+// console.log('💰 Precio:', precioVenta);
+// console.log('🔢 Cantidad:', cantidad);
     
     const cuentaRef = doc(db, "cuentasActivas", clienteId);
     const idTurno = localStorage.getItem("idTurno") || null;
@@ -954,7 +970,7 @@ async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta
     });
 
     try {
-        console.log('📝 INICIANDO TRANSACTION...');
+// console.log('📝 INICIANDO TRANSACTION...');
         await runTransaction(db, async (transaction) => {
         const cuentaDoc = await transaction.get(cuentaRef);
         
@@ -1009,9 +1025,9 @@ async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta
         historialCuenta.push(registroHistorial);
         
         // Actualizar la cuenta
-        console.log('📝 ACTUALIZANDO DOCUMENTO CON TRANSACTION...');
-        console.log('📦 Productos finales:', productosCuenta);
-        console.log('💰 Total final:', totalCuenta);
+// console.log('📝 ACTUALIZANDO DOCUMENTO CON TRANSACTION...');
+// console.log('📦 Productos finales:', productosCuenta);
+// console.log('💰 Total final:', totalCuenta);
         
         transaction.update(cuentaRef, {
             productos: productosCuenta,
@@ -1020,10 +1036,10 @@ async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta
             ultimaModificacion: fechaFormateada
         });
         
-        console.log('✅ TRANSACTION UPDATE EJECUTADO');
+// console.log('✅ TRANSACTION UPDATE EJECUTADO');
     });
     
-    console.log('✅ TRANSACTION COMPLETADA EXITOSAMENTE');
+// console.log('✅ TRANSACTION COMPLETADA EXITOSAMENTE');
     
     } catch (error) {
         console.error('❌ ERROR EN agregarProductoACuentaEnBD:', error);
@@ -1031,6 +1047,88 @@ async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta
         console.error('❌ Mensaje de error:', error.message);
         console.error('❌ Stack trace:', error.stack);
         throw error; // Re-lanzar el error
+    }
+}
+
+// =====================================================
+// FUNCIONES PARA MANEJO DE ABONOS
+// =====================================================
+
+/**
+ * Procesa abono parcial para un cliente
+ */
+window.procesarAbonoCliente = async function(clienteId) {
+    try {
+        mostrarCargando('Cargando datos de la cuenta...');
+        
+        // Obtener datos actuales de la cuenta
+        const cuentaRef = doc(db, "cuentasActivas", clienteId);
+        const cuentaSnap = await getDoc(cuentaRef);
+        
+        if (!cuentaSnap.exists()) {
+            cerrarModal();
+            await mostrarError('Cuenta no encontrada');
+            return;
+        }
+        
+        const cuenta = cuentaSnap.data();
+        
+        // Verificar si puede recibir abonos
+        if (!puedeRecibirAbono(cuenta)) {
+            cerrarModal();
+            await mostrarAdvertencia('Esta cuenta no puede recibir abonos');
+            return;
+        }
+        
+        cerrarModal();
+        
+        // Mostrar modal de abono
+        const datosAbono = await mostrarModalAbono(cuenta.cliente, cuenta.total);
+        
+        if (datosAbono) {
+            const exito = await procesarAbono(
+                clienteId, 
+                datosAbono.monto, 
+                datosAbono.medioPago, 
+                cuenta.total
+            );
+            
+            if (exito) {
+                // Recargar la vista de cuentas
+                if (window.cargarCuentasAbiertas) {
+                    window.cargarCuentasAbiertas();
+                }
+            }
+        }
+        
+    } catch (error) {
+        cerrarModal();
+        console.error('Error procesando abono:', error);
+        await mostrarError(`Error: ${error.message}`);
+    }
+};
+
+/**
+ * Actualiza la vista de una cuenta para mostrar historial de abonos
+ */
+async function actualizarVistaConHistorial(clienteId, contenidoHTML) {
+    try {
+        const historial = await obtenerHistorialAbono(clienteId);
+        
+        if (historial.length > 0) {
+            const historialHTML = renderizarHistorialAbonos(historial);
+            // Insertar el historial antes de los botones
+            const botonesIndex = contenidoHTML.lastIndexOf('<div class="d-grid gap-2">');
+            if (botonesIndex !== -1) {
+                return contenidoHTML.slice(0, botonesIndex) + historialHTML + contenidoHTML.slice(botonesIndex);
+            }
+        }
+        
+        return contenidoHTML;
+        
+    } catch (error) {
+        console.error('Error cargando historial de abonos:', error);
+        return contenidoHTML;
     }
 }
 

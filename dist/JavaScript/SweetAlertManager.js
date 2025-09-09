@@ -225,18 +225,18 @@ export function mostrarFormularioVenta() {
             const claseVenta = document.getElementById('swal-select-clase-venta').value;
             const cliente = document.getElementById('swal-input-cliente').value.trim();
 
-            console.log('🔍 [FORMULARIO VENTA] - Valores capturados:');
-            console.log('   👤 Cliente:', cliente);
-            console.log('   📝 Clase de Venta:', claseVenta);
-            console.log('   🎯 Select element value:', document.getElementById('swal-select-clase-venta').value);
-            console.log('   🎯 Select element selectedIndex:', document.getElementById('swal-select-clase-venta').selectedIndex);
+            // console.log('🔍 [FORMULARIO VENTA] - Valores capturados:');
+            // console.log('   👤 Cliente:', cliente);
+            // console.log('   📝 Clase de Venta:', claseVenta);
+            // console.log('   🎯 Select element value:', document.getElementById('swal-select-clase-venta').value);
+            // console.log('   🎯 Select element selectedIndex:', document.getElementById('swal-select-clase-venta').selectedIndex);
 
             if ((claseVenta === 'En cuaderno' || claseVenta === 'Consumo en el local') && !cliente) {
                 Swal.showValidationMessage('El nombre del cliente es obligatorio para esta opción');
                 return false;
             }
             
-            console.log('✅ [FORMULARIO VENTA] - Datos válidos, retornando:', { cliente, claseVenta });
+            // console.log('✅ [FORMULARIO VENTA] - Datos válidos, retornando:', { cliente, claseVenta });
             return { cliente, claseVenta };
         },
         confirmButtonText: 'Confirmar Venta',
@@ -331,4 +331,178 @@ export function log(mensaje, tipo = 'info') {
     } else {
         // console.log(`🔵 SweetAlertManager: ${mensaje}`);
     }
+}
+
+/**
+ * Muestra modal para procesar abono parcial
+ * @param {string} clienteNombre - Nombre del cliente
+ * @param {number} saldoActual - Saldo actual de la cuenta
+ * @returns {Promise<{monto: number, medioPago: string} | null>}
+ */
+export async function mostrarModalAbono(clienteNombre, saldoActual) {
+    const { value: formValues } = await Swal.fire({
+        title: `💰 Abono Parcial`,
+        html: `
+            <div class="text-start">
+                <div class="mb-3 p-3 bg-light rounded">
+                    <h6 class="mb-1">Cliente: <strong>${clienteNombre}</strong></h6>
+                    <h6 class="mb-0 text-primary">Saldo actual: <strong>$${saldoActual.toLocaleString('es-CO')}</strong></h6>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="swal-monto-abono" class="form-label">Monto del abono:</label>
+                    <input type="number" 
+                           id="swal-monto-abono" 
+                           class="form-control" 
+                           placeholder="Ingrese el monto"
+                           min="1" 
+                           max="${saldoActual}"
+                           inputmode="numeric">
+                    <div class="form-text">Máximo: $${saldoActual.toLocaleString('es-CO')}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="swal-medio-pago" class="form-label">Medio de pago:</label>
+                    <select id="swal-medio-pago" class="form-select">
+                        <option value="">Seleccione el medio de pago</option>
+                        <option value="Efectivo">💵 Efectivo</option>
+                        <option value="Nequi">📱 Nequi</option>
+                        <option value="Daviplat">💳 Daviplata</option>
+                    </select>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '💰 Procesar Abono',
+        cancelButtonText: '❌ Cancelar',
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#dc3545',
+        focusConfirm: false,
+        width: '500px',
+        preConfirm: () => {
+            const monto = parseFloat(document.getElementById('swal-monto-abono').value);
+            const medioPago = document.getElementById('swal-medio-pago').value;
+            
+            // Validaciones
+            if (!monto || monto <= 0) {
+                Swal.showValidationMessage('Debe ingresar un monto válido');
+                return false;
+            }
+            
+            if (monto > saldoActual) {
+                Swal.showValidationMessage(`El abono no puede ser mayor al saldo actual ($${saldoActual.toLocaleString('es-CO')})`);
+                return false;
+            }
+            
+            if (!medioPago) {
+                Swal.showValidationMessage('Debe seleccionar un medio de pago');
+                return false;
+            }
+            
+            return { monto, medioPago };
+        }
+    });
+    
+    return formValues || null;
+}
+
+/**
+ * Muestra modal con la lista de clientes que tienen abonos
+ * @param {Array} clientesConAbonos - Array de clientes con historial de abonos
+ */
+export async function mostrarModalClientesConAbonos(clientesConAbonos) {
+    if (clientesConAbonos.length === 0) {
+        return mostrarInfo('Sin historial', 'No hay clientes con historial de abonos');
+    }
+
+    const listaClientes = clientesConAbonos.map(cliente => `
+        <div class="cliente-abono-item" onclick="window.verHistorialCliente('${cliente.id}', '${cliente.nombre}')" 
+             style="cursor: pointer; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa; transition: all 0.2s;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1 text-primary">${cliente.nombre}</h6>
+                    <small class="text-muted">
+                        ${cliente.totalAbonos} abono(s) • Último: ${cliente.ultimoAbono.fecha}
+                    </small>
+                </div>
+                <div class="text-success fw-bold">
+                    ${cliente.ultimoAbono.monto.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    return Swal.fire({
+        title: '📊 Historial de Abonos',
+        html: `
+            <div style="max-height: 400px; overflow-y: auto;">
+                <p class="text-muted mb-3">Selecciona un cliente para ver su historial completo:</p>
+                ${listaClientes}
+            </div>
+            <style>
+                .cliente-abono-item:hover {
+                    background: #e3f2fd !important;
+                    border-color: #2196f3 !important;
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+            </style>
+        `,
+        confirmButtonText: '✅ Cerrar',
+        confirmButtonColor: '#007bff',
+        width: '600px'
+    });
+}
+
+/**
+ * Muestra el historial detallado de abonos de un cliente específico
+ * @param {Array} abonos - Array de abonos del cliente
+ * @param {string} nombreCliente - Nombre del cliente
+ */
+export async function mostrarModalHistorialCliente(abonos, nombreCliente) {
+    // Ordenar abonos del más reciente al más antiguo
+    const abonosOrdenados = [...abonos].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    
+    const totalAbonado = abonos.reduce((sum, abono) => sum + abono.monto, 0);
+    
+    const listaAbonos = abonosOrdenados.map((abono, index) => `
+        <div class="abono-detalle" style="padding: 12px; margin: 8px 0; border-left: 4px solid #28a745; background: #f8f9fa; border-radius: 4px;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="mb-1 text-success">Abono #${abonosOrdenados.length - index}</h6>
+                    <div class="small text-muted">
+                        <div><strong>📅 Fecha:</strong> ${abono.fecha}</div>
+                        <div><strong>💳 Medio:</strong> ${abono.medioPago}</div>
+                        <div><strong>🎯 Turno:</strong> ${abono.turno}</div>
+                        ${abono.saldoAnterior ? `<div><strong>💰 Saldo anterior:</strong> ${abono.saldoAnterior.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</div>` : ''}
+                        ${abono.saldoRestante !== undefined ? `<div><strong>💸 Saldo restante:</strong> ${abono.saldoRestante.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</div>` : ''}
+                    </div>
+                </div>
+                <div class="text-success fw-bold fs-5">
+                    ${abono.monto.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    return Swal.fire({
+        title: `📈 Historial de ${nombreCliente}`,
+        html: `
+            <div class="mb-3 p-3 bg-primary text-white rounded">
+                <h5 class="mb-0">💎 Total Abonado: ${totalAbonado.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</h5>
+                <small>${abonos.length} abono(s) registrado(s)</small>
+            </div>
+            <div style="max-height: 400px; overflow-y: auto;">
+                ${listaAbonos}
+            </div>
+        `,
+        confirmButtonText: '⬅️ Volver a la lista',
+        confirmButtonColor: '#007bff',
+        width: '700px'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Volver a mostrar la lista de clientes
+            window.mostrarHistorialAbonosGeneral();
+        }
+    });
 }

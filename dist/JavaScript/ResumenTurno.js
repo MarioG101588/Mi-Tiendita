@@ -43,7 +43,12 @@ export async function obtenerResumenTurno(idTurno) {
     const q = query(cuentasActivasRef, where('turno', '==', idTurno));
     const cuentasSnap = await getDocs(q);
     const cuentasActivasDelTurno = [];
-    cuentasSnap.forEach(doc => cuentasActivasDelTurno.push({ id: doc.id, ...doc.data() }));
+    cuentasSnap.forEach(doc => {
+        // Filtrar el documento especial de historial de abonos
+        if (doc.id !== 'historial_abonos') {
+            cuentasActivasDelTurno.push({ id: doc.id, ...doc.data() });
+        }
+    });
     
     // console.log('Cuentas activas del turno encontradas:', cuentasActivasDelTurno.length);
 
@@ -52,7 +57,12 @@ export async function obtenerResumenTurno(idTurno) {
     const qTodas = query(todasCuentasRef, where('tipo', '==', 'En cuaderno'));
     const todasCuentasSnap = await getDocs(qTodas);
     const todasCuentasEnCuaderno = [];
-    todasCuentasSnap.forEach(doc => todasCuentasEnCuaderno.push({ id: doc.id, ...doc.data() }));
+    todasCuentasSnap.forEach(doc => {
+        // Filtrar el documento especial de historial de abonos
+        if (doc.id !== 'historial_abonos') {
+            todasCuentasEnCuaderno.push({ id: doc.id, ...doc.data() });
+        }
+    });
     
     // console.log('TODAS las cuentas En cuaderno encontradas:', todasCuentasEnCuaderno.length);
 
@@ -63,15 +73,41 @@ export async function obtenerResumenTurno(idTurno) {
     let totalCuentasCerradas = 0;
     let tipoVenta = { efectivo: 0, nequi: 0, daviplata: 0 };
 
-    // 4. Procesar ventas cerradas
+    // 4. Procesar ventas cerradas y separar abonos
+    let totalAbonos = 0;
+    let totalVentasCompletas = 0;
+    let detalleAbonos = [];
+    
+    // Validar que cuentasCerradas sea un array
+    if (!Array.isArray(cuentasCerradas)) {
+        console.warn('cuentasCerradas no es un array:', cuentasCerradas);
+        cuentasCerradas = [];
+    }
+    
     for (const venta of cuentasCerradas) {
         totalCuentasCerradas += venta.total || 0;
         const medioPago = venta.tipoVenta?.toLowerCase();
         if (medioPago && tipoVenta[medioPago] !== undefined) {
             tipoVenta[medioPago] += venta.total || 0;
         }
+        
+        // Separar abonos de ventas completas
+        if (venta.esAbono) {
+            totalAbonos += venta.total || 0;
+            detalleAbonos.push({
+                cliente: venta.cliente,
+                monto: venta.total || 0,
+                medioPago: venta.tipoVenta,
+                fecha: venta.fechaCierre,
+                saldoOriginal: venta.saldoOriginal,
+                saldoRestante: venta.saldoRestante
+            });
+        } else {
+            totalVentasCompletas += venta.total || 0;
+        }
+
         // Tabaco: filtrar por productos específicos de tabaco
-        if (venta.productos) {
+        if (venta.productos && Array.isArray(venta.productos)) {
             for (const prod of venta.productos) {
                 const nombreProducto = (prod.nombreProducto || '').toLowerCase().trim();
                 
@@ -102,6 +138,11 @@ export async function obtenerResumenTurno(idTurno) {
     }
 
     // 5. Procesar cuentas activas DEL TURNO (para consumo en local)
+    if (!Array.isArray(cuentasActivasDelTurno)) {
+        console.warn('cuentasActivasDelTurno no es un array:', cuentasActivasDelTurno);
+        cuentasActivasDelTurno = [];
+    }
+    
     for (const cuenta of cuentasActivasDelTurno) {
         // console.log('Procesando cuenta del turno:', cuenta.cliente || cuenta.id, 'Tipo:', cuenta.tipo, 'Total:', cuenta.total);
         
@@ -111,6 +152,11 @@ export async function obtenerResumenTurno(idTurno) {
     }
     
     // 6. Procesar TODAS las cuentas "En cuaderno" (independiente del turno)
+    if (!Array.isArray(todasCuentasEnCuaderno)) {
+        console.warn('todasCuentasEnCuaderno no es un array:', todasCuentasEnCuaderno);
+        todasCuentasEnCuaderno = [];
+    }
+    
     for (const cuenta of todasCuentasEnCuaderno) {
         // console.log('Procesando cuenta En cuaderno:', cuenta.cliente || cuenta.id, 'Turno:', cuenta.turno, 'Total:', cuenta.total);
         
@@ -144,6 +190,9 @@ export async function obtenerResumenTurno(idTurno) {
         totalNoCobradas,
         cuentasEnCuaderno, // Cambio: array en lugar de total
         totalCuentasCerradas,
+        totalAbonos,
+        totalVentasCompletas,
+        detalleAbonos,
         tipoVenta,
         pagoTurno
     };
@@ -176,7 +225,7 @@ export function renderizarResumenTurno(resumen, containerId) {
                 👤 <strong>${cuenta.cliente}</strong> 
                 <span class="badge bg-secondary ms-1">${cuenta.turno}</span><br>
                 📅 ${cuenta.fechaCreacion} → ⏰ ${cuenta.fechaModificacion}<br>
-                💰 <span class="text-success fw-bold">${formatearPrecio(cuenta.total)}</span>
+                💰 <span class="text-dark fw-bold">${formatearPrecio(cuenta.total)}</span>
             </li>`;
         }).join('');
         
@@ -203,23 +252,23 @@ export function renderizarResumenTurno(resumen, containerId) {
 
         <!-- SECCIÓN 1: LO MÁS IMPORTANTE - DINERO RECIBIDO -->
         <div class="card mb-4" style="border: 3px solid #28a745;">
-            <div class="card-header bg-success text-white text-center">
+            <div class="card-header text-dark text-center" style="background-color: #f8f9fa !important;">
                 <h4 class="mb-0">💰 DINERO QUE RECIBISTE HOY</h4>
             </div>
             <div class="card-body">
                 <!-- DISEÑO RESPONSIVE: En móvil se apilan, en desktop se mantienen en línea -->
                 <div class="row text-center g-3">
                     <div class="col-12 col-md-4">
-                        <div class="p-3 bg-light rounded shadow-sm">
+                        <div class="p-3 rounded" style="background-color: #ffffff !important; border: 1px solid #dee2e6 !important;">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <span style="font-size: 2rem;">💵</span>
-                                <h5 class="text-success mb-0 ms-2">Efectivo</h5>
+                                <h5 class="text-dark mb-0 ms-2">Efectivo</h5>
                             </div>
-                            <h3 class="text-success mb-0 fw-bold">${formatearPrecio(resumen.tipoVenta.efectivo)}</h3>
+                            <h3 class="text-dark mb-0 fw-bold">${formatearPrecio(resumen.tipoVenta.efectivo)}</h3>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
-                        <div class="p-3 bg-light rounded shadow-sm">
+                        <div class="p-3 rounded" style="background-color: #ffffff !important; border: 1px solid #dee2e6 !important;">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <span style="font-size: 2rem;">📱</span>
                                 <h5 class="text-info mb-0 ms-2">Nequi</h5>
@@ -228,7 +277,7 @@ export function renderizarResumenTurno(resumen, containerId) {
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
-                        <div class="p-3 bg-light rounded shadow-sm">
+                        <div class="p-3 rounded" style="background-color: #ffffff !important; border: 1px solid #dee2e6 !important;">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <span style="font-size: 2rem;">💳</span>
                                 <h5 class="text-warning mb-0 ms-2">Daviplata</h5>
@@ -239,23 +288,71 @@ export function renderizarResumenTurno(resumen, containerId) {
                 </div>
                 <hr>
                 <div class="text-center">
-                    <h3 class="text-success mb-0">
+                    <h3 class="text-dark mb-0">
                         <strong>TOTAL RECIBIDO: ${formatearPrecio(resumen.totalCuentasCerradas)}</strong>
                     </h3>
+                    ${resumen.totalAbonos > 0 ? `
+                        <div class="mt-2">
+                            <small class="text-muted">Incluye:</small><br>
+                            <span class="badge bg-primary me-2">💰 Ventas completas: ${formatearPrecio(resumen.totalVentasCompletas)}</span>
+                            <span class="badge bg-info">📋 Abonos parciales: ${formatearPrecio(resumen.totalAbonos)}</span>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         </div>
 
+        ${resumen.totalAbonos > 0 ? `
+        <!-- SECCIÓN ESPECIAL: ABONOS RECIBIDOS -->
+        <div class="card mb-4" style="border: 2px solid #17a2b8;">
+            <div class="card-header text-white text-center" style="background-color: #17a2b8 !important;">
+                <h4 class="mb-0">📋 ABONOS PARCIALES RECIBIDOS</h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <h4 class="text-info mb-0">Total en abonos: ${formatearPrecio(resumen.totalAbonos)}</h4>
+                    <small class="text-muted">${resumen.detalleAbonos.length} abono${resumen.detalleAbonos.length !== 1 ? 's' : ''} procesado${resumen.detalleAbonos.length !== 1 ? 's' : ''}</small>
+                </div>
+                <details class="mt-2">
+                    <summary class="resumen-summary-clickable">
+                        Ver detalles de abonos (${resumen.detalleAbonos.length})
+                    </summary>
+                    <div class="mt-3">
+                        ${resumen.detalleAbonos.map(abono => `
+                            <div class="border-start border-info border-3 ps-3 mb-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>👤 ${abono.cliente}</strong><br>
+                                        <small class="text-muted">
+                                            📅 ${formatearFechaAbreviada(abono.fecha)}<br>
+                                            💳 ${abono.medioPago}<br>
+                                            💰 Saldo original: ${formatearPrecio(abono.saldoOriginal)}<br>
+                                            💸 Saldo restante: ${formatearPrecio(abono.saldoRestante)}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <h5 class="text-info mb-0">${formatearPrecio(abono.monto)}</h5>
+                                        <small class="text-success">✅ Abono</small>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </details>
+            </div>
+        </div>
+        ` : ''}
+
         <!-- SECCIÓN 2: DINERO PENDIENTE DE COBRAR -->
         <div class="card mb-4" style="border: 2px solid #ffc107;">
-            <div class="card-header bg-warning text-dark text-center">
+            <div class="card-header text-dark text-center" style="background-color: #fff3cd !important;">
                 <h4 class="mb-0">⏳ DINERO QUE AÚN NO HAS COBRADO</h4>
             </div>
             <div class="card-body">
                 <!-- DISEÑO RESPONSIVE: En móvil se apilan, en desktop lado a lado -->
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
-                        <div class="text-center p-3 bg-light rounded shadow-sm h-100">
+                        <div class="text-center p-3 rounded shadow-sm h-100" style="background-color: #ffffff !important; border: 1px solid #dee2e6 !important;">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <span style="font-size: 2rem;">🍺</span>
                                 <div class="ms-2 text-start">
@@ -267,7 +364,7 @@ export function renderizarResumenTurno(resumen, containerId) {
                         </div>
                     </div>
                     <div class="col-12 col-md-6">
-                        <div class="text-center p-3 bg-light rounded shadow-sm h-100">
+                        <div class="text-center p-3 rounded shadow-sm h-100" style="background-color: #ffffff !important; border: 1px solid #dee2e6 !important;">
                             <div class="d-flex align-items-center justify-content-center mb-2">
                                 <span style="font-size: 2rem;">📝</span>
                                 <div class="ms-2 text-start">
@@ -285,7 +382,7 @@ export function renderizarResumenTurno(resumen, containerId) {
 
         <!-- SECCIÓN 3: OTROS PRODUCTOS -->
         <div class="card mb-4">
-            <div class="card-header bg-secondary text-white text-center">
+            <div class="card-header text-white text-center" style="background-color: #6c757d !important;">
                 <h5 class="mb-0">🚬 Otros productos vendidos</h5>
             </div>
             <div class="card-body text-center">
@@ -297,7 +394,7 @@ export function renderizarResumenTurno(resumen, containerId) {
 
         <!-- SECCIÓN 4: TU PAGO -->
         <div class="card" style="border: 3px solid #007bff;">
-            <div class="card-header bg-primary text-white text-center">
+            <div class="card-header text-white text-center" style="background-color: #0d6efd !important;">
                 <h4 class="mb-0">💵 TU PAGO DE HOY</h4>
             </div>
             <div class="card-body text-center">

@@ -89,10 +89,10 @@ export async function procesarVentaDirecta(carrito, medioPago) {
  * @param {string} claseVenta - El tipo de venta.
  */
 async function procesarVentaCliente(carrito, cliente, claseVenta) {
-    console.log('🔍 [PROCESAR VENTA CLIENTE] - Parámetros recibidos:');
-    console.log('   👤 Cliente:', cliente);
-    console.log('   📋 Clase Venta:', claseVenta);
-    console.log('   🛒 Carrito:', carrito);
+    // console.log('🔍 [PROCESAR VENTA CLIENTE] - Parámetros recibidos:');
+    // console.log('   👤 Cliente:', cliente);
+    // console.log('   📋 Clase Venta:', claseVenta);
+    // console.log('   🛒 Carrito:', carrito);
     
     const cuentaRef = doc(db, "cuentasActivas", cliente);
     const idTurno = localStorage.getItem("idTurno") || null;
@@ -109,12 +109,12 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
     await runTransaction(db, async (transaction) => {
         const cuentaDoc = await transaction.get(cuentaRef);
         
-        console.log('🔍 [TRANSACCIÓN] - Estado de la cuenta:');
-        console.log('   🗃️  Cuenta existe:', cuentaDoc.exists());
-        if (cuentaDoc.exists()) {
-            console.log('   📋 Tipo actual en BD:', cuentaDoc.data().tipo);
-            console.log('   💰 Total actual:', cuentaDoc.data().total);
-        }
+        // console.log('🔍 [TRANSACCIÓN] - Estado de la cuenta:');
+        // console.log('   🗃️  Cuenta existe:', cuentaDoc.exists());
+        // if (cuentaDoc.exists()) {
+        //     console.log('   📋 Tipo actual en BD:', cuentaDoc.data().tipo);
+        //     console.log('   💰 Total actual:', cuentaDoc.data().total);
+        // }
         
         const productosCuenta = cuentaDoc.exists() ? cuentaDoc.data().productos : {};
         const historialCuenta = cuentaDoc.exists() ? cuentaDoc.data().historial || [] : [];
@@ -163,19 +163,19 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
 
         if (cuentaDoc.exists()) {
             const tipoOriginal = cuentaDoc.data().tipo;
-            console.log('📝 [PROCESAR VENTA CLIENTE] - Actualizando cuenta existente:');
-            console.log('   👤 Cliente:', cliente);
-            console.log('   📋 Tipo original:', tipoOriginal);
-            console.log('   📋 Clase Venta nueva:', claseVenta);
-            console.log('   💰 Total anterior:', cuentaDoc.data().total);
-            console.log('   💰 Total nuevo:', totalCuenta);
+            // console.log('📝 [PROCESAR VENTA CLIENTE] - Actualizando cuenta existente:');
+            // console.log('   👤 Cliente:', cliente);
+            // console.log('   📋 Tipo original:', tipoOriginal);
+            // console.log('   📋 Clase Venta nueva:', claseVenta);
+            // console.log('   💰 Total anterior:', cuentaDoc.data().total);
+            // console.log('   💰 Total nuevo:', totalCuenta);
             
             // Verificar si necesita actualizar el tipo
-            if (tipoOriginal !== claseVenta) {
-                console.log('   🔄 ACTUALIZANDO TIPO: de "' + tipoOriginal + '" a "' + claseVenta + '"');
-            } else {
-                console.log('   ✅ TIPO MANTENIDO: "' + claseVenta + '"');
-            }
+            // if (tipoOriginal !== claseVenta) {
+            //     console.log('   🔄 ACTUALIZANDO TIPO: de "' + tipoOriginal + '" a "' + claseVenta + '"');
+            // } else {
+            //     console.log('   ✅ TIPO MANTENIDO: "' + claseVenta + '"');
+            // }
             
             transaction.update(cuentaRef, {
                 productos: productosCuenta,
@@ -186,10 +186,10 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
                 turno: idTurno
             });
         } else {
-            console.log('💾 [PROCESAR VENTA CLIENTE] - Creando nueva cuenta con:');
-            console.log('   👤 Cliente:', cliente);
-            console.log('   📋 Tipo:', claseVenta);
-            console.log('   💰 Total:', totalCuenta);
+            // console.log('💾 [PROCESAR VENTA CLIENTE] - Creando nueva cuenta con:');
+            // console.log('   👤 Cliente:', cliente);
+            // console.log('   📋 Tipo:', claseVenta);
+            // console.log('   💰 Total:', totalCuenta);
             
             transaction.set(cuentaRef, {
                 cliente: cliente,
@@ -201,12 +201,12 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
                 turno: idTurno
             });
             
-            console.log('✅ [TRANSACCIÓN] - SET ejecutado para nueva cuenta:', cliente, 'con tipo:', claseVenta);
+            // console.log('✅ [TRANSACCIÓN] - SET ejecutado para nueva cuenta:', cliente, 'con tipo:', claseVenta);
         }
         
-        console.log('🔄 [TRANSACCIÓN] - Ejecutando runTransaction...');
+        // console.log('🔄 [TRANSACCIÓN] - Ejecutando runTransaction...');
     }).then(() => {
-        console.log('✅ [TRANSACCIÓN] - runTransaction COMPLETADA exitosamente');
+        // console.log('✅ [TRANSACCIÓN] - runTransaction COMPLETADA exitosamente');
     }).catch((error) => {
         console.error('❌ [TRANSACCIÓN] - runTransaction FALLÓ:', error);
         throw error;
@@ -225,15 +225,15 @@ export async function realizarVenta(carrito) {
 
     const { value: formValues } = await mostrarFormularioVenta();
 
-    console.log('🔍 [REALIZAR VENTA] - FormValues recibidos:', formValues);
+    // console.log('🔍 [REALIZAR VENTA] - FormValues recibidos:', formValues);
 
     if (formValues) {
-        console.log('✅ [REALIZAR VENTA] - Procesando venta con clase:', formValues.claseVenta);
+        // console.log('✅ [REALIZAR VENTA] - Procesando venta con clase:', formValues.claseVenta);
         mostrarCargando('Procesando venta...');
 
         try {
             if (formValues.claseVenta === 'Pago en efectivo') {
-                console.log('💰 [REALIZAR VENTA] - Flujo: Pago en efectivo');
+                // console.log('💰 [REALIZAR VENTA] - Flujo: Pago en efectivo');
                 cerrarModal(); // Cerrar el loading
                 
                 const total = Object.values(carrito).reduce((acc, item) => acc + item.total, 0);
@@ -250,9 +250,9 @@ export async function realizarVenta(carrito) {
                 await procesarVentaDirecta(carrito, medioPagoFinal);
             } else {
                 // FLUJO 2: La venta se guarda en 'cuentasActivas'.
-                console.log('📝 [REALIZAR VENTA] - Flujo: Cuenta de cliente');
-                console.log('   👤 Cliente:', formValues.cliente);
-                console.log('   📋 Clase Venta:', formValues.claseVenta);
+                // console.log('📝 [REALIZAR VENTA] - Flujo: Cuenta de cliente');
+                // console.log('   👤 Cliente:', formValues.cliente);
+                // console.log('   📋 Clase Venta:', formValues.claseVenta);
                 await procesarVentaCliente(carrito, formValues.cliente, formValues.claseVenta);
             }
 
