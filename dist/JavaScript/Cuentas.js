@@ -171,10 +171,16 @@ export async function cargarDetalleCuenta(clienteId) {
             let botonesEdicion = '';
             if (!esTipoEnCuaderno) {
                 botonesEdicion = `
-                    <div class="mt-2">
-                        <button class="btn btn-cantidad" onclick="window.disminuirCantidadCuenta('${clienteId}','${productoId}')">-</button>
-                        <span class="mx-3 fw-bold fs-5">${cantidad}</span>
-                        <button class="btn btn-cantidad" onclick="window.aumentarCantidadCuenta('${clienteId}','${productoId}')">+</button>
+                    <div class="mt-2 d-flex align-items-center justify-content-center">
+                        <button class="btn btn-danger btn-cantidad-mejorado me-2" onclick="window.disminuirCantidadCuenta('${clienteId}','${productoId}')" 
+                                style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; border: 2px solid #dc3545;">
+                            −
+                        </button>
+                        <span class="mx-3 fw-bold text-primary" style="font-size: 1.5rem; min-width: 30px; text-align: center; background: #e3f2fd; padding: 8px 16px; border-radius: 8px; border: 2px solid #2196f3;">${cantidad}</span>
+                        <button class="btn btn-success btn-cantidad-mejorado ms-2" onclick="window.aumentarCantidadCuenta('${clienteId}','${productoId}')" 
+                                style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; font-weight: bold; border: 2px solid #28a745;">
+                            +
+                        </button>
                     </div>
                 `;
             } else {
@@ -182,13 +188,17 @@ export async function cargarDetalleCuenta(clienteId) {
             }
 
             productosHtml += `
-                <tr>
-                    <td class="py-3">
-                        <div class="fw-bold fs-6 mb-1">${producto.nombre || 'Producto sin nombre'}</div>
+                <tr style="height: 80px;">
+                    <td class="py-4 align-middle">
+                        <div class="fw-bold fs-5 mb-2 text-dark">${producto.nombre || 'Producto sin nombre'}</div>
                         ${botonesEdicion}
                     </td>
-                    <td class="text-center py-3 fs-6">${precioUnitarioFormateado}</td>
-                    <td class="text-end py-3 fw-bold fs-5">${precioTotalFormateado}</td>
+                    <td class="text-center py-4 align-middle">
+                        <span class="fs-5 fw-semibold text-success">${precioUnitarioFormateado}</span>
+                    </td>
+                    <td class="text-end py-4 align-middle">
+                        <span class="fs-4 fw-bold text-primary">${precioTotalFormateado}</span>
+                    </td>
                 </tr>
             `;
         }
@@ -227,13 +237,13 @@ export async function cargarDetalleCuenta(clienteId) {
                         </h4>
                     </div>
                     
-                    <div class="table-responsive w-40">
+                    <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
-                                    <th style="font-size: 1.1rem;">Producto</th>
-                                    <th class="text-center" style="font-size: 1.1rem;">Precio c/u</th>
-                                    <th class="text-end" style="font-size: 1.1rem;">Total</th>
+                                    <th style="font-size: 1.1rem; width: 50%;">Producto</th>
+                                    <th class="text-center" style="font-size: 1.1rem; width: 25%;">Precio c/u</th>
+                                    <th class="text-end" style="font-size: 1.1rem; width: 25%;">Total</th>
                                 </tr>
                             </thead>
                             <tbody style="font-size: 1rem;">

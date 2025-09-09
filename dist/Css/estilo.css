@@ -1828,19 +1828,44 @@ th {
 }
 
 .btn-cantidad {
-    width: 32px;
-    height: 32px;
-    border: 1px solid #007bff;
-    border-radius: 4px;
-    font-size: 16px;
+    width: 50px;
+    height: 50px;
+    border: 2px solid #007bff;
+    border-radius: 25px;
+    font-size: 20px;
+    font-weight: bold;
     cursor: pointer;
     background: white;
     color: #007bff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
 }
 
-.btn-menos:hover, .btn-mas:hover {
-    background: #007bff;
-    color: white;
+/* Botón MENOS - Rojo para claridad */
+.btn-menos {
+    border-color: #dc3545 !important;
+    color: #dc3545 !important;
+}
+
+.btn-menos:hover {
+    background: #dc3545 !important;
+    color: white !important;
+    transform: scale(1.05);
+}
+
+/* Botón MÁS - Verde para claridad */
+.btn-mas {
+    border-color: #28a745 !important;
+    color: #28a745 !important;
+}
+
+.btn-mas:hover {
+    background: #28a745 !important;
+    color: white !important;
+    transform: scale(1.05);
 }
 
 .cantidad-display {
@@ -1936,9 +1961,11 @@ th {
     }
     
     .btn-cantidad {
-        width: 28px;
-        height: 28px;
-        font-size: 14px;
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+        min-width: 50px;
+        min-height: 50px;
     }
     
     /* OPTIMIZACIÓN MÓVIL PARA VISTA VENTAS */
@@ -1975,11 +2002,11 @@ th {
         padding: 6px 3px !important; /* Reducir espaciado interno */
     }
     
-    /* Botones del carrito en móviles */
+    /* Botones del carrito en móviles - MÁS GRANDES PARA FACILIDAD */
     #carritoVenta .btn-cantidad {
-        width: 25px;
-        height: 25px;
-        font-size: 12px;
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
         padding: 0;
     }
     

@@ -207,23 +207,33 @@ export function renderizarResumenTurno(resumen, containerId) {
                 <h4 class="mb-0">💰 DINERO QUE RECIBISTE HOY</h4>
             </div>
             <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-4">
-                        <div class="p-3 bg-light rounded">
-                            <h5 class="text-success">💵 Efectivo</h5>
-                            <h4 class="text-success">${formatearPrecio(resumen.tipoVenta.efectivo)}</h4>
+                <!-- DISEÑO RESPONSIVE: En móvil se apilan, en desktop se mantienen en línea -->
+                <div class="row text-center g-3">
+                    <div class="col-12 col-md-4">
+                        <div class="p-3 bg-light rounded shadow-sm">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <span style="font-size: 2rem;">💵</span>
+                                <h5 class="text-success mb-0 ms-2">Efectivo</h5>
+                            </div>
+                            <h3 class="text-success mb-0 fw-bold">${formatearPrecio(resumen.tipoVenta.efectivo)}</h3>
                         </div>
                     </div>
-                    <div class="col-4">
-                        <div class="p-3 bg-light rounded">
-                            <h5 class="text-info">📱 Nequi</h5>
-                            <h4 class="text-info">${formatearPrecio(resumen.tipoVenta.nequi)}</h4>
+                    <div class="col-12 col-md-4">
+                        <div class="p-3 bg-light rounded shadow-sm">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <span style="font-size: 2rem;">📱</span>
+                                <h5 class="text-info mb-0 ms-2">Nequi</h5>
+                            </div>
+                            <h3 class="text-info mb-0 fw-bold">${formatearPrecio(resumen.tipoVenta.nequi)}</h3>
                         </div>
                     </div>
-                    <div class="col-4">
-                        <div class="p-3 bg-light rounded">
-                            <h5 class="text-warning">💳 Daviplata</h5>
-                            <h4 class="text-warning">${formatearPrecio(resumen.tipoVenta.daviplata)}</h4>
+                    <div class="col-12 col-md-4">
+                        <div class="p-3 bg-light rounded shadow-sm">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <span style="font-size: 2rem;">💳</span>
+                                <h5 class="text-warning mb-0 ms-2">Daviplata</h5>
+                            </div>
+                            <h3 class="text-warning mb-0 fw-bold">${formatearPrecio(resumen.tipoVenta.daviplata)}</h3>
                         </div>
                     </div>
                 </div>
@@ -242,19 +252,30 @@ export function renderizarResumenTurno(resumen, containerId) {
                 <h4 class="mb-0">⏳ DINERO QUE AÚN NO HAS COBRADO</h4>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-6">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h6>🍺 Mesas que consumieron</h6>
-                            <h6 class="text-muted">(aún no han pagado)</h6>
-                            <h4 class="text-warning">${formatearPrecio(resumen.totalNoCobradas)}</h4>
+                <!-- DISEÑO RESPONSIVE: En móvil se apilan, en desktop lado a lado -->
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="text-center p-3 bg-light rounded shadow-sm h-100">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <span style="font-size: 2rem;">🍺</span>
+                                <div class="ms-2 text-start">
+                                    <h6 class="mb-0">Mesas que consumieron</h6>
+                                    <small class="text-muted">(aún no han pagado)</small>
+                                </div>
+                            </div>
+                            <h3 class="text-warning mb-0 fw-bold">${formatearPrecio(resumen.totalNoCobradas)}</h3>
                         </div>
                     </div>
-                    <div class="col-6">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h6>📝 Cuentas del cuaderno</h6>
-                            <h6 class="text-muted">(fiadas de otros días)</h6>
-                            <h4 class="text-warning">${formatearPrecio(totalEnCuaderno)}</h4>
+                    <div class="col-12 col-md-6">
+                        <div class="text-center p-3 bg-light rounded shadow-sm h-100">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <span style="font-size: 2rem;">📝</span>
+                                <div class="ms-2 text-start">
+                                    <h6 class="mb-0">Cuentas del cuaderno</h6>
+                                    <small class="text-muted">(fiadas de otros días)</small>
+                                </div>
+                            </div>
+                            <h3 class="text-warning mb-0 fw-bold">${formatearPrecio(totalEnCuaderno)}</h3>
                             ${listadoCuentasEnCuaderno}
                         </div>
                     </div>
