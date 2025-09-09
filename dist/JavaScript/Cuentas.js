@@ -2,7 +2,7 @@
 
 import {
     getFirestore, doc, getDoc, setDoc, deleteDoc, collection,
-    query, where, orderBy, limit, getDocs, updateDoc, arrayUnion
+    query, where, orderBy, limit, getDocs, updateDoc, arrayUnion, runTransaction
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 import { app } from "./Conexion.js"; // debe exportar `app`
@@ -13,6 +13,8 @@ import {
     mostrarError, 
     mostrarConfirmacion,
     mostrarInput,
+    mostrarInputNumerico,
+    mostrarAdvertencia,
     cerrarModal,
     mostrarPersonalizado
 } from "./SweetAlertManager.js";
@@ -136,8 +138,28 @@ export async function cargarDetalleCuenta(clienteId) {
             }
         }
         
-        for (const productoId in productosObj) {
-            const producto = productosObj[productoId] || {};
+        // 🔧 SOLUCIÓN: Mantener ORDEN FIJO de productos para evitar confusión de la operaria
+        // Convertir a array y ordenar por timestamp de creación o nombre para orden consistente
+        const productosArray = Object.entries(productosObj).map(([productoId, producto]) => ({
+            id: productoId,
+            ...producto,
+            // Usar timestamp de creación si existe, sino usar nombre como fallback
+            ordenSort: producto.timestampCreacion || producto.primerPedido || producto.nombre || productoId
+        }));
+        
+        // Ordenar por timestamp de creación (más antiguo primero) para mantener orden cronológico
+        productosArray.sort((a, b) => {
+            // Si ambos tienen timestamp, ordenar cronológicamente
+            if (a.ordenSort && b.ordenSort && typeof a.ordenSort === 'string' && a.ordenSort.includes('-')) {
+                return a.ordenSort.localeCompare(b.ordenSort);
+            }
+            // Sino, ordenar alfabéticamente por nombre
+            return (a.nombre || a.id).localeCompare(b.nombre || b.id);
+        });
+        
+        // Ahora iterar en orden FIJO
+        for (const producto of productosArray) {
+            const productoId = producto.id;
             const subtotal = producto.total ?? 0;
             total += subtotal;
             const precioUnitario = producto.precioUnidad ?? producto.precioVenta ?? 0;
@@ -188,7 +210,23 @@ export async function cargarDetalleCuenta(clienteId) {
                         <img src="./pngs/LogoLocal.png" alt="Logo El Arrendajo Azul" class="logo-detalle" />
                     </div>
                     
+                    ${!esTipoEnCuaderno ? `
+                        <div class="text-center mb-3">
+                            <button class="btn btn-primary btn-lg" onclick="agregarProductoACuenta('${clienteId}')">
+                                ➕ Agregar Producto
+                            </button>
+                        </div>
+                    ` : ''}
+                    
                     <h5 class="mb-3 text-center">📦 Productos ordenados:</h5>
+                    
+                    <!-- TOTAL FIJO VISIBLE -->
+                    <div class="alert alert-success text-center mb-3" style="background: linear-gradient(135deg, #28a745, #20c997); border: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                        <h4 class="mb-0 text-white fw-bold" style="font-size: 1.4rem;">
+                            💰 TOTAL A PAGAR: ${totalFormateado}
+                        </h4>
+                    </div>
+                    
                     <div class="table-responsive w-40">
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
@@ -201,13 +239,6 @@ export async function cargarDetalleCuenta(clienteId) {
                             <tbody style="font-size: 1rem;">
                                 ${productosHtml}
                             </tbody>
-                            <tfoot class="table-success">
-                                <tr>
-                                    <th colspan="3" class="text-center py-3" style="font-size: 1.3rem;">
-                                        💰 TOTAL A PAGAR: ${totalFormateado}
-                                    </th>
-                                </tr>
-                            </tfoot>
                         </table>
                     </div>
                     
@@ -414,10 +445,9 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
 
         // 2) Pago Americano (opcional)
         if (esPagoAmericano) {
-            const { value: partes } = await mostrarInput(
+            const { value: partes } = await mostrarInputNumerico(
                 '¿Dividir entre cuántas personas?',
-                '',
-                '1'
+                'Número de personas'
             );
             if (!partes) return;
 
@@ -506,5 +536,220 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
         // console.error("Error al cerrar la cuenta:", error);
     }
 };
+
+// **FUNCIÓN PARA ABRIR MODAL DE BÚSQUEDA DE PRODUCTOS Y AGREGAR A UNA CUENTA**
+window.agregarProductoACuenta = async function(clienteId) {
+    try {
+        mostrarModalBusquedaProductos(clienteId);
+    } catch (error) {
+        mostrarError(`Error al abrir búsqueda de productos: ${error.message}`);
+        console.error("Error agregarProductoACuenta:", error);
+    }
+};
+
+// **FUNCIÓN PARA MOSTRAR MODAL DE BÚSQUEDA DE PRODUCTOS**
+async function mostrarModalBusquedaProductos(clienteId) {
+    const resultado = await mostrarPersonalizado({
+        title: '🔍 Buscar Producto',
+        html: `
+            <div class="text-start mb-3">
+                <h6 class="text-primary mb-2">Cliente: ${clienteId}</h6>
+                <p class="text-muted small">Escriba el nombre del producto que desea agregar</p>
+            </div>
+            <input type="text" id="searchProducto" class="swal2-input" placeholder="Escriba el nombre del producto..." style="font-size: 1.1rem;">
+            <div id="resultadosProductos" class="mt-3" style="max-height: 300px; overflow-y: auto;">
+                <p class="text-muted">Escriba para buscar productos...</p>
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Cerrar',
+        cancelButtonText: 'Cancelar',
+        allowOutsideClick: false,
+        didOpen: () => {
+            const input = document.getElementById('searchProducto');
+            const resultados = document.getElementById('resultadosProductos');
+            
+            // Listener para búsqueda en tiempo real
+            input.addEventListener('input', async (e) => {
+                await buscarProductosEnInventario(e.target.value, resultados, clienteId);
+            });
+            
+            // Enfocar el campo de búsqueda
+            input.focus();
+        }
+    });
+}
+
+// **FUNCIÓN PARA BUSCAR PRODUCTOS EN EL INVENTARIO**
+async function buscarProductosEnInventario(termino, resultadosDiv, clienteId) {
+    if (!termino.trim()) {
+        resultadosDiv.innerHTML = '<p class="text-muted">Escriba para buscar productos...</p>';
+        return;
+    }
+    
+    try {
+        resultadosDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><br>Buscando...</div>';
+        
+        const inventarioRef = collection(db, "inventario");
+        const snapshot = await getDocs(inventarioRef);
+        
+        const productos = [];
+        const terminoLower = termino.toLowerCase();
+        
+        snapshot.forEach(doc => {
+            const nombreProducto = doc.id.toLowerCase();
+            if (nombreProducto.includes(terminoLower)) {
+                const data = doc.data();
+                productos.push({
+                    id: doc.id,
+                    nombre: doc.id,
+                    precio: data.precioVenta || 0,
+                    cantidad: data.cantidad || 0
+                });
+            }
+        });
+        
+        if (productos.length === 0) {
+            resultadosDiv.innerHTML = '<p class="text-warning">No se encontraron productos con ese nombre.</p>';
+            return;
+        }
+        
+        let html = '<div class="list-group">';
+        productos.forEach(producto => {
+            const precio = formatearPrecio(producto.precio);
+            html += `
+                <button type="button" class="list-group-item list-group-item-action text-start" 
+                        onclick="seleccionarProductoParaAgregar('${clienteId}', '${producto.id}', ${producto.precio})">
+                    <div class="fw-bold">${producto.nombre}</div>
+                    <small class="text-muted">Precio: ${precio} | Stock: ${producto.cantidad}</small>
+                </button>
+            `;
+        });
+        html += '</div>';
+        
+        resultadosDiv.innerHTML = html;
+        
+    } catch (error) {
+        resultadosDiv.innerHTML = '<p class="text-danger">Error al buscar productos.</p>';
+        console.error('Error buscando productos:', error);
+    }
+}
+
+// **FUNCIÓN PARA SELECCIONAR UN PRODUCTO Y AGREGARLO A LA CUENTA**
+window.seleccionarProductoParaAgregar = async function(clienteId, nombreProducto, precioVenta) {
+    try {
+        // Cerrar el modal de búsqueda
+        cerrarModal();
+        
+        // Pedir cantidad
+        const result = await mostrarInputNumerico(
+            'Cantidad a agregar',
+            `¿Cuántas unidades de "${nombreProducto}" desea agregar?`
+        );
+        
+        // Si el usuario canceló
+        if (result.dismiss) {
+            return;
+        }
+        
+        const cantidad = result.value;
+        
+        if (!cantidad || isNaN(cantidad) || parseInt(cantidad) <= 0) {
+            mostrarAdvertencia('Debe ingresar una cantidad válida mayor a 0.');
+            return;
+        }
+        
+        const cantidadNum = parseInt(cantidad);
+        const totalProducto = cantidadNum * precioVenta;
+        
+        // Agregar producto directamente sin confirmación molesta
+        await agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta, cantidadNum);
+        
+        // Recargar el detalle de la cuenta inmediatamente
+        cargarDetalleCuenta(clienteId);
+        
+    } catch (error) {
+        mostrarError(`Error al agregar producto: ${error.message}`);
+        console.error("Error seleccionarProductoParaAgregar:", error);
+    }
+};
+
+// **FUNCIÓN PARA AGREGAR FÍSICAMENTE EL PRODUCTO A LA BASE DE DATOS**
+async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta, cantidad) {
+    const cuentaRef = doc(db, "cuentasActivas", clienteId);
+    const idTurno = localStorage.getItem("idTurno") || null;
+    const fechaActual = new Date();
+    const fechaFormateada = fechaActual.toLocaleString('es-CO', { 
+        timeZone: 'America/Bogota',
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    await runTransaction(db, async (transaction) => {
+        const cuentaDoc = await transaction.get(cuentaRef);
+        
+        if (!cuentaDoc.exists()) {
+            throw new Error(`La cuenta del cliente ${clienteId} no existe.`);
+        }
+        
+        const dataCuenta = cuentaDoc.data();
+        const productosCuenta = dataCuenta.productos || {};
+        const historialCuenta = dataCuenta.historial || [];
+        let totalCuenta = dataCuenta.total || 0;
+        
+        const totalProducto = cantidad * precioVenta;
+        
+        // Si el producto ya existe en la cuenta, sumar cantidades
+        if (productosCuenta[nombreProducto]) {
+            productosCuenta[nombreProducto].cantidad += cantidad;
+            productosCuenta[nombreProducto].total += totalProducto;
+            productosCuenta[nombreProducto].ultimaFecha = fechaFormateada;
+        } else {
+            // Nuevo producto en la cuenta
+            productosCuenta[nombreProducto] = {
+                nombre: nombreProducto,
+                precioVenta: precioVenta,
+                precioUnidad: precioVenta,
+                cantidad: cantidad,
+                total: totalProducto,
+                fechaCreacion: fechaFormateada,
+                ultimaFecha: fechaFormateada,
+                timestampCreacion: new Date().toISOString(),
+                ordenSort: new Date().toISOString()
+            };
+        }
+        
+        // Actualizar total de la cuenta
+        totalCuenta += totalProducto;
+        
+        // Agregar al historial
+        const registroHistorial = {
+            fecha: fechaFormateada,
+            turno: idTurno,
+            productos: [{
+                nombre: nombreProducto,
+                cantidad: cantidad,
+                precioVenta: precioVenta,
+                total: totalProducto
+            }],
+            subtotal: totalProducto,
+            accion: 'AGREGADO MANUAL'
+        };
+        
+        historialCuenta.push(registroHistorial);
+        
+        // Actualizar la cuenta
+        transaction.update(cuentaRef, {
+            productos: productosCuenta,
+            total: totalCuenta,
+            historial: historialCuenta,
+            ultimaModificacion: fechaFormateada
+        });
+    });
+}
 
 

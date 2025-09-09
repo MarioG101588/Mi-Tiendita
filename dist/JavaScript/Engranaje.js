@@ -1,10 +1,9 @@
-import { obtenerResumenTurno, renderizarResumenTurno } from "./ResumenTurno.js";
-import { formatearPrecio } from "./FormateoPrecios.js";
-// JavaScript/main.js
-// Este es el archivo principal que se encargará de importar las funciones de los otros archivos
-// y manejar los eventos de la interfaz (botones, inputs, etc.).
+// JavaScript/Engranaje.js
+// Archivo principal que maneja la lógica de cuentas activas y navegación
 
 // Importaciones de módulos locales
+import { obtenerResumenTurno, renderizarResumenTurno } from "./ResumenTurno.js";
+import { formatearPrecio } from "./FormateoPrecios.js";
 import { iniciarSesion, cerrarSesion as cerrarSesionAuth, verificarSesionAutomatica } from "./Autenticacion.js";
 import { cargarInventario, ocultarInventario } from "./Inventario.js";
 import { agregarAlCarrito, aumentarCantidad, disminuirCantidad, quitarDelCarrito, renderCarrito } from "./CarritoCompras.js";
@@ -12,7 +11,7 @@ import { realizarVenta } from "./VentasApp.js";
 import { db } from './Conexion.js';
 import { cargarDetalleCuenta } from "./Cuentas.js";
 
-// IMPORTACIONES de Firebase para la funcionalidad de cuentas
+// IMPORTACIONES de Firebase
 import { collection, onSnapshot, query, doc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import { 
     mostrarPersonalizado, 
@@ -71,34 +70,82 @@ function cargarCuentasAbiertas() {
     const q = query(collection(db, "cuentasActivas"));
     const container = document.getElementById('cuentasActivasTurno');
     const idTurno = localStorage.getItem("idTurno");
+    const timestamp = new Date().toISOString().slice(-13, -5); // HH:MM:SS.mmm
+    
+    console.log('🚀 [INICIAR CARGA CUENTAS] - Función cargarCuentasAbiertas iniciada - TIMESTAMP:', timestamp);
+    console.log('🆔 [TURNO DESDE localStorage] - Valor:', idTurno);
+    console.log('📅 [FORMATO TURNO] - Tipo:', typeof idTurno, '- Longitud:', idTurno?.length);
     if (!container) {
         console.error("El contenedor para las cuentas activas no fue encontrado.");
         return;
     }
     onSnapshot(q, async (querySnapshot) => {
-        // console.log('cargarCuentasAbiertas ejecutándose...');
-        // console.log('ID Turno actual:', idTurno);
-        // console.log('📊 Total documentos encontrados:', querySnapshot.size);
+        const execTimestamp = new Date().toISOString().slice(-13, -5);
+        console.log('🔄 [CARGAR CUENTAS ABIERTAS] - Ejecutándose... TIMESTAMP:', execTimestamp);
+        console.log('🆔 [TURNO ACTUAL] - localStorage:', idTurno);
+        console.log('📊 [TOTAL DOCUMENTOS] - Encontrados:', querySnapshot.size);
         
         let htmlContent = '';
         let pendientes = [];
         let activas = [];
+        
         // Clasificar cuentas
         for (const docSnap of querySnapshot.docs) {
             const cuenta = docSnap.data();
             const clienteId = docSnap.id;
-            // console.log('Procesando cuenta:', clienteId, 'Turno de cuenta:', cuenta.turno, 'Tipo:', cuenta.tipo);
+            
+            console.log('👤 [PROCESANDO CUENTA]', clienteId, ':', {
+                turnoEnCuenta: cuenta.turno,
+                turnoActual: idTurno,
+                tipoActual: cuenta.tipo,
+                total: cuenta.total
+            });
+            
+            // Comparación de turnos
+            const esTurnoAnterior = cuenta.turno && cuenta.turno !== idTurno;
+            const noEsEnCuaderno = cuenta.tipo !== 'En cuaderno';
+            
+            console.log('🔍 [COMPARACIÓN]', clienteId, ':', {
+                turnoEnCuenta: cuenta.turno,
+                turnoActual: idTurno,
+                sonTurnosDiferentes: esTurnoAnterior,
+                tipoActual: cuenta.tipo,
+                noEsEnCuaderno: noEsEnCuaderno,
+                DEBE_CONVERTIRSE: esTurnoAnterior && noEsEnCuaderno
+            });
+            
+            // 🚨 DETECCIÓN ESPECÍFICA PARA DEBUGGING
+            if (clienteId === 'prueba3' && cuenta.tipo === 'En cuaderno') {
+                console.error('🚨 [DETECTIVE] prueba3 YA ESTÁ EN CUADERNO - ¿QUIÉN LO CONVIRTIÓ?');
+                console.error('🔍 [DETECTIVE] Datos de la cuenta:', {
+                    cliente: clienteId,
+                    tipoActual: cuenta.tipo,
+                    turnoEnCuenta: cuenta.turno,
+                    turnoActual: idTurno,
+                    timestamp: execTimestamp,
+                    stackTrace: new Error().stack
+                });
+            }
             
             // Lógica corregida: solo actualizar cuentas de turnos anteriores
-            if (cuenta.turno && cuenta.turno !== idTurno && cuenta.tipo !== 'En cuaderno') {
-                // console.log('Actualizando cuenta', clienteId, 'de', cuenta.tipo, 'a "En cuaderno" (turno anterior)');
+            if (esTurnoAnterior && noEsEnCuaderno) {
+                console.log('⚠️ [CONVERSIÓN AUTOMÁTICA] TIMESTAMP:', execTimestamp, '-', clienteId, '- DE:', cuenta.tipo, '→ A: "En cuaderno"');
+                console.log('🔍 [CONVERSIÓN - DETALLES]', clienteId, ':', {
+                    turnoEnCuenta: cuenta.turno,
+                    turnoActual: idTurno,
+                    tipoOriginal: cuenta.tipo,
+                    ejecutor: 'cargarCuentasAbiertas',
+                    timestamp: execTimestamp
+                });
                 try {
                     await updateDoc(doc(collection(db, "cuentasActivas"), clienteId), { tipo: 'En cuaderno' });
                     cuenta.tipo = 'En cuaderno';
-                    // console.log('Cuenta actualizada exitosamente');
+                    console.log('✅ [CONVERSIÓN EXITOSA] TIMESTAMP:', execTimestamp, '-', clienteId, '- Actualizada en Firebase');
                 } catch (error) {
-                    console.error('Error al actualizar cuenta:', error);
+                    console.error('❌ [ERROR CONVERSIÓN] TIMESTAMP:', execTimestamp, '-', clienteId, '- Error:', error);
                 }
+            } else {
+                console.log('🟢 [SIN CAMBIOS] TIMESTAMP:', execTimestamp, '-', clienteId, '- Mantiene tipo:', cuenta.tipo);
             }
             
             // Clasificar cuentas: las del turno actual van a activas, el resto a pendientes
@@ -117,9 +164,8 @@ function cargarCuentasAbiertas() {
         if (pendientes.length > 0) {
             htmlContent += `
                 <div class="alert alert-warning text-center p-4 mb-3 alert-clickable" onclick="window.mostrarCuentasPendientes()">
-                    <h5>📋 Cuentas Pendientes</h5>
-                    <p class="mb-2">Hay <strong>${pendientes.length}</strong> cuenta(s) pendiente(s) de turnos anteriores.</p>
-                    <small class="text-muted">👆 Haz clic aquí para revisarlas</small>
+                    <h5>📋 Cuentas Pendientes Hay <strong>${pendientes.length}</strong></h5>
+                    <small class="text-muted">👆 Toca aquí para revisarlas</small>
                 </div>
             `;
             // console.log('🟡 Agregado HTML de pendientes mejorado');
@@ -130,9 +176,8 @@ function cargarCuentasAbiertas() {
         if (activas.length === 0) {
             htmlContent += `
                 <div class="alert alert-info text-center p-4 mb-3">
-                    <h4>✨ ¡Turno Limpio!</h4>
-                    <p class="mb-2">No hay cuentas activas en este turno actual.</p>
-                    <small class="text-muted">Turno: ${idTurno}</small>
+                    <p class="mb-2">Aun No hay clientes en el local .</p>
+                    <small class="text-muted">Paciencia...</small>
                 </div>
             `;
             // console.log('ℹ️ Agregado mensaje mejorado: No hay cuentas activas');
@@ -268,16 +313,24 @@ document.addEventListener("DOMContentLoaded", async function () {
     const closeButton = document.getElementById("closeButton");
     const campoBusqueda1 = document.getElementById("campoBusqueda1");
 
-    // Configurar eventos del buscador SIEMPRE
+    // Configurar eventos del buscador SIEMPRE - NUEVO MODAL INTUITIVO
     if (campoBusqueda1) {
-        campoBusqueda1.addEventListener("input", function() {
-            if (this.value.trim()) {
-                cargarInventario(this.value);
-            } else {
-                ocultarInventario();
-            }
+        // Convertir el campo de búsqueda en solo lectura y hacer que abra el modal
+        campoBusqueda1.readOnly = true;
+        campoBusqueda1.placeholder = "🔍 Toca aquí para buscar productos...";
+        campoBusqueda1.style.cursor = "pointer";
+        
+        // Remover eventos antiguos y agregar el nuevo
+        campoBusqueda1.removeEventListener("input", cargarInventario);
+        
+        // SOLO evento click - evitar duplicación con focus
+        campoBusqueda1.addEventListener("click", function(e) {
+            e.preventDefault(); // Prevenir comportamiento por defecto
+            e.stopPropagation(); // Evitar propagación
+            abrirModalBusquedaCarrito();
         });
-        // console.log("✅ Evento del buscador configurado");
+        
+        // console.log("✅ Nuevo sistema de búsqueda modal configurado");
     } else {
         console.warn("⚠️ Campo de búsqueda no encontrado");
     }
@@ -358,7 +411,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     usuarioActualElement.textContent = email;
                 }
                 
-                cargarCuentasAbiertas();
+                // cargarCuentasAbiertas(); // 🚫 COMENTADO - evitar múltiples listeners
             } catch (error) {
                 console.error("🔴 Fallo al iniciar sesión:", error);
                 // NO redirigir si hay error - el usuario se queda en la pantalla de login
@@ -383,7 +436,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 usuarioActualElement.textContent = estadoSesion.usuario;
             }
             
-            cargarCuentasAbiertas();
+            // cargarCuentasAbiertas(); // 🚫 COMENTADO - evitar múltiples listeners
             
         } else if (estadoSesion.autenticado && !estadoSesion.turnoActivo) {
             // Usuario autenticado pero sin turno activo - mostrar aviso y login
@@ -452,8 +505,8 @@ function mostrarContainer(idMostrar) {
         // Si no hay cuentas pendientes cargadas, ir primero a cargar las cuentas activas
         if (!window._cuentasPendientes || window._cuentasPendientes.length === 0) {
             // console.log("No hay cuentas pendientes cargadas, cargando primero las cuentas activas...");
-            // Forzar carga de cuentas activas para actualizar pendientes
-            cargarCuentasAbiertas();
+            // 🚫 COMENTADO - evitar múltiples listeners
+            // cargarCuentasAbiertas(); 
             // Esperar un momento y luego mostrar pendientes
             setTimeout(() => {
                 window.mostrarCuentasPendientes();
@@ -570,6 +623,164 @@ export async function mostrarModalMedioPago(total) {
     
     return medioPagoFinal;
 }
+
+// Variable para prevenir apertura múltiple
+let modalBusquedaAbierto = false;
+
+// **FUNCIÓN PARA ABRIR MODAL DE BÚSQUEDA INTUITIVO PARA EL CARRITO**
+window.abrirModalBusquedaCarrito = async function() {
+    // Prevenir apertura múltiple
+    if (modalBusquedaAbierto) {
+        console.log('🛑 Modal ya está abierto, ignorando nueva apertura');
+        return;
+    }
+    
+    try {
+        modalBusquedaAbierto = true;
+        await mostrarModalBusquedaCarrito();
+    } catch (error) {
+        mostrarError(`Error al abrir búsqueda de productos: ${error.message}`);
+        console.error("Error abrirModalBusquedaCarrito:", error);
+    } finally {
+        modalBusquedaAbierto = false;
+    }
+};
+
+// **FUNCIÓN PARA MOSTRAR MODAL DE BÚSQUEDA PARA CARRITO**
+async function mostrarModalBusquedaCarrito() {
+    // Generar ID único para evitar conflictos entre modales
+    const modalId = 'searchProductoCarrito_' + Date.now();
+    const resultadosId = 'resultadosProductosCarrito_' + Date.now();
+    
+    const resultado = await mostrarPersonalizado({
+        title: '🛒 Buscar Productos para Carrito',
+        html: `
+            <div class="text-start mb-3">
+                <p class="text-muted small">Escriba el nombre del producto que desea agregar al carrito</p>
+            </div>
+            <input type="text" id="${modalId}" class="swal2-input" placeholder="Escriba el nombre del producto..." style="font-size: 1.1rem;">
+            <div id="${resultadosId}" class="mt-3" style="max-height: 400px; overflow-y: auto;">
+                <p class="text-muted">Escriba para buscar productos...</p>
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Cerrar',
+        cancelButtonText: 'Cancelar',
+        allowOutsideClick: false,
+        width: '600px',
+        didOpen: () => {
+            const input = document.getElementById(modalId);
+            const resultados = document.getElementById(resultadosId);
+            
+            if (input && resultados) {
+                // Listener para búsqueda en tiempo real - función nueva cada vez
+                const buscarHandler = async (e) => {
+                    await buscarProductosParaCarrito(e.target.value, resultados);
+                };
+                
+                input.addEventListener('input', buscarHandler);
+                
+                // Enfocar el campo de búsqueda
+                input.focus();
+            }
+        },
+        willClose: () => {
+            // Limpiar cualquier referencia al cerrar
+            const input = document.getElementById(modalId);
+            if (input) {
+                input.removeEventListener('input', buscarProductosParaCarrito);
+            }
+            // Resetear flag de modal abierto
+            modalBusquedaAbierto = false;
+        }
+    });
+}
+
+// **FUNCIÓN PARA BUSCAR PRODUCTOS PARA EL CARRITO**
+async function buscarProductosParaCarrito(termino, resultadosDiv) {
+    if (!termino.trim()) {
+        resultadosDiv.innerHTML = '<p class="text-muted">Escriba para buscar productos...</p>';
+        return;
+    }
+    
+    try {
+        resultadosDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><br>Buscando...</div>';
+        
+        const inventarioRef = collection(db, "inventario");
+        const snapshot = await getDocs(inventarioRef);
+        
+        const productos = [];
+        const terminoLower = termino.toLowerCase();
+        
+        snapshot.forEach(doc => {
+            const nombreProducto = doc.id.toLowerCase();
+            if (nombreProducto.includes(terminoLower)) {
+                const data = doc.data();
+                productos.push({
+                    id: doc.id,
+                    nombre: doc.id,
+                    precio: data.precioVenta || 0,
+                    cantidad: data.cantidad || 0
+                });
+            }
+        });
+        
+        if (productos.length === 0) {
+            resultadosDiv.innerHTML = '<p class="text-warning">No se encontraron productos con ese nombre.</p>';
+            return;
+        }
+        
+        let html = '<div class="list-group">';
+        productos.forEach(producto => {
+            const precio = formatearPrecio(producto.precio);
+            html += `
+                <button type="button" class="list-group-item list-group-item-action text-start d-flex justify-content-between align-items-center" 
+                        onclick="seleccionarProductoParaCarrito('${producto.id}', ${producto.precio})"
+                        style="min-height: 60px;">
+                    <div>
+                        <div class="fw-bold">${producto.nombre}</div>
+                        <small class="text-muted">Stock: ${producto.cantidad} disponibles</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold text-success">${precio}</div>
+                        <small class="text-muted">por unidad</small>
+                    </div>
+                </button>
+            `;
+        });
+        html += '</div>';
+        
+        resultadosDiv.innerHTML = html;
+        
+    } catch (error) {
+        resultadosDiv.innerHTML = '<p class="text-danger">Error al buscar productos.</p>';
+        console.error('Error buscando productos para carrito:', error);
+    }
+}
+
+// **FUNCIÓN PARA SELECCIONAR PRODUCTO Y AGREGARLO AL CARRITO**
+window.seleccionarProductoParaCarrito = async function(nombreProducto, precioVenta) {
+    try {
+        // PASO 1: Agregar el producto al carrito PRIMERO
+        window.agregarAlCarrito(nombreProducto, precioVenta);
+        
+        // PASO 2: Resetear flag de modal y cerrar
+        modalBusquedaAbierto = false;
+        cerrarModal();
+        
+        // PASO 3: Limpiar el campo de búsqueda para el próximo uso
+        const campoBusqueda1 = document.getElementById("campoBusqueda1");
+        if (campoBusqueda1) {
+            campoBusqueda1.blur(); // Quitar focus del campo
+        }
+        
+    } catch (error) {
+        modalBusquedaAbierto = false; // Resetear en caso de error
+        mostrarError(`Error al agregar producto al carrito: ${error.message}`);
+        console.error("Error seleccionarProductoParaCarrito:", error);
+    }
+};
 
 // Exportar funciones globales para que puedan ser accedidas desde el HTML
 window.cerrarSesion = cerrarSesion;

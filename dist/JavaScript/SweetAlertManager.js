@@ -143,6 +143,61 @@ export function mostrarInput(titulo, placeholder = '', valorInicial = '') {
 }
 
 /**
+ * Muestra un modal con input NUMÉRICO optimizado para móviles
+ * @param {string} titulo - Título del modal
+ * @param {string} placeholder - Placeholder del input
+ */
+export function mostrarInputNumerico(titulo, placeholder = 'Ingrese un número') {
+    return Swal.fire({
+        title: titulo,
+        html: `
+            <input 
+                type="number" 
+                id="swal-numeric-input" 
+                class="swal2-input" 
+                placeholder="${placeholder}"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                min="1"
+                max="99"
+                style="font-size: 1.5rem; text-align: center; padding: 15px; -webkit-appearance: none; -moz-appearance: textfield;"
+                autofocus
+                autocomplete="off"
+                enterkeyhint="done"
+            >
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Aceptar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#007bff',
+        cancelButtonColor: '#6c757d',
+        focusConfirm: false,
+        didOpen: () => {
+            // Enfocar el input y seleccionar todo el contenido (si lo hay) para móviles
+            const input = document.getElementById('swal-numeric-input');
+            if (input) {
+                // Delay pequeño para asegurar que se renderice completamente
+                setTimeout(() => {
+                    input.focus();
+                    input.select(); // Selecciona cualquier contenido existente
+                }, 100);
+            }
+        },
+        preConfirm: () => {
+            const input = document.getElementById('swal-numeric-input');
+            const value = input.value.trim();
+            
+            if (!value || isNaN(value) || parseInt(value) < 1) {
+                Swal.showValidationMessage('Ingrese un número válido mayor a 0');
+                return false;
+            }
+            
+            return parseInt(value);
+        }
+    });
+}
+
+/**
  * Muestra un formulario de venta con opciones de cliente y clase de venta
  */
 export function mostrarFormularioVenta() {
@@ -170,10 +225,18 @@ export function mostrarFormularioVenta() {
             const claseVenta = document.getElementById('swal-select-clase-venta').value;
             const cliente = document.getElementById('swal-input-cliente').value.trim();
 
+            console.log('🔍 [FORMULARIO VENTA] - Valores capturados:');
+            console.log('   👤 Cliente:', cliente);
+            console.log('   📝 Clase de Venta:', claseVenta);
+            console.log('   🎯 Select element value:', document.getElementById('swal-select-clase-venta').value);
+            console.log('   🎯 Select element selectedIndex:', document.getElementById('swal-select-clase-venta').selectedIndex);
+
             if ((claseVenta === 'En cuaderno' || claseVenta === 'Consumo en el local') && !cliente) {
                 Swal.showValidationMessage('El nombre del cliente es obligatorio para esta opción');
                 return false;
             }
+            
+            console.log('✅ [FORMULARIO VENTA] - Datos válidos, retornando:', { cliente, claseVenta });
             return { cliente, claseVenta };
         },
         confirmButtonText: 'Confirmar Venta',

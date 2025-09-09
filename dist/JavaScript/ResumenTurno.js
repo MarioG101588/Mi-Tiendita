@@ -195,22 +195,97 @@ export function renderizarResumenTurno(resumen, containerId) {
     }
     
     c.innerHTML = `
-        
-        <!--<h2>Resumen del Turno</h2>-->
-        <ul class="list-group mb-3">
-            <li class="list-group-item">Total ventas de Cigarrillo: <b>${formatearPrecio(resumen.totalTabaco)}</b></li>
-            <li class="list-group-item">Total ventas Consumo en el local no Pagas: <b>${formatearPrecio(resumen.totalNoCobradas)}</b></li>
-            <li class="list-group-item">
-                Cuentas Anotadas En El Cuaderno: <b>${formatearPrecio(totalEnCuaderno)}</b>
-                ${listadoCuentasEnCuaderno}
-            </li>
-            <li class="list-group-item">Efectivo: <b>${formatearPrecio(resumen.tipoVenta.efectivo)}</b></li>
-            <li class="list-group-item">Nequi: <b>${formatearPrecio(resumen.tipoVenta.nequi)}</b></li>
-            <li class="list-group-item">Daviplata: <b>${formatearPrecio(resumen.tipoVenta.daviplata)}</b></li>
-            <li class="list-group-item">Total Pagos Recibidos: <b>${formatearPrecio(resumen.totalCuentasCerradas)}</b></li>
-            </ul>
-        <div class="alert alert-info">
-            Pago de turno (10% ventas cerradas + aseo $ 7.000): <b>${formatearPrecio(resumen.pagoTurno)}</b>
+        <!-- Encabezado principal con información clara -->
+        <div class="alert alert-primary text-center mb-4">
+            <h3 class="mb-2">📊 Resumen de Tu Turno</h3>
+            <p class="mb-0">Así terminaste tu día de trabajo</p>
+        </div>
+
+        <!-- SECCIÓN 1: LO MÁS IMPORTANTE - DINERO RECIBIDO -->
+        <div class="card mb-4" style="border: 3px solid #28a745;">
+            <div class="card-header bg-success text-white text-center">
+                <h4 class="mb-0">💰 DINERO QUE RECIBISTE HOY</h4>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded">
+                            <h5 class="text-success">💵 Efectivo</h5>
+                            <h4 class="text-success">${formatearPrecio(resumen.tipoVenta.efectivo)}</h4>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded">
+                            <h5 class="text-info">📱 Nequi</h5>
+                            <h4 class="text-info">${formatearPrecio(resumen.tipoVenta.nequi)}</h4>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded">
+                            <h5 class="text-warning">💳 Daviplata</h5>
+                            <h4 class="text-warning">${formatearPrecio(resumen.tipoVenta.daviplata)}</h4>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <h3 class="text-success mb-0">
+                        <strong>TOTAL RECIBIDO: ${formatearPrecio(resumen.totalCuentasCerradas)}</strong>
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: DINERO PENDIENTE DE COBRAR -->
+        <div class="card mb-4" style="border: 2px solid #ffc107;">
+            <div class="card-header bg-warning text-dark text-center">
+                <h4 class="mb-0">⏳ DINERO QUE AÚN NO HAS COBRADO</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h6>🍺 Mesas que consumieron</h6>
+                            <h6 class="text-muted">(aún no han pagado)</h6>
+                            <h4 class="text-warning">${formatearPrecio(resumen.totalNoCobradas)}</h4>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 bg-light rounded">
+                            <h6>📝 Cuentas del cuaderno</h6>
+                            <h6 class="text-muted">(fiadas de otros días)</h6>
+                            <h4 class="text-warning">${formatearPrecio(totalEnCuaderno)}</h4>
+                            ${listadoCuentasEnCuaderno}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 3: OTROS PRODUCTOS -->
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white text-center">
+                <h5 class="mb-0">🚬 Otros productos vendidos</h5>
+            </div>
+            <div class="card-body text-center">
+                <h6>Cigarrillos</h6>
+                <h4 class="text-secondary">${formatearPrecio(resumen.totalTabaco)}</h4>
+                <small class="text-muted">Este dinero ya está incluido en el total recibido</small>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 4: TU PAGO -->
+        <div class="card" style="border: 3px solid #007bff;">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">💵 TU PAGO DE HOY</h4>
+            </div>
+            <div class="card-body text-center">
+                <h6 class="text-muted">10% de ventas cobradas + $7.000 de aseo</h6>
+                <h2 class="text-primary">
+                    <strong>${formatearPrecio(resumen.pagoTurno)}</strong>
+                </h2>
+                <small class="text-muted">Este es el dinero que te corresponde por tu trabajo de hoy</small>
+            </div>
         </div>
     `;
 }
