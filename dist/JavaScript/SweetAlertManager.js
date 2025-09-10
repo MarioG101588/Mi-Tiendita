@@ -367,7 +367,7 @@ export async function mostrarModalAbono(clienteNombre, saldoActual) {
                         <option value="">Seleccione el medio de pago</option>
                         <option value="Efectivo">💵 Efectivo</option>
                         <option value="Nequi">📱 Nequi</option>
-                        <option value="Daviplat">💳 Daviplata</option>
+                        <option value="Daviplata">💳 Daviplata</option>
                     </select>
                 </div>
             </div>

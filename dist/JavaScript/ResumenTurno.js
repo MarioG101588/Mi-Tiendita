@@ -87,10 +87,11 @@ export async function obtenerResumenTurno(idTurno) {
     for (const venta of cuentasCerradas) {
         totalCuentasCerradas += venta.total || 0;
         const medioPago = venta.tipoVenta?.toLowerCase();
-        if (medioPago && tipoVenta[medioPago] !== undefined) {
-            tipoVenta[medioPago] += venta.total || 0;
-        }
-        
+            if (medioPago === 'daviplata' || medioPago === 'daviplat') { // Acepta ambas formas
+                tipoVenta.daviplata += venta.total || 0;
+}           else if (medioPago && tipoVenta[medioPago] !== undefined) {
+                tipoVenta[medioPago] += venta.total || 0;
+}        
         // Separar abonos de ventas completas
         if (venta.esAbono) {
             totalAbonos += venta.total || 0;

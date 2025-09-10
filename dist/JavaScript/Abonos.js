@@ -173,7 +173,7 @@ export async function obtenerHistorialAbono(clienteId) {
 /**
  * Elimina el historial de abonos cuando se completa el pago
  */
-async function eliminarHistorialAbono(clienteId) {
+export async function eliminarHistorialAbono(clienteId) {
     try {
         const historialRef = doc(db, 'cuentasActivas', 'historial_abonos');
         const historialSnap = await getDoc(historialRef);

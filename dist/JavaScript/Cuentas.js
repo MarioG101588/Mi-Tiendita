@@ -7,19 +7,8 @@ import {
 
 import { app } from "./Conexion.js"; // debe exportar `app`
 import { formatearPrecio } from "./FormateoPrecios.js";
-import { 
-    mostrarCargando, 
-    mostrarExito, 
-    mostrarError, 
-    mostrarConfirmacion,
-    mostrarInput,
-    mostrarInputNumerico,
-    mostrarAdvertencia,
-    cerrarModal,
-    mostrarPersonalizado,
-    mostrarModalAbono
-} from "./SweetAlertManager.js";
-import { procesarAbono, obtenerHistorialAbono, renderizarHistorialAbonos, puedeRecibirAbono } from "./Abonos.js";
+import { mostrarCargando, mostrarExito, mostrarError, mostrarConfirmacion, mostrarInput, mostrarInputNumerico, mostrarAdvertencia, cerrarModal, mostrarPersonalizado, mostrarModalAbono} from "./SweetAlertManager.js";
+import { procesarAbono, obtenerHistorialAbono, renderizarHistorialAbonos, puedeRecibirAbono, eliminarHistorialAbono } from "./Abonos.js";
 import { mostrarModalMedioPago } from "./Engranaje.js";
 
 const db = getFirestore(app);
@@ -668,33 +657,29 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
         }
         if (!idTurno) throw new Error("No se encontró turno activo.");
 
-        // 5) Procesar productos
-        const productosObj = cuenta.productos || {};
-        const productosArray = Object.values(productosObj).map(p => {
-            const cantidad = Number(p?.cantidad ?? p?.cantidadTotal ?? p?.qty ?? 0);
-            let precioVenta = Number(p?.precioUnidad ?? p?.precio ?? p?.precioVenta ?? (cantidad ? p?.total / cantidad : 0)) || 0;
-            return {
-                nombreProducto: String(p?.nombre ?? p?.nombreProducto ?? 'sin nombre'),
-                precioVenta,
-                cantidad
-            };
-        });
+  // 5) Usar directamente el total de la cuenta (saldo restante)
+const totalCalculado = cuenta.total || 0; // <--- TOMAMOS EL VALOR CORRECTO
 
-        // 6) Calcular total real
-        const totalCalculado = productosArray.reduce((acc, prod) => acc + (prod.precioVenta * prod.cantidad), 0);
+// 6) Preparar la lista de productos para el registro (sin recalcular)
+const productosObj = cuenta.productos || {};
+const productosArray = Object.values(productosObj).map(p => ({
+    nombreProducto: String(p?.nombre ?? p?.nombreProducto ?? 'sin nombre'),
+    precioVenta: Number(p?.precioUnidad ?? p?.precioVenta ?? 0),
+    cantidad: Number(p?.cantidad ?? 0)
+}));
 
-        // 7) Armar objeto cliente
-        const horaVenta = new Date().toLocaleTimeString('es-CO', { hour12: false });
-        const clienteNombreFinal = (medioPagoFinal.toLowerCase() === 'efectivo') ? 'Cliente Ocasional' : (cuenta.cliente || 'Desconocido');
 
-        const clienteObj = {
-            cliente: clienteNombreFinal,
-            tipoVenta: medioPagoFinal,
-            horaVenta,
-            total: totalCalculado,
-            productos: productosArray,
-            turno: idTurno
-        };
+// 7) Armar objeto cliente
+const horaVenta = new Date().toLocaleTimeString('es-CO', { hour12: false });
+const clienteNombreFinal = (medioPagoFinal.toLowerCase() === 'efectivo') ? 'Cliente Ocasional' : (cuenta.cliente || 'Desconocido');
+const clienteObj = {
+    cliente: clienteNombreFinal,
+    tipoVenta: medioPagoFinal,
+    horaVenta,
+    total: totalCalculado, // <-- AHORA USA EL SALDO RESTANTE CORRECTO
+    productos: productosArray, // La lista de productos sigue siendo la original para referencia
+    turno: idTurno
+};
 
         // Validaciones
         if (!clienteObj.cliente || !clienteObj.tipoVenta || !clienteObj.productos.length) {
@@ -712,7 +697,8 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
 
         // 9) Eliminar cuenta activa
         await deleteDoc(cuentaRef);
-
+        await eliminarHistorialAbono(clienteId);
+        
         mostrarExito('La venta ha sido registrada.');
         if (typeof mostrarContainer === 'function') mostrarContainer('container2');
 
