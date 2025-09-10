@@ -6,8 +6,6 @@
     <meta http-equiv="Permissions-Policy" content="unload=(), camera=(), microphone=(), geolocation=()">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:;">
     <title>Sistema POS - El Arrendajo Azul</title>
-    
-    <!-- Script de supresión de errores jQuery/Firebase -->
     <script>
         (function() {
             const originalWarn = console.warn;
@@ -132,6 +130,9 @@
             📋 Ir a INICIO
         </button>
     </div>
+    <br><br><br><br>        <button onclick="exportarInventarioAExcel()">Exportar Inventario a Excel</button>
+        <input type="file" accept=".xlsx, .xls" onchange="importarInventarioDesdeExcel(event)">
+
 </div>
 </div>
 <div class="container2 d-none" id="container2">
@@ -176,8 +177,11 @@
     <div id="detalleCuentaContainer"></div>
 </div>
 
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>    <!-- Script de supresión de errores jQuery/Firebase -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script type="module" src="JavaScript/Engranaje.js"></script>
     <script type="module" src="JavaScript/Cuentas.js"></script>
+    <script type="module" src="JavaScript/Export_Import.js"></script>
+
 </body>
 </html>
