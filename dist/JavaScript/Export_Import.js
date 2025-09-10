@@ -1,4 +1,4 @@
-import { collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { db } from "./Conexion.js";
 // Asegúrate de incluir SheetJS en tu HTML: <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
@@ -22,8 +22,6 @@ async function exportarInventarioAExcel() {
     XLSX.writeFile(wb, "inventario.xlsx");
 }
 
-// Asegúrate de incluir SheetJS en tu HTML
-
 async function importarInventarioDesdeExcel(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -33,8 +31,20 @@ async function importarInventarioDesdeExcel(event) {
         const workbook = XLSX.read(data, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const productos = XLSX.utils.sheet_to_json(sheet);
+
+        // 1. Leer todos los productos actuales de Firestore
+        const inventarioRef = collection(db, "inventario");
+        const snapshot = await getDocs(inventarioRef);
+        const productosFirestore = {};
+        snapshot.forEach(docSnap => {
+            productosFirestore[docSnap.id] = true;
+        });
+
+        // 2. Leer productos del Excel y construir un set de nombres
+        const productosExcel = new Set();
         for (const prod of productos) {
-            // Asume que el campo Producto es el nombre/ID del documento
+            productosExcel.add(prod.Producto);
+            // Actualizar o crear producto
             const docRef = doc(db, "inventario", prod.Producto);
             await setDoc(docRef, {
                 cantidad: Number(prod.Cantidad) || 0,
@@ -42,10 +52,19 @@ async function importarInventarioDesdeExcel(event) {
                 fechaVencimiento: prod.FechaVencimiento || ""
             }, { merge: true });
         }
+
+        // 3. Eliminar productos que están en Firestore pero no en el Excel
+        for (const id in productosFirestore) {
+            if (!productosExcel.has(id)) {
+                await deleteDoc(doc(db, "inventario", id));
+            }
+        }
+
         alert("Inventario actualizado correctamente.");
     };
     reader.readAsArrayBuffer(file);
 }
 
+// Exponer funciones globales para el HTML
 window.exportarInventarioAExcel = exportarInventarioAExcel;
 window.importarInventarioDesdeExcel = importarInventarioDesdeExcel;
