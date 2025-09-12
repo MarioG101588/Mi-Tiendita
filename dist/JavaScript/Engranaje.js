@@ -20,7 +20,8 @@ import {
     mostrarCargando, 
     mostrarExito, 
     mostrarError,
-    mostrarAdvertencia 
+    mostrarAdvertencia,
+    mostrarInputNumerico 
 } from "./SweetAlertManager.js";
 
 // **FUNCIÓN UTILITARIA PARA CONVERTIR idTurno A FECHA LEGIBLE**
@@ -52,8 +53,8 @@ function convertirIdTurnoAFecha(idTurno) {
 
 // Exportar funciones del carrito al ámbito global
 // Redefinir agregarAlCarrito para limpiar buscador y ocultar inventario tras agregar
-window.agregarAlCarrito = function(id, precioVenta) {
-    agregarAlCarrito(id, precioVenta);
+window.agregarAlCarrito = function(id, precioVenta, cantidad = 1) {
+    agregarAlCarrito(id, precioVenta, cantidad);
     // Limpiar buscador y ocultar inventario
     const campoBusqueda1 = document.getElementById("campoBusqueda1");
     if (campoBusqueda1) campoBusqueda1.value = "";
@@ -798,14 +799,24 @@ async function buscarProductosParaCarrito(termino, resultadosDiv) {
 // **FUNCIÓN PARA SELECCIONAR PRODUCTO Y AGREGARLO AL CARRITO**
 window.seleccionarProductoParaCarrito = async function(nombreProducto, precioVenta) {
     try {
-        // PASO 1: Agregar el producto al carrito PRIMERO
-        window.agregarAlCarrito(nombreProducto, precioVenta);
+        // PASO 1: Mostrar input numérico para cantidad
+        const { value: cantidad } = await mostrarInputNumerico(`Cantidad para ${nombreProducto}`, 'Ingrese la cantidad');
         
-        // PASO 2: Resetear flag de modal y cerrar
+        if (!cantidad || cantidad <= 0) {
+            // Usuario canceló o ingresó cantidad inválida
+            modalBusquedaAbierto = false;
+            cerrarModal();
+            return;
+        }
+        
+        // PASO 2: Agregar el producto al carrito con la cantidad especificada
+        window.agregarAlCarrito(nombreProducto, precioVenta, cantidad);
+        
+        // PASO 3: Resetear flag de modal y cerrar
         modalBusquedaAbierto = false;
         cerrarModal();
         
-        // PASO 3: Limpiar el campo de búsqueda para el próximo uso
+        // PASO 4: Limpiar el campo de búsqueda para el próximo uso
         const campoBusqueda1 = document.getElementById("campoBusqueda1");
         if (campoBusqueda1) {
             campoBusqueda1.blur(); // Quitar focus del campo

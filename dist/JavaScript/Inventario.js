@@ -2,6 +2,8 @@
 //Este archivo contiene la lógica para cargar, filtrar y mostrar el inventario de productos.
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js";
+import { agregarAlCarrito } from "./CarritoCompras.js";
+import { mostrarInputNumerico } from "./SweetAlertManager.js";
 
 const db = getFirestore(app);
 
@@ -63,7 +65,7 @@ export async function cargarInventario(filtro = "") {
                 const data = doc.data();
                 hayResultados = true;
                 html += `
-                    <tr class="inventario-row-clickable" onclick="window.agregarAlCarrito('${doc.id}', ${data.precioVenta})">
+                    <tr class="inventario-row-clickable" onclick="window.seleccionarProductoDesdeInventario('${doc.id}', ${data.precioVenta})">
                         <td>${doc.id}</td>
                         <td>${data.precioVenta !== undefined ? data.precioVenta : "-"}</td>
                         <td>${data.cantidad !== undefined ? data.cantidad : "-"}</td>
@@ -86,6 +88,29 @@ export async function cargarInventario(filtro = "") {
         alert('Error al cargar inventario: ' + error.message);
     }
 }
+
+// Función para manejar el clic en filas del inventario con input de cantidad
+window.seleccionarProductoDesdeInventario = async function(nombreProducto, precioVenta) {
+    try {
+        // Mostrar input numérico para cantidad
+        const { value: cantidad } = await mostrarInputNumerico(`Cantidad para ${nombreProducto}`, 'Ingrese la cantidad');
+        
+        if (!cantidad || cantidad <= 0) {
+            // Usuario canceló o ingresó cantidad inválida
+            return;
+        }
+        
+        // Agregar al carrito con la cantidad especificada
+        agregarAlCarrito(nombreProducto, precioVenta, cantidad);
+        
+        // Ocultar inventario después de agregar
+        ocultarInventario();
+        
+    } catch (error) {
+        console.error('Error al seleccionar producto desde inventario:', error);
+        alert('Error al agregar producto al carrito: ' + error.message);
+    }
+};
 
 // Función para ocultar el inventario desde otros módulos
 export function ocultarInventario() {

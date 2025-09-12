@@ -7,17 +7,18 @@ window.carrito = {};
  * Agrega un producto al carrito o aumenta su cantidad.
  * @param {string} id - ID del producto.
  * @param {number} precioVenta - Precio de venta del producto.
+ * @param {number} cantidad - Cantidad a agregar (opcional, por defecto 1).
  */
-export function agregarAlCarrito(id, precioVenta) {
+export function agregarAlCarrito(id, precioVenta, cantidad = 1) {
     if (window.carrito[id]) {
-        window.carrito[id].cantidad += 1;
+        window.carrito[id].cantidad += cantidad;
         window.carrito[id].total = window.carrito[id].cantidad * precioVenta;
     } else {
         window.carrito[id] = {
             nombre: id,
-            cantidad: 1,
+            cantidad: cantidad,
             precioVenta: precioVenta,
-            total: precioVenta
+            total: precioVenta * cantidad
         };
     }
     renderCarrito();
