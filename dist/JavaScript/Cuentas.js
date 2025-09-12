@@ -120,7 +120,7 @@ export async function cargarDetalleCuenta(clienteId) {
     const detalleContainer = document.getElementById('detalleCuentaContainer');
     if (!detalleContainer) return;
 
-    //mostrarCargando('Cargando detalles...');
+    mostrarCargando('Cargando detalles...');
 
     try {
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
@@ -785,19 +785,19 @@ window.procesarAbonoCliente = async function(clienteId) {
     }
 };
 
-//sync function actualizarVistaConHistorial(clienteId, contenidoHTML) {
-//    try {
-//        const historial = await obtenerHistorialAbono(clienteId);
-//        if (historial.length > 0) {
-//            const historialHTML = renderizarHistorialAbonos(historial);
-//            const botonesIndex = contenidoHTML.lastIndexOf('<div class="d-grid gap-2">');
-//            if (botonesIndex !== -1) {
-//                return contenidoHTML.slice(0, botonesIndex) + historialHTML + contenidoHTML.slice(botonesIndex);
-//            }
-//        }
-//        return contenidoHTML;
-//    } catch (error) {
-//        console.error('Error cargando historial de abonos:', error);
-//        return contenidoHTML;
-//    }
-//}
+async function actualizarVistaConHistorial(clienteId, contenidoHTML) {
+    try {
+        const historial = await obtenerHistorialAbono(clienteId);
+        if (historial.length > 0) {
+            const historialHTML = renderizarHistorialAbonos(historial);
+            const botonesIndex = contenidoHTML.lastIndexOf('<div class="d-grid gap-2">');
+            if (botonesIndex !== -1) {
+                return contenidoHTML.slice(0, botonesIndex) + historialHTML + contenidoHTML.slice(botonesIndex);
+            }
+        }
+        return contenidoHTML;
+    } catch (error) {
+        console.error('Error cargando historial de abonos:', error);
+        return contenidoHTML;
+    }
+}
