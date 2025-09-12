@@ -1,5 +1,3 @@
-// JavaScript/carrito.js
-// Este archivo maneja toda la lógica del carrito de compras, incluyendo la adición, eliminación y renderización de productos.
 import { formatearPrecio } from './FormateoPrecios.js';
 
 // Carrito global (se recomienda manejarlo como un estado en un objeto para mayor control)

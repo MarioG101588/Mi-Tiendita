@@ -132,6 +132,7 @@
     </div>
     <br><br><br><br>        <button onclick="exportarInventarioAExcel()">Exportar Inventario a Excel</button>
         <input type="file" accept=".xlsx, .xls" onchange="importarInventarioDesdeExcel(event)">
+    <button onclick="sincronizarPreciosDesdeInventario()">🔄 Sincronizar productos y precios</button>
 
 </div>
 </div>
@@ -182,6 +183,7 @@
     <script type="module" src="JavaScript/Engranaje.js"></script>
     <script type="module" src="JavaScript/Cuentas.js"></script>
     <script type="module" src="JavaScript/Export_Import.js"></script>
+    <script type="module" src="JavaScript/SincronizadorPrecios.js"></script>
 
 </body>
 </html>

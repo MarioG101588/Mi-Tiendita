@@ -1,5 +1,6 @@
 import { collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { db } from "./Conexion.js";
+
 // Asegúrate de incluir SheetJS en tu HTML: <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 async function exportarInventarioAExcel() {
