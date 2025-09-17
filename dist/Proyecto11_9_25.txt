@@ -47,7 +47,8 @@ body {
 .container2, 
 .container3,
 .containerPendientes,
-.containerResumenTurno {
+.containerResumenTurno,
+.containerCompras {
     background: white;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -2385,6 +2386,34 @@ body {
     max-width: 100%;
 }
 
+/* Contenedor y estilo del logo en la sección de compras */
+.logo-container-compras {
+    text-align: center !important;
+    margin: 10px 0 20px 0 !important;
+}
+
+.logo-compras {
+    max-width: 100px !important;
+    max-height: 100px !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    transition: transform 0.3s ease !important;
+}
+
+.logo-compras:hover {
+    transform: scale(1.05) !important;
+}
+
+/* Responsive para el logo de compras en pantallas pequeñas */
+@media (max-width: 576px) {
+    .logo-compras {
+        max-width: 80px !important;
+        max-height: 80px !important;
+    }
+}
+
 
 ################    ##      ####              ##
 ##                  ##      ##  ##            ##
@@ -2406,6 +2435,14 @@ import { db } from './Conexion.js';
 import { formatearPrecio } from './FormateoPrecios.js';
 import { mostrarExito, mostrarError, mostrarCargando, cerrarModal } from './SweetAlertManager.js';
 import { doc, getDoc, setDoc, updateDoc, collection, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import {
+    wrappedGetDoc,
+    wrappedSetDoc,
+    wrappedUpdateDoc,
+    wrappedDeleteDoc,
+    wrappedRunTransaction
+} from "./FirebaseWrapper.js";
+import { registrarOperacion } from "./FirebaseMetrics.js";
 
 /**
  * Procesa un abono parcial de una cuenta
@@ -2432,7 +2469,7 @@ export async function procesarAbono(clienteId, montoAbono, medioPago, saldoActua
             throw new Error('El abono no puede ser mayor al saldo actual');
         }
 
-        const resultado = await runTransaction(db, async (transaction) => {
+        const resultado = await wrappedRunTransaction(db, async (transaction) => {
             // 1. Obtener datos actuales de la cuenta
             const cuentaRef = doc(db, 'cuentasActivas', clienteId);
             const cuentaDoc = await transaction.get(cuentaRef);
@@ -2487,7 +2524,7 @@ export async function procesarAbono(clienteId, montoAbono, medioPago, saldoActua
             }
 
             return { saldoRestante, ventaCerrada };
-        });
+        }, { lecturas: 2, escrituras: 2 });
 
         cerrarModal();
         
@@ -2512,7 +2549,7 @@ export async function procesarAbono(clienteId, montoAbono, medioPago, saldoActua
  */
 async function registrarVentaCerrada(ventaData, idTurno) {
     const cuentasCerradasRef = doc(db, 'cuentasCerradas', idTurno);
-    const cuentasCerradasSnap = await getDoc(cuentasCerradasRef);
+    const cuentasCerradasSnap = await wrappedGetDoc(cuentasCerradasRef);
     
     let clientesArray = [];
     if (cuentasCerradasSnap.exists()) {
@@ -2521,7 +2558,7 @@ async function registrarVentaCerrada(ventaData, idTurno) {
     
     clientesArray.push(ventaData);
     
-    await setDoc(cuentasCerradasRef, { clientes: clientesArray }, { merge: true });
+    await wrappedSetDoc(cuentasCerradasRef, { clientes: clientesArray }, { merge: true });
 }
 
 /**
@@ -2530,7 +2567,7 @@ async function registrarVentaCerrada(ventaData, idTurno) {
 export async function guardarHistorialAbono(clienteId, abonoData) {
     try {
         const historialRef = doc(db, 'cuentasActivas', 'historial_abonos');
-        const historialSnap = await getDoc(historialRef);
+        const historialSnap = await wrappedGetDoc(historialRef);
         
         let historialCompleto = {};
         if (historialSnap.exists()) {
@@ -2543,7 +2580,7 @@ export async function guardarHistorialAbono(clienteId, abonoData) {
         
         historialCompleto[clienteId].push(abonoData);
         
-        await setDoc(historialRef, historialCompleto);
+        await wrappedSetDoc(historialRef, historialCompleto);
         
     } catch (error) {
         console.error('Error guardando historial de abono:', error);
@@ -2557,7 +2594,7 @@ export async function guardarHistorialAbono(clienteId, abonoData) {
 export async function obtenerHistorialAbono(clienteId) {
     try {
         const historialRef = doc(db, 'cuentasActivas', 'historial_abonos');
-        const historialSnap = await getDoc(historialRef);
+        const historialSnap = await wrappedGetDoc(historialRef);
         
         if (historialSnap.exists()) {
             const historial = historialSnap.data();
@@ -2578,13 +2615,13 @@ export async function obtenerHistorialAbono(clienteId) {
 export async function eliminarHistorialAbono(clienteId) {
     try {
         const historialRef = doc(db, 'cuentasActivas', 'historial_abonos');
-        const historialSnap = await getDoc(historialRef);
+        const historialSnap = await wrappedGetDoc(historialRef);
         
         if (historialSnap.exists()) {
             const historialCompleto = historialSnap.data();
             delete historialCompleto[clienteId];
             
-            await setDoc(historialRef, historialCompleto);
+            await wrappedSetDoc(historialRef, historialCompleto);
         }
         
     } catch (error) {
@@ -2637,7 +2674,7 @@ export function puedeRecibirAbono(cuenta) {
 export async function obtenerClientesConAbonos() {
     try {
         const historialRef = doc(db, 'cuentasActivas', 'historial_abonos');
-        const historialSnap = await getDoc(historialRef);
+        const historialSnap = await wrappedGetDoc(historialRef);
         
         if (historialSnap.exists()) {
             const historial = historialSnap.data();
@@ -2648,7 +2685,7 @@ export async function obtenerClientesConAbonos() {
                 if (abonos && abonos.length > 0) {
                     // Obtener nombre del cliente desde la cuenta activa
                     const cuentaRef = doc(db, 'cuentasActivas', clienteId);
-                    const cuentaSnap = await getDoc(cuentaRef);
+                    const cuentaSnap = await wrappedGetDoc(cuentaRef);
                     
                     let nombreCliente = clienteId;
                     if (cuentaSnap.exists()) {
@@ -2717,6 +2754,7 @@ import {
     mostrarInfo,
     cerrarModal 
 } from "./SweetAlertManager.js";
+import { wrappedGetDocs } from "./FirebaseWrapper.js";
 
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -2743,7 +2781,7 @@ export function verificarSesionAutomatica() {
                     );
                     // console.log('🔵 Buscando turno activo para:', user.email);
                     
-                    const querySnapshot = await getDocs(q);
+                    const querySnapshot = await wrappedGetDocs(q);
                     // console.log('🔵 Resultado query turnos:', querySnapshot.size, 'documentos');
                     
                     if (!querySnapshot.empty) {
@@ -2829,7 +2867,7 @@ export async function iniciarSesion(email, password, recordar) {
             where("usuario", "==", email),
             where("estado", "==", "activo")
         );
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await wrappedGetDocs(q);
 
         if (!querySnapshot.empty) {
             // Si existe un turno activo, usarlo y no crear otro
@@ -2907,8 +2945,6 @@ export async function cerrarSesion() {
 
 CarritoCompras.js
 
-// JavaScript/carrito.js
-// Este archivo maneja toda la lógica del carrito de compras, incluyendo la adición, eliminación y renderización de productos.
 import { formatearPrecio } from './FormateoPrecios.js';
 
 // Carrito global (se recomienda manejarlo como un estado en un objeto para mayor control)
@@ -2918,17 +2954,18 @@ window.carrito = {};
  * Agrega un producto al carrito o aumenta su cantidad.
  * @param {string} id - ID del producto.
  * @param {number} precioVenta - Precio de venta del producto.
+ * @param {number} cantidad - Cantidad a agregar (opcional, por defecto 1).
  */
-export function agregarAlCarrito(id, precioVenta) {
+export function agregarAlCarrito(id, precioVenta, cantidad = 1) {
     if (window.carrito[id]) {
-        window.carrito[id].cantidad += 1;
+        window.carrito[id].cantidad += cantidad;
         window.carrito[id].total = window.carrito[id].cantidad * precioVenta;
     } else {
         window.carrito[id] = {
             nombre: id,
-            cantidad: 1,
+            cantidad: cantidad,
             precioVenta: precioVenta,
-            total: precioVenta
+            total: precioVenta * cantidad
         };
     }
     renderCarrito();
@@ -3050,6 +3087,379 @@ export function renderCarrito() {
 
 
 
+
+################    ##      ####              ##
+##                  ##      ##  ##            ##
+##                  ##      ##    ##          ##
+################    ##      ##      ##        ##
+##                  ##      ##        ##      ##
+##                  ##      ##          ##    ##  
+##                  ##      ##            ##  ##  
+##                  ##      ##              ####
+##                  ##      ##                ##
+
+
+
+
+Comras.js
+
+// Compras.js
+// Módulo para gestionar compras de productos al inventario
+import { db } from './Conexion.js';
+import { formatearPrecio } from './FormateoPrecios.js';
+import { mostrarCargando, mostrarExito, mostrarError, mostrarConfirmacion, mostrarInput, cerrarModal } from './SweetAlertManager.js';
+import { collection, doc, setDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import {
+    wrappedGetDocs,
+    wrappedGetDoc,
+    wrappedSetDoc,
+    wrappedAddDoc
+} from "./FirebaseWrapper.js";
+import { registrarOperacion } from "./FirebaseMetrics.js";
+import {
+    mostrarModalSeleccionProducto,
+    mostrarModalDetallesProducto,
+    mostrarModalMetodoPago
+} from './ComprasUI.js';
+
+/**
+ * Renderiza la pantalla principal del módulo de compras
+ * @param {string} containerId - ID del contenedor
+ */
+export function renderizarModuloCompras(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        console.log('Compras.js: Container no encontrado:', containerId);
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="alert alert-info text-center mb-4">
+            <h3 class="mb-2">🛒 Módulo de Compras</h3>
+            <p class="mb-0">Registra compras para actualizar tu inventario</p>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-12">
+                <button id="btnNuevaCompra" class="btn btn-success btn-lg w-100">
+                    ➕ Nueva Compra
+                </button>
+            </div>
+            <div class="col-12">
+                <button id="btnHistorialCompras" class="btn btn-outline-primary w-100">
+                    📋 Ver Historial de Compras
+                </button>
+            </div>
+        </div>
+
+        <div id="listaComprasRecientes" class="mt-4">
+            </div>
+    `;
+
+    document.getElementById('btnNuevaCompra').addEventListener('click', iniciarNuevaCompra);
+    document.getElementById('btnHistorialCompras').addEventListener('click', mostrarHistorialCompras);
+    cargarComprasRecientes();
+}
+
+/**
+ * Inicia el proceso de nueva compra (paso a paso)
+ */
+async function iniciarNuevaCompra() {
+    const compra = {
+        productos: [],
+        proveedor: '',
+        fecha: new Date().toLocaleDateString('es-CO'),
+        metodoPago: { tipo: 'efectivo' },
+        total: 0
+    };
+
+    await mostrarPasoSeleccionProductos(compra);
+}
+
+/**
+ * Paso 1: Seleccionar productos
+ */
+async function mostrarPasoSeleccionProductos(compra) {
+    // La nueva función ahora muestra un modal autónomo
+    const productoSeleccionado = await mostrarModalSeleccionProducto();
+
+    if (productoSeleccionado) {
+        await mostrarPasoDetallesProducto(compra, productoSeleccionado);
+    } else {
+        console.log('Compras.js: Proceso de selección de producto cancelado.');
+    }
+}
+
+/**
+ * Obtiene datos del producto desde el inventario
+ * @param {string} nombreProducto - Nombre del producto
+ * @returns {Object|null} Datos del producto
+ */
+async function obtenerDatosProducto(nombreProducto) {
+    try {
+        const inventarioRef = collection(db, 'inventario');
+        const snapshot = await wrappedGetDocs(inventarioRef);
+        let productoData = null;
+
+        snapshot.forEach(doc => {
+            if (doc.id.toLowerCase().replace(/_/g, ' ') === nombreProducto.toLowerCase()) {
+                productoData = {
+                    nombre: nombreProducto,
+                    presentaciones: doc.data().presentaciones || [],
+                    precioVenta: doc.data().precioVenta || 0,
+                    cantidad: doc.data().cantidad || 0,
+                    fechaVencimiento: doc.data().fechaVencimiento || null
+                };
+            }
+        });
+        return productoData;
+    } catch (error) {
+        console.error('Compras.js: Error obteniendo datos del producto:', error);
+        return null;
+    }
+}
+
+/**
+ * Paso 2: Detalles del producto (presentaciones, cantidad, precio)
+ */
+async function mostrarPasoDetallesProducto(compra, productoSeleccionado) {
+    const productoData = await obtenerDatosProducto(productoSeleccionado.nombre);
+    if (!productoData) {
+        mostrarError('Error', 'No se pudieron obtener los datos del producto.');
+        return;
+    }
+
+    const detalles = await mostrarModalDetallesProducto(productoData);
+
+    if (detalles) {
+        compra.productos.push({
+            nombre: productoSeleccionado.nombre,
+            precioVenta: productoSeleccionado.precioVenta,
+            ...detalles
+        });
+        compra.total += detalles.cantidadPresentaciones * detalles.precioPorPresentacion;
+        await mostrarPasoDetallesCompra(compra);
+    }
+}
+
+/**
+ * Paso 3: Detalles de la compra (proveedor, pago, etc.)
+ */
+async function mostrarPasoDetallesCompra(compra) {
+    const { value: proveedor } = await mostrarInput('Proveedor', 'Nombre del proveedor (opcional)');
+    compra.proveedor = proveedor || '';
+    await mostrarPasoMetodoPago(compra);
+}
+
+/**
+ * Paso 4: Método de pago
+ */
+async function mostrarPasoMetodoPago(compra) {
+    const metodoPago = await mostrarModalMetodoPago();
+    if (metodoPago) {
+        compra.metodoPago = metodoPago;
+        await confirmarYGuardarCompra(compra);
+    }
+}
+
+/**
+ * Confirmar y guardar compra
+ */
+async function confirmarYGuardarCompra(compra) {
+    const resumenHTML = `
+        <div class="resumen-compra" style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.5;">
+            <h5 style="color: #28a745; text-align: center; margin-bottom: 20px;">📋 Resumen de tu Compra</h5>
+            <p style="text-align: center; margin-bottom: 15px;">Revisa los productos que vas a comprar:</p>
+            <table class="table table-bordered" style="border-collapse: collapse; width: 100%;">
+                <thead style="background-color: #f8f9fa;">
+                   <tr>
+                        <th style="padding: 10px; text-align: left;">Producto</th>
+                        <th style="padding: 10px; text-align: center;">Cantidad</th>
+                        <th style="padding: 10px; text-align: right;">Precio por Unidad</th>
+                        <th style="padding: 10px; text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                     ${compra.productos.map(p => `
+                        <tr>
+                            <td style="padding: 10px;">${p.nombre}</td>
+                            <td style="padding: 10px; text-align: center;">${p.cantidadPresentaciones} paquete(s) de ${p.unidadesPorPresentacion} unidad(es) cada uno</td>
+                            <td style="padding: 10px; text-align: right;">${formatearPrecio(p.precioUnitario)}</td>
+                            <td style="padding: 10px; text-align: right;">${formatearPrecio(p.cantidadPresentaciones * p.precioPorPresentacion)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+                <tfoot style="background-color: #e9ecef; font-weight: bold;">
+                    <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">Total de la Compra:</td>
+                        <td style="padding: 10px; text-align: right; color: #28a745;">${formatearPrecio(compra.total)}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">Forma de Pago:</td>
+                        <td style="padding: 10px; text-align: right;">${compra.metodoPago.tipo === 'efectivo' ? '💵 Efectivo' : compra.metodoPago.tipo === 'credito' ? `📅 Crédito (${compra.metodoPago.plazoDias} días, pago: ${compra.metodoPago.fechaPago})` : '🔀 Mixto'}</td>
+                    </tr>
+                </tfoot>
+            </table>
+            <p style="text-align: center; margin-top: 15px; font-style: italic;">¿Todo correcto? Confirma para guardar la compra.</p>
+        </div>
+    `;
+
+    const { value: confirmado } = await mostrarConfirmacion('Confirmar Compra', resumenHTML);
+
+    if (confirmado) {
+        await guardarCompra(compra);
+    }
+}
+
+/**
+ * Guarda la compra en Firebase y actualiza inventario
+ */
+async function guardarCompra(compra) {
+    try {
+        mostrarCargando('Guardando compra...');
+        await wrappedAddDoc(collection(db, 'compras'), {
+            ...compra,
+            timestamp: serverTimestamp()
+        });
+
+        for (const producto of compra.productos) {
+            const productoRef = doc(db, 'inventario', producto.nombre);
+            const productoDoc = await wrappedGetDoc(productoRef);
+            const productoExistente = productoDoc.exists() ? productoDoc.data() : null;
+            const datosActualizados = {
+                nombre: producto.nombre,
+                presentaciones: productoExistente ?
+                productoExistente.presentaciones || [] : [producto.unidadesPorPresentacion],
+                precioCompraUnitario: producto.precioUnitario,
+                precioVenta: productoExistente ?
+                productoExistente.precioVenta || 0 : 0,
+                cantidad: (productoExistente ? productoExistente.cantidad || 0 : 0) + producto.unidadesTotales,
+                fechaVencimiento: productoExistente ?
+                productoExistente.fechaVencimiento : null,
+                ultimaCompra: serverTimestamp()
+            };
+            await wrappedSetDoc(productoRef, datosActualizados, { merge: true });
+        }
+
+        cerrarModal();
+        mostrarExito('Compra registrada exitosamente', 'El inventario ha sido actualizado.');
+        cargarComprasRecientes();
+    } catch (error) {
+        cerrarModal();
+        mostrarError('Error al guardar', error.message);
+    }
+}
+
+/**
+ * Carga compras recientes
+ */
+async function cargarComprasRecientes() {
+    const lista = document.getElementById('listaComprasRecientes');
+    lista.innerHTML = '<p>Cargando compras recientes...</p>';
+    // Lógica para cargar de Firebase (en desarrollo)
+    lista.innerHTML = '<p class="text-muted">El historial de compras recientes aparecerá aquí.</p>';
+}
+
+/**
+ * Muestra historial de compras
+ */
+async function mostrarHistorialCompras() {
+    mostrarInfo('Historial', 'Esta funcionalidad está en desarrollo.');
+}
+
+
+
+
+################    ##      ####              ##
+##                  ##      ##  ##            ##
+##                  ##      ##    ##          ##
+################    ##      ##      ##        ##
+##                  ##      ##        ##      ##
+##                  ##      ##          ##    ##  
+##                  ##      ##            ##  ##  
+##                  ##      ##              ####
+##                  ##      ##                ##
+
+
+
+
+ComprasUI.js
+
+// ComprasUI.js
+import { guardarCompra, cargarComprasRecientes } from "./Compras.js";
+
+/**
+ * Inicializa el módulo de compras
+ */
+export function renderizarModuloCompras() {
+    const cont = document.getElementById("containerCompras");
+    if (!cont) return;
+
+    cont.innerHTML = `
+        <div class="logo-container-compras">
+            <img src="img/logo-compras.png" class="logo-compras" alt="Compras">
+        </div>
+        <h2>Gestión de Compras</h2>
+        <div class="botones">
+            <button id="btnNuevaCompra" class="btn btn-primary">Nueva Compra</button>
+            <button id="btnHistorialCompras" class="btn btn-secondary">Historial</button>
+        </div>
+        <div id="historialCompras" class="mt-3 d-none">
+            <h3>Compras recientes</h3>
+            <div id="listaComprasRecientes" class="list-group"></div>
+        </div>
+    `;
+
+    document.getElementById("btnNuevaCompra").addEventListener("click", iniciarNuevaCompra);
+    document.getElementById("btnHistorialCompras").addEventListener("click", () => {
+        document.getElementById("historialCompras").classList.remove("d-none");
+        cargarComprasRecientes();
+    });
+}
+
+/**
+ * Flujo de nueva compra (simplificado)
+ */
+async function iniciarNuevaCompra() {
+    const compra = {
+        proveedor: prompt("Ingrese el nombre del proveedor:"),
+        total: 0,
+        productos: []
+    };
+
+    let seguir = true;
+    while (seguir) {
+        const nombre = prompt("Nombre del producto:");
+        const cantidad = parseInt(prompt("Cantidad:"), 10) || 0;
+        const precio = parseInt(prompt("Precio unitario:"), 10) || 0;
+
+        compra.productos.push({ nombre, cantidad, precio });
+        compra.total += cantidad * precio;
+
+        seguir = confirm("¿Desea agregar otro producto?");
+    }
+
+    // Confirmar compra
+    if (confirm(`Confirmar compra por ${formatearPrecio(compra.total)}?`)) {
+        const ok = await guardarCompra(compra);
+        if (ok) alert("✅ Compra registrada exitosamente");
+    }
+}
+
+/**
+ * Formatea precio
+ */
+function formatearPrecio(valor) {
+    return new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+        minimumFractionDigits: 0
+    }).format(valor);
+}
+
+
+
+
 ################    ##      ####              ##
 ##                  ##      ##  ##            ##
 ##                  ##      ##    ##          ##
@@ -3068,23 +3478,20 @@ Conexion.js
 // JavaScript/Conexion.js
 // Configuración y conexión a Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getAuth, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-// Importa todo lo necesario de Firestore
 import {
-    getFirestore, 
-    collection,
-    increment, 
-    doc, 
-    addDoc, 
-    setDoc, 
-    getDoc, 
-    updateDoc,
-    arrayUnion, 
-    runTransaction, 
-    serverTimestamp,
-    deleteDoc,
-    connectFirestoreEmulator
+  getFirestore,
+  collection,
+  doc,
+  addDoc,
+  setDoc,
+  getDocs,
+  query,
+  orderBy,
+  limit,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+
 
 const firebaseConfig = {
     apiKey: "AIzaSyCygT0WyAVlV_AvlOXSPyQht6KlpALPZ10",
@@ -3095,42 +3502,37 @@ const firebaseConfig = {
     appId: "1:797163205747:web:7455fe43c4683c59aee606"
 };
 
-// Inicializar Firebase y exportar instancias
+// Inicializar
 export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Configuración para desarrollo local - MODO DIAGNÓSTICO
-if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-    // console.log('🔧 Modo desarrollo detectado - Firebase OAuth warnings visibles para diagnóstico');
-    
-    // Para desarrollo local, configuramos la auth
-    try {
-        auth.settings = {
-            appVerificationDisabledForTesting: true
-        };
-    } catch (error) {
-        // console.log('ℹ️ Emuladores ya configurados:', error.message);
-    }
+// ============================
+// Wrappers para monitoreo
+// ============================
+export async function wrappedAddDoc(ref, data) {
+  console.log("📥 addDoc:", ref.path, data);
+  return await addDoc(ref, data);
 }
 
-// Exporta las funciones de Firestore para usarlas en otros módulos
-export { 
-    collection, 
-    doc,
-    increment, 
-    addDoc, 
-    setDoc, 
-    getDoc, 
-    updateDoc,
-    arrayUnion, 
-    runTransaction, 
-    serverTimestamp,
-    deleteDoc,
-    connectFirestoreEmulator
+export async function wrappedSetDoc(ref, data, options) {
+  console.log("✏️ setDoc:", ref.path, data, options);
+  return await setDoc(ref, data, options);
+}
+
+export async function wrappedGetDocs(q) {
+  console.log("🔎 getDocs:", q);
+  return await getDocs(q);
+}
+
+// 🔹 Exportar helpers Firestore (si los usas en otros módulos)
+export {
+  collection,
+  doc,
+  query,
+  orderBy,
+  limit,
+  serverTimestamp
 };
-
-
 
 
 ################    ##      ####              ##
@@ -3148,14 +3550,21 @@ export {
 
 Cuentas.js
 
-// Cuentas.js - versión corregida y adaptada
-
 import {getFirestore, doc, getDoc, setDoc, deleteDoc, collection,query, where, orderBy, limit, getDocs, updateDoc, arrayUnion, runTransaction} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js"; // debe exportar `app`
 import { formatearPrecio } from "./FormateoPrecios.js";
 import { mostrarCargando, mostrarExito, mostrarError, mostrarConfirmacion, mostrarInput, mostrarInputNumerico, mostrarAdvertencia, cerrarModal, mostrarPersonalizado, mostrarModalAbono} from "./SweetAlertManager.js";
 import { procesarAbono, obtenerHistorialAbono, renderizarHistorialAbonos, puedeRecibirAbono, eliminarHistorialAbono } from "./Abonos.js";
 import { mostrarModalMedioPago } from "./Engranaje.js";
+import {
+    wrappedGetDoc,
+    wrappedGetDocs,
+    wrappedSetDoc,
+    wrappedUpdateDoc,
+    wrappedDeleteDoc,
+    wrappedRunTransaction
+} from "./FirebaseWrapper.js";
+import { registrarOperacion } from "./FirebaseMetrics.js";
 
 const db = getFirestore(app);
 
@@ -3164,7 +3573,7 @@ window.diagnosticarFirestore = async function() {
     try {
         const collectionRef = collection(db, "cuentasActivas");
         const q = query(collectionRef, limit(1));
-        const snapshot = await getDocs(q);
+        const snapshot = await wrappedGetDocs(q);
         if (snapshot.empty) {
             console.error('❌ No hay documentos en cuentasActivas');
             return;
@@ -3174,7 +3583,7 @@ window.diagnosticarFirestore = async function() {
         const datosOriginales = primeraCtasnapshot.data();
         const testRef = doc(db, "cuentasActivas", primerDocId);
         try {
-            await updateDoc(testRef, {
+            await wrappedUpdateDoc(testRef, {
                 pruebaEscritura: new Date().toISOString(),
                 contadorPruebas: (datosOriginales.contadorPruebas || 0) + 1
             });
@@ -3182,13 +3591,13 @@ window.diagnosticarFirestore = async function() {
             console.error('❌ Error en escritura simple:', writeError);
             return;
         }
-        const docActualizado = await getDoc(testRef);
+        const docActualizado = await wrappedGetDoc(testRef);
         const datosNuevos = docActualizado.data();
         if (!datosNuevos.pruebaEscritura) {
             console.error('❌ Los datos NO se guardaron en Firestore');
         }
         try {
-            await updateDoc(testRef, {
+            await wrappedUpdateDoc(testRef, {
                 'productos.productoPrueba': {
                     nombre: 'Producto de Prueba',
                     precio: 1000,
@@ -3209,18 +3618,18 @@ window.diagnosticarFirestore = async function() {
 window.probarCambioNombre = async function(clienteId, nuevoNombre) {
     try {
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
-        const docActual = await getDoc(cuentaRef);
+        const docActual = await wrappedGetDoc(cuentaRef);
         if (!docActual.exists()) {
             console.error('❌ El documento no existe');
             return;
         }
         const datosActuales = docActual.data();
-        await updateDoc(cuentaRef, {
+        await wrappedUpdateDoc(cuentaRef, {
             cliente: nuevoNombre,
             ultimaModificacion: new Date().toISOString(),
             pruebaTimestamp: Date.now()
         });
-        const docVerificacion = await getDoc(cuentaRef);
+        const docVerificacion = await wrappedGetDoc(cuentaRef);
         const datosVerificacion = docVerificacion.data();
         if (datosVerificacion.cliente !== nuevoNombre) {
             console.error('❌ FALLO: El cambio de nombre NO funcionó');
@@ -3276,7 +3685,7 @@ export async function cargarDetalleCuenta(clienteId) {
 
     try {
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
-        const cuentaDoc = await getDoc(cuentaRef);
+        const cuentaDoc = await wrappedGetDoc(cuentaRef);
 
         if (!cuentaDoc.exists()) {
             detalleContainer.innerHTML = `<p>La cuenta no fue encontrada.</p>`;
@@ -3453,7 +3862,7 @@ export async function cargarDetalleCuenta(clienteId) {
 async function modificarCantidadProductoCuenta(clienteId, productoId, operacion) {
     try {
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
-        const cuentaDoc = await getDoc(cuentaRef);
+        const cuentaDoc = await wrappedGetDoc(cuentaRef);
         if (!cuentaDoc.exists()) return;
         
         const cuenta = cuentaDoc.data();
@@ -3527,7 +3936,7 @@ async function modificarCantidadProductoCuenta(clienteId, productoId, operacion)
         }
 
         try {
-            await updateDoc(cuentaRef, {
+            await wrappedUpdateDoc(cuentaRef, {
                 productos,
                 historial,
                 total: totalCuenta,
@@ -3542,7 +3951,7 @@ async function modificarCantidadProductoCuenta(clienteId, productoId, operacion)
         const mensaje = operacion === 'aumentar' 
             ? `✅ Agregada 1 unidad de ${producto.nombre}` 
             : `➖ ${producto.cantidad === 0 ? 'Eliminado' : 'Reducida 1 unidad de'} ${producto.nombre}`;
-        mostrarExito(mensaje);
+        //mostrarExito(mensaje);
 
     } catch (error) {
         console.error('❌ ERROR COMPLETO EN modificarCantidadProductoCuenta:', error);
@@ -3567,7 +3976,7 @@ window.borrarCuentaActiva = async function(clienteId) {
     );
     if (!confirm.isConfirmed) return;
     try {
-        await deleteDoc(doc(db, "cuentasActivas", clienteId));
+        await wrappedDeleteDoc(doc(db, "cuentasActivas", clienteId));
         mostrarExito('La cuenta ha sido eliminada.');
         if (typeof mostrarContainer === 'function') mostrarContainer('container2');
     } catch (error) {
@@ -3588,7 +3997,7 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
     try {
         mostrarCargando('Cargando cuenta...');
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
-        const cuentaDoc = await getDoc(cuentaRef);
+        const cuentaDoc = await wrappedGetDoc(cuentaRef);
         if (!cuentaDoc.exists()) throw new Error("La cuenta no existe.");
         const cuenta = cuentaDoc.data();
         cerrarModal();
@@ -3613,7 +4022,7 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
         if (!idTurno) {
             const turnosRef = collection(db, "turnos");
             const q = query(turnosRef, where("estado", "==", "activo"), orderBy("fechaInicio", "desc"), limit(1));
-            const snap = await getDocs(q);
+            const snap = await wrappedGetDocs(q);
             if (!snap.empty) {
                 idTurno = snap.docs[0].id;
                 localStorage.setItem("idTurno", idTurno);
@@ -3641,13 +4050,13 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
             throw new Error("Datos incompletos para guardar la venta.");
         }
         const turnoRef = doc(db, "cuentasCerradas", idTurno);
-        const turnoSnap = await getDoc(turnoRef);
+        const turnoSnap = await wrappedGetDoc(turnoRef);
         if (!turnoSnap.exists()) {
-            await setDoc(turnoRef, { clientes: [clienteObj] });
+            await wrappedSetDoc(turnoRef, { clientes: [clienteObj] });
         } else {
-            await updateDoc(turnoRef, { clientes: arrayUnion(clienteObj) });
+            await wrappedUpdateDoc(turnoRef, { clientes: arrayUnion(clienteObj) });
         }
-        await deleteDoc(cuentaRef);
+        await wrappedDeleteDoc(cuentaRef);
         await eliminarHistorialAbono(clienteId);
         mostrarExito('La venta ha sido registrada.');
         if (typeof mostrarContainer === 'function') mostrarContainer('container2');
@@ -3693,11 +4102,11 @@ window.editarNombreCliente = async function(clienteId, nombreActual) {
                 mostrarCargando('Actualizando nombre...');
                 try {
                     const cuentaRef = doc(db, "cuentasActivas", clienteId);
-                    const docSnapshot = await getDoc(cuentaRef);
+                    const docSnapshot = await wrappedGetDoc(cuentaRef);
                     if (!docSnapshot.exists()) {
                         throw new Error(`El documento con ID ${clienteId} no existe en cuentasActivas`);
                     }
-                    await updateDoc(cuentaRef, {
+                    await wrappedUpdateDoc(cuentaRef, {
                         cliente: nuevoNombre,
                         ultimaModificacion: new Date().toISOString()
                     });
@@ -3757,7 +4166,7 @@ async function buscarProductosEnInventario(termino, resultadosDiv, clienteId) {
     try {
         resultadosDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><br>Buscando...</div>';
         const inventarioRef = collection(db, "inventario");
-        const snapshot = await getDocs(inventarioRef);
+        const snapshot = await wrappedGetDocs(inventarioRef);
         const productos = [];
         const terminoLower = termino.toLowerCase();
         snapshot.forEach(doc => {
@@ -3841,7 +4250,7 @@ async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta
     });
 
     try {
-        await runTransaction(db, async (transaction) => {
+        await wrappedRunTransaction(db, async (transaction) => {
         const cuentaDoc = await transaction.get(cuentaRef);
         if (!cuentaDoc.exists()) {
             throw new Error(`La cuenta del cliente ${clienteId} no existe.`);
@@ -3888,7 +4297,7 @@ async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta
             historial: historialCuenta,
             ultimaModificacion: fechaFormateada
         });
-    });
+    }, { lecturas: 1, escrituras: 1 });
     } catch (error) {
         console.error('❌ ERROR EN agregarProductoACuentaEnBD:', error);
         throw error;
@@ -3903,7 +4312,7 @@ window.procesarAbonoCliente = async function(clienteId) {
     try {
         mostrarCargando('Cargando datos de la cuenta...');
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
-        const cuentaSnap = await getDoc(cuentaRef);
+        const cuentaSnap = await wrappedGetDoc(cuentaRef);
         if (!cuentaSnap.exists()) {
             cerrarModal();
             await mostrarError('Cuenta no encontrada');
@@ -3957,6 +4366,8 @@ async function actualizarVistaConHistorial(clienteId, contenidoHTML) {
 
 
 
+
+
 ################    ##      ####              ##
 ##                  ##      ##  ##            ##
 ##                  ##      ##    ##          ##
@@ -3984,6 +4395,7 @@ import { agregarAlCarrito, aumentarCantidad, disminuirCantidad, quitarDelCarrito
 import { realizarVenta } from "./VentasApp.js";
 import { db } from './Conexion.js';
 import { cargarDetalleCuenta } from "./Cuentas.js";
+import { renderizarModuloCompras } from "./ComprasUI.js";
 
 // IMPORTACIONES de Firebase
 import { collection, onSnapshot, query, doc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
@@ -3994,8 +4406,14 @@ import {
     mostrarCargando, 
     mostrarExito, 
     mostrarError,
-    mostrarAdvertencia 
+    mostrarAdvertencia,
+    mostrarInputNumerico 
 } from "./SweetAlertManager.js";
+import {
+    wrappedGetDocs,
+    wrappedUpdateDoc,
+    wrappedOnSnapshot
+} from "./FirebaseWrapper.js";
 
 // **FUNCIÓN UTILITARIA PARA CONVERTIR idTurno A FECHA LEGIBLE**
 function convertirIdTurnoAFecha(idTurno) {
@@ -4026,8 +4444,8 @@ function convertirIdTurnoAFecha(idTurno) {
 
 // Exportar funciones del carrito al ámbito global
 // Redefinir agregarAlCarrito para limpiar buscador y ocultar inventario tras agregar
-window.agregarAlCarrito = function(id, precioVenta) {
-    agregarAlCarrito(id, precioVenta);
+window.agregarAlCarrito = function(id, precioVenta, cantidad = 1) {
+    agregarAlCarrito(id, precioVenta, cantidad);
     // Limpiar buscador y ocultar inventario
     const campoBusqueda1 = document.getElementById("campoBusqueda1");
     if (campoBusqueda1) campoBusqueda1.value = "";
@@ -4055,7 +4473,7 @@ function cargarCuentasAbiertas() {
         console.error("El contenedor para las cuentas activas no fue encontrado.");
         return;
     }
-    onSnapshot(q, async (querySnapshot) => {
+    wrappedOnSnapshot(q, async (querySnapshot) => {
         // Debounce para evitar actualizaciones muy frecuentes
         if (debounceTimer) {
             clearTimeout(debounceTimer);
@@ -4125,7 +4543,7 @@ function cargarCuentasAbiertas() {
                 //     timestamp: execTimestamp
                 // });
                 try {
-                    await updateDoc(doc(collection(db, "cuentasActivas"), clienteId), { tipo: 'En cuaderno' });
+                    await wrappedUpdateDoc(doc(collection(db, "cuentasActivas"), clienteId), { tipo: 'En cuaderno' });
                     cuenta.tipo = 'En cuaderno';
                     // console.log('✅ [CONVERSIÓN EXITOSA] TIMESTAMP:', execTimestamp, '-', clienteId, '- Actualizada en Firebase');
                 } catch (error) {
@@ -4485,7 +4903,7 @@ function mostrarContainer(idMostrar) {
     // console.log('✅ Elemento encontrado:', elementoDestino);
     
     // OCULTAR TODOS los containers - usando solo clases CSS
-    document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
+    document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno, .containerCompras').forEach(el => {
         el.classList.add('js-hidden', 'd-none');
         el.classList.remove('js-visible', 'd-block', 'container-visible');
     });
@@ -4534,6 +4952,10 @@ function mostrarContainer(idMostrar) {
             });
         }
     }
+    if (idMostrar === "containerCompras") {
+        // Mostrar módulo de compras
+        renderizarModuloCompras('comprasContent');
+    }
 };
 
 // Función para cerrar sesión (expuesta globalmente)
@@ -4554,7 +4976,7 @@ async function cerrarSesion() {
             await cerrarSesionAuth(); // Se llama a la función importada de Autenticacion.js
             
             // Oculta todos los containers y muestra el de inicio
-            document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
+            document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno, .containerCompras').forEach(el => {
                 el.classList.add('js-hidden', 'd-none');
                 el.classList.remove('js-visible', 'd-block', 'container-visible');
             });
@@ -4718,7 +5140,7 @@ async function buscarProductosParaCarrito(termino, resultadosDiv) {
         resultadosDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><br>Buscando...</div>';
         
         const inventarioRef = collection(db, "inventario");
-        const snapshot = await getDocs(inventarioRef);
+        const snapshot = await wrappedGetDocs(inventarioRef);
         
         const productos = [];
         const terminoLower = termino.toLowerCase();
@@ -4772,14 +5194,24 @@ async function buscarProductosParaCarrito(termino, resultadosDiv) {
 // **FUNCIÓN PARA SELECCIONAR PRODUCTO Y AGREGARLO AL CARRITO**
 window.seleccionarProductoParaCarrito = async function(nombreProducto, precioVenta) {
     try {
-        // PASO 1: Agregar el producto al carrito PRIMERO
-        window.agregarAlCarrito(nombreProducto, precioVenta);
+        // PASO 1: Mostrar input numérico para cantidad
+        const { value: cantidad } = await mostrarInputNumerico(`Cantidad para ${nombreProducto}`, 'Ingrese la cantidad');
         
-        // PASO 2: Resetear flag de modal y cerrar
+        if (!cantidad || cantidad <= 0) {
+            // Usuario canceló o ingresó cantidad inválida
+            modalBusquedaAbierto = false;
+            cerrarModal();
+            return;
+        }
+        
+        // PASO 2: Agregar el producto al carrito con la cantidad especificada
+        window.agregarAlCarrito(nombreProducto, precioVenta, cantidad);
+        
+        // PASO 3: Resetear flag de modal y cerrar
         modalBusquedaAbierto = false;
         cerrarModal();
         
-        // PASO 3: Limpiar el campo de búsqueda para el próximo uso
+        // PASO 4: Limpiar el campo de búsqueda para el próximo uso
         const campoBusqueda1 = document.getElementById("campoBusqueda1");
         if (campoBusqueda1) {
             campoBusqueda1.blur(); // Quitar focus del campo
@@ -4841,6 +5273,9 @@ window.verHistorialCliente = async function(clienteId, nombreCliente) {
 
 
 
+
+
+
 ################    ##      ####              ##
 ##                  ##      ##  ##            ##
 ##                  ##      ##    ##          ##
@@ -4858,12 +5293,17 @@ Export_Import.js
 
 import { collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { db } from "./Conexion.js";
+import {
+    wrappedGetDocs,
+    wrappedSetDoc,
+    wrappedDeleteDoc
+} from "./FirebaseWrapper.js";
 
 // Asegúrate de incluir SheetJS en tu HTML: <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 async function exportarInventarioAExcel() {
     const inventarioRef = collection(db, "inventario");
-    const snapshot = await getDocs(inventarioRef);
+    const snapshot = await wrappedGetDocs(inventarioRef);
     const data = [];
     snapshot.forEach(doc => {
         const d = doc.data();
@@ -4893,7 +5333,7 @@ async function importarInventarioDesdeExcel(event) {
 
         // 1. Leer todos los productos actuales de Firestore
         const inventarioRef = collection(db, "inventario");
-        const snapshot = await getDocs(inventarioRef);
+        const snapshot = await wrappedGetDocs(inventarioRef);
         const productosFirestore = {};
         snapshot.forEach(docSnap => {
             productosFirestore[docSnap.id] = true;
@@ -4905,7 +5345,7 @@ async function importarInventarioDesdeExcel(event) {
             productosExcel.add(prod.Producto);
             // Actualizar o crear producto
             const docRef = doc(db, "inventario", prod.Producto);
-            await setDoc(docRef, {
+            await wrappedSetDoc(docRef, {
                 cantidad: Number(prod.Cantidad) || 0,
                 precioVenta: Number(prod.PrecioVenta) || 0,
                 fechaVencimiento: prod.FechaVencimiento || ""
@@ -4915,7 +5355,7 @@ async function importarInventarioDesdeExcel(event) {
         // 3. Eliminar productos que están en Firestore pero no en el Excel
         for (const id in productosFirestore) {
             if (!productosExcel.has(id)) {
-                await deleteDoc(doc(db, "inventario", id));
+                await wrappedDeleteDoc(doc(db, "inventario", id));
             }
         }
 
@@ -4931,6 +5371,8 @@ window.importarInventarioDesdeExcel = importarInventarioDesdeExcel;
 
 
 
+
+
 ################    ##      ####              ##
 ##                  ##      ##  ##            ##
 ##                  ##      ##    ##          ##
@@ -4940,6 +5382,273 @@ window.importarInventarioDesdeExcel = importarInventarioDesdeExcel;
 ##                  ##      ##            ##  ##  
 ##                  ##      ##              ####
 ##                  ##      ##                ##
+
+
+
+
+FirebasMetrics.js
+
+// FirebaseMetrics.js
+// Contador simple de consumo de Firebase en el turno
+
+let metrics = {
+  lecturas: 0,
+  escrituras: 0,
+  borrados: 0,
+  almacenamiento: 0, // en KB
+  transferencia: 0,  // en KB
+};
+
+// Registrar operación
+export function registrarOperacion(tipo, size = 1) {
+  if (tipo === "lectura") {
+    metrics.lecturas++;
+    metrics.transferencia += size; // Estimar transferencia basada en tamaño leído
+  }
+  if (tipo === "escritura") {
+    metrics.escrituras++;
+    metrics.almacenamiento += size;
+    metrics.transferencia += size;
+  }
+  if (tipo === "borrado") {
+    metrics.borrados++;
+    metrics.almacenamiento -= size; // Restar almacenamiento estimado en borrados
+    if (metrics.almacenamiento < 0) metrics.almacenamiento = 0; // Evitar negativos
+  }
+}
+
+// Obtener resumen actual
+export function obtenerResumenFirebase() {
+  return { ...metrics };
+}
+
+// Resetear métricas (cuando inicia nuevo turno)
+export function resetFirebaseMetrics() {
+  metrics = {
+    lecturas: 0,
+    escrituras: 0,
+    borrados: 0,
+    almacenamiento: 0,
+    transferencia: 0,
+  };
+}
+
+
+
+
+
+
+################    ##      ####              ##
+##                  ##      ##  ##            ##
+##                  ##      ##    ##          ##
+################    ##      ##      ##        ##
+##                  ##      ##        ##      ##
+##                  ##      ##          ##    ##  
+##                  ##      ##            ##  ##  
+##                  ##      ##              ####
+##                  ##      ##                ##
+
+
+
+
+FirebaseStats.js
+
+// FirebaseStats.js
+import {
+  collection,
+  wrappedAddDoc,
+  wrappedGetDocs,
+} from "./FirebaseWrapper.js"; // usamos el wrapper con métricas
+import { db } from "./Conexion.js";
+import {
+  obtenerResumenFirebase,
+  resetFirebaseMetrics,
+} from "./FirebaseMetrics.js"; // 👈 corregido, antes importabas mal desde FirebaseStats.js
+
+/**
+ * Guardar métricas del turno en Firestore
+ * @param {string} turnoId - ID único del turno
+ */
+export async function guardarConsumoTurno(turnoId) {
+  const metrics = obtenerResumenFirebase();
+  try {
+    await wrappedAddDoc(collection(db, "firebaseStats"), {
+      turnoId,
+      fecha: new Date().toLocaleString(),
+      ...metrics,
+    });
+  } catch (err) {
+    console.error("Error guardando métricas Firebase:", err);
+  }
+}
+
+/**
+ * Obtener acumulado histórico de consumo
+ * @returns {Promise<object>}
+ */
+export async function obtenerConsumoHistorico() {
+  let acumulado = {
+    lecturas: 0,
+    escrituras: 0,
+    borrados: 0,
+    almacenamientoNeto: 0, // Nuevo: almacenamiento neto (escrituras - borrados)
+    transferencia: 0,
+  };
+
+  try {
+    const snap = await wrappedGetDocs(collection(db, "firebaseStats"));
+    snap.forEach((doc) => {
+      const d = doc.data();
+      acumulado.lecturas += d.lecturas || 0;
+      acumulado.escrituras += d.escrituras || 0;
+      acumulado.borrados += d.borrados || 0;
+      acumulado.almacenamientoNeto += (d.escrituras || 0) - (d.borrados || 0); // Neto por turno
+      acumulado.transferencia += parseInt(d.transferencia) || 0;
+    });
+  } catch (err) {
+    console.error("Error obteniendo histórico Firebase:", err);
+  }
+
+  return acumulado;
+}
+
+/**
+ * Resetear contadores al iniciar turno nuevo
+ */
+export function iniciarNuevoTurno() {
+  resetFirebaseMetrics();
+}
+
+
+
+
+
+
+
+################    ##      ####              ##
+##                  ##      ##  ##            ##
+##                  ##      ##    ##          ##
+################    ##      ##      ##        ##
+##                  ##      ##        ##      ##
+##                  ##      ##          ##    ##  
+##                  ##      ##            ##  ##  
+##                  ##      ##              ####
+##                  ##      ##                ##
+
+
+
+
+
+
+FirebaseWrapper.js
+
+// FirebaseWrapper.js
+// Envoltorio para las funciones de Firestore con registro de métricas
+
+import {
+  getFirestore, doc, getDoc, setDoc, addDoc,
+  updateDoc, deleteDoc, collection, query, where, getDocs,
+  runTransaction, onSnapshot
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+import { registrarOperacion } from "./FirebaseMetrics.js";
+
+export const db = getFirestore();
+
+// GET
+export async function wrappedGetDoc(ref) {
+  const snap = await getDoc(ref);
+  const size = snap.exists() ? JSON.stringify(snap.data()).length / 1024 : 0;
+  registrarOperacion("lectura", size);
+  return snap;
+}
+
+export async function wrappedGetDocs(q) {
+  const snap = await getDocs(q);
+  let totalSize = 0;
+  snap.forEach(doc => {
+    totalSize += JSON.stringify(doc.data()).length / 1024;
+  });
+  registrarOperacion("lectura", totalSize);
+  return snap;
+}
+
+// ADD
+export async function wrappedAddDoc(colRef, data) {
+  registrarOperacion("escritura", JSON.stringify(data).length / 1024);
+  return addDoc(colRef, data);
+}
+
+export async function wrappedSetDoc(ref, data) {
+  registrarOperacion("escritura", JSON.stringify(data).length / 1024);
+  return setDoc(ref, data);
+}
+
+export async function wrappedUpdateDoc(ref, data) {
+  registrarOperacion("escritura", JSON.stringify(data).length / 1024);
+  return updateDoc(ref, data);
+}
+
+// DELETE
+export async function wrappedDeleteDoc(ref) {
+  // Estimar tamaño del documento a borrar (requiere leerlo primero para precisión)
+  const snap = await getDoc(ref);
+  const size = snap.exists() ? JSON.stringify(snap.data()).length / 1024 : 0;
+  registrarOperacion("borrado", size);
+  return deleteDoc(ref);
+}
+
+// Reexporta lo demás para usarlos normal
+export {
+  doc, collection, query, where
+};
+
+// TRANSACTION
+export async function wrappedRunTransaction(db, updateFunction, options = {}) {
+  // Estimar operaciones basadas en opciones (opcional: { lecturas: N, escrituras: M })
+  const lecturasEstimadas = options.lecturas || 0;
+  const escriturasEstimadas = options.escrituras || 0;
+  const borradosEstimados = options.borrados || 0;
+  
+  // Registrar estimaciones antes de ejecutar
+  if (lecturasEstimadas > 0) registrarOperacion("lectura", lecturasEstimadas * 1); // Estimar 1KB por lectura
+  if (escriturasEstimadas > 0) registrarOperacion("escritura", escriturasEstimadas * 1);
+  if (borradosEstimados > 0) registrarOperacion("borrado", borradosEstimados * 1);
+  
+  return runTransaction(db, updateFunction);
+}
+
+// ONSNAPSHOT
+export function wrappedOnSnapshot(query, callback, options) {
+  return onSnapshot(query, (snapshot) => {
+    // Registrar cada snapshot como una lectura
+    let totalSize = 0;
+    snapshot.forEach(doc => {
+      totalSize += JSON.stringify(doc.data()).length / 1024;
+    });
+    registrarOperacion("lectura", totalSize);
+    
+    // Ejecutar el callback original
+    callback(snapshot);
+  }, options);
+}
+
+
+
+
+
+
+
+################    ##      ####              ##
+##                  ##      ##  ##            ##
+##                  ##      ##    ##          ##
+################    ##      ##      ##        ##
+##                  ##      ##        ##      ##
+##                  ##      ##          ##    ##  
+##                  ##      ##            ##  ##  
+##                  ##      ##              ####
+##                  ##      ##                ##
+
 
 
 
@@ -5071,8 +5780,11 @@ Inventario.js
 
 //JavaScript/inventario.js
 //Este archivo contiene la lógica para cargar, filtrar y mostrar el inventario de productos.
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { wrappedGetDocs, wrappedDeleteDoc, wrappedSetDoc } from "./FirebaseWrapper.js";
 import { app } from "./Conexion.js";
+import { agregarAlCarrito } from "./CarritoCompras.js";
+import { mostrarInputNumerico } from "./SweetAlertManager.js";
 
 const db = getFirestore(app);
 
@@ -5082,6 +5794,7 @@ const db = getFirestore(app);
  */
 
 export async function cargarInventario(filtro = "") {
+    console.log('Inventario.js: cargarInventario llamado con filtro:', filtro);
     const resultadoDiv = document.getElementById("resultadoBusqueda1");
     if (!resultadoDiv) {
         console.error('🔴 No se encontró el elemento resultadoBusqueda1');
@@ -5090,11 +5803,13 @@ export async function cargarInventario(filtro = "") {
 
     // Mostrar u ocultar inventario según el filtro
     if (!filtro.trim()) {
+        console.log('Inventario.js: Filtro vacío, ocultando inventario');
         resultadoDiv.classList.add("js-hidden", "d-none");
         resultadoDiv.classList.remove("js-visible", "d-block");
         resultadoDiv.innerHTML = "";
         return;
     } else {
+        console.log('Inventario.js: Mostrando inventario con filtro');
         resultadoDiv.classList.remove("js-hidden", "d-none");
         resultadoDiv.classList.add("js-visible", "d-block");
     }
@@ -5103,14 +5818,15 @@ export async function cargarInventario(filtro = "") {
     try {
         // console.log('🔵 Cargando inventario con filtro:', filtro);
         const inventarioRef = collection(db, "inventario");
-        const snapshot = await getDocs(inventarioRef);
-        // console.log('✅ Documentos obtenidos:', snapshot.size);
+        const snapshot = await wrappedGetDocs(inventarioRef);
+        console.log('Inventario.js: Documentos obtenidos:', snapshot.size);
 
         let html = `
             <!-- Cabecera animada del inventario -->
             <div class="inventario-header">
                 <img src="./pngs/busqueda.gif" alt="Búsqueda de Inventario" class="inventario-gif" />
                 <h5 class="inventario-titulo">📦 Inventario de Productos</h5>
+                <button class="btn btn-primary btn-sm" onclick="window.agregarNuevoProducto()">➕ Agregar Nuevo</button>
             </div>
             
             <div class="table-responsive inventario-table-container">
@@ -5121,6 +5837,7 @@ export async function cargarInventario(filtro = "") {
                         <th>PRECIO</th>
                         <th>CANTIDAD</th>
                         <th>VENCIMIENTO</th>
+                        <th>ACCIONES</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -5134,11 +5851,14 @@ export async function cargarInventario(filtro = "") {
                 const data = doc.data();
                 hayResultados = true;
                 html += `
-                    <tr class="inventario-row-clickable" onclick="window.agregarAlCarrito('${doc.id}', ${data.precioVenta})">
+                    <tr class="inventario-row-clickable" onclick="window.seleccionarProductoDesdeInventario('${doc.id}', ${data.precioVenta})">
                         <td>${doc.id}</td>
                         <td>${data.precioVenta !== undefined ? data.precioVenta : "-"}</td>
                         <td>${data.cantidad !== undefined ? data.cantidad : "-"}</td>
                         <td>${data.fechaVencimiento || "-"}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); window.eliminarProducto('${doc.id}')">🗑️</button>
+                        </td>
                     </tr>
                 `;
             }
@@ -5158,6 +5878,41 @@ export async function cargarInventario(filtro = "") {
     }
 }
 
+// Función para manejar el clic en filas del inventario con input de cantidad
+window.seleccionarProductoDesdeInventario = async function(nombreProducto, precioVenta) {
+    console.log('Inventario.js: seleccionarProductoDesdeInventario llamado con:', nombreProducto, precioVenta);
+    try {
+        if (window.modoCompras) {
+            console.log('Inventario.js: Modo compras detectado, llamando callback');
+            // Modo compras: llamar callback en lugar de agregar al carrito
+            if (window.callbackSeleccionProductoCompras) {
+                window.callbackSeleccionProductoCompras({ nombre: nombreProducto, precioVenta });
+            }
+            return;
+        }
+
+        console.log('Inventario.js: Modo ventas, agregando al carrito');
+        // Modo ventas: comportamiento original
+        // Mostrar input numérico para cantidad
+        const { value: cantidad } = await mostrarInputNumerico(`Cantidad para ${nombreProducto}`, 'Ingrese la cantidad');
+        
+        if (!cantidad || cantidad <= 0) {
+            // Usuario canceló o ingresó cantidad inválida
+            return;
+        }
+        
+        // Agregar al carrito con la cantidad especificada
+        agregarAlCarrito(nombreProducto, precioVenta, cantidad);
+        
+        // Ocultar inventario después de agregar
+        ocultarInventario();
+        
+    } catch (error) {
+        console.error('Error al seleccionar producto desde inventario:', error);
+        alert('Error al agregar producto al carrito: ' + error.message);
+    }
+};
+
 // Función para ocultar el inventario desde otros módulos
 export function ocultarInventario() {
     const resultadoDiv = document.getElementById("resultadoBusqueda1");
@@ -5165,9 +5920,70 @@ export function ocultarInventario() {
         resultadoDiv.classList.add("js-hidden", "d-none");
         resultadoDiv.classList.remove("js-visible", "d-block");
         resultadoDiv.innerHTML = "";
-        // console.log('✅ Inventario ocultado');
     }
 }
+
+// Función para eliminar producto
+window.eliminarProducto = async function(nombreProducto) {
+    try {
+        // Verificar stock
+        const productoRef = doc(db, 'inventario', nombreProducto);
+        const productoSnap = await wrappedGetDocs(collection(db, 'inventario'));
+        let stock = 0;
+        productoSnap.forEach(doc => {
+            if (doc.id === nombreProducto) {
+                stock = doc.data().cantidad || 0;
+            }
+        });
+
+        if (stock > 0) {
+            alert('No se puede eliminar el producto porque aún tiene stock.');
+            return;
+        }
+
+        const confirmacion = confirm(`¿Estás seguro de eliminar "${nombreProducto}"? Esta acción no se puede deshacer.`);
+        if (confirmacion) {
+            await wrappedDeleteDoc(productoRef);
+            alert('Producto eliminado.');
+            // Recargar inventario si está visible
+            cargarInventario(document.getElementById('campoBusqueda1')?.value || '');
+        }
+    } catch (error) {
+        console.error('Error eliminando producto:', error);
+        alert('Error al eliminar producto: ' + error.message);
+    }
+};
+
+// Función para agregar nuevo producto
+window.agregarNuevoProducto = async function() {
+    try {
+        const nombre = prompt('Nombre del nuevo producto:');
+        if (!nombre) return;
+
+        const precio = parseFloat(prompt('Precio unitario estimado:'));
+        if (isNaN(precio)) return;
+
+        const presentaciones = prompt('Presentaciones (ej. 30,16,13) - opcional:');
+        const productoRef = doc(db, 'inventario', nombre.toLowerCase().replace(/\s+/g, '_'));
+        
+        await wrappedSetDoc(productoRef, {
+            precioVenta: precio,
+            cantidad: 0,
+            presentaciones: presentaciones ? presentaciones.split(',').map(p => parseInt(p.trim())) : [],
+            fechaVencimiento: null
+        });
+
+        alert('Producto agregado.');
+        // Recargar inventario
+        cargarInventario(document.getElementById('campoBusqueda1')?.value || '');
+    } catch (error) {
+        console.error('Error agregando producto:', error);
+        alert('Error al agregar producto: ' + error.message);
+    }
+};
+
+
+
 
 
 
@@ -5194,6 +6010,9 @@ ResumenTurno.js
 import { db } from './Conexion.js';
 import { formatearPrecio } from './FormateoPrecios.js';
 import { doc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { obtenerResumenFirebase } from "./FirebaseMetrics.js";
+import { obtenerConsumoHistorico } from "./FirebaseStats.js";
+import { wrappedGetDoc, wrappedGetDocs } from "./FirebaseWrapper.js";
 
 /**
  * Formatea una fecha a formato abreviado (DD/MM HH:mm)
@@ -5222,68 +6041,48 @@ function formatearFechaAbreviada(fecha) {
  * @returns {Promise<Object>} resumen
  */
 export async function obtenerResumenTurno(idTurno) {
-    // console.log('=== INICIANDO RESUMEN PARA TURNO:', idTurno, '===');
-    
-    // 1. Obtener ventas cerradas del turno
     const cuentasCerradasRef = doc(db, 'cuentasCerradas', idTurno);
-    const cuentasCerradasSnap = await getDoc(cuentasCerradasRef);
+    const cuentasCerradasSnap = await wrappedGetDoc(cuentasCerradasRef);
     const cuentasCerradas = cuentasCerradasSnap.exists() ? cuentasCerradasSnap.data().clientes || [] : [];
 
-    // 2. Obtener cuentas activas del turno específico
     const cuentasActivasRef = collection(db, 'cuentasActivas');
     const q = query(cuentasActivasRef, where('turno', '==', idTurno));
-    const cuentasSnap = await getDocs(q);
+    const cuentasSnap = await wrappedGetDocs(q);
     const cuentasActivasDelTurno = [];
     cuentasSnap.forEach(doc => {
-        // Filtrar el documento especial de historial de abonos
         if (doc.id !== 'historial_abonos') {
             cuentasActivasDelTurno.push({ id: doc.id, ...doc.data() });
         }
     });
-    
-    // console.log('Cuentas activas del turno encontradas:', cuentasActivasDelTurno.length);
 
-    // 3. TAMBIÉN obtener TODAS las cuentas "En cuaderno" (sin filtrar por turno)
     const todasCuentasRef = collection(db, 'cuentasActivas');
     const qTodas = query(todasCuentasRef, where('tipo', '==', 'En cuaderno'));
-    const todasCuentasSnap = await getDocs(qTodas);
+    const todasCuentasSnap = await wrappedGetDocs(qTodas);
     const todasCuentasEnCuaderno = [];
     todasCuentasSnap.forEach(doc => {
-        // Filtrar el documento especial de historial de abonos
         if (doc.id !== 'historial_abonos') {
             todasCuentasEnCuaderno.push({ id: doc.id, ...doc.data() });
         }
     });
-    
-    // console.log('TODAS las cuentas En cuaderno encontradas:', todasCuentasEnCuaderno.length);
 
-    // 4. Calcular totales
     let totalTabaco = 0;
     let totalNoCobradas = 0;
-    let cuentasEnCuaderno = []; // Cambio: array en lugar de total
+    let cuentasEnCuaderno = [];
     let totalCuentasCerradas = 0;
     let tipoVenta = { efectivo: 0, nequi: 0, daviplata: 0 };
 
-    // 4. Procesar ventas cerradas y separar abonos
     let totalAbonos = 0;
     let totalVentasCompletas = 0;
     let detalleAbonos = [];
     
-    // Validar que cuentasCerradas sea un array
-    if (!Array.isArray(cuentasCerradas)) {
-        console.warn('cuentasCerradas no es un array:', cuentasCerradas);
-        cuentasCerradas = [];
-    }
-    
     for (const venta of cuentasCerradas) {
         totalCuentasCerradas += venta.total || 0;
         const medioPago = venta.tipoVenta?.toLowerCase();
-            if (medioPago === 'daviplata' || medioPago === 'daviplat') { // Acepta ambas formas
-                tipoVenta.daviplata += venta.total || 0;
-}           else if (medioPago && tipoVenta[medioPago] !== undefined) {
-                tipoVenta[medioPago] += venta.total || 0;
-}        
-        // Separar abonos de ventas completas
+        if (medioPago === 'daviplata' || medioPago === 'daviplat') {
+            tipoVenta.daviplata += venta.total || 0;
+        } else if (medioPago && tipoVenta[medioPago] !== undefined) {
+            tipoVenta[medioPago] += venta.total || 0;
+        }        
         if (venta.esAbono) {
             totalAbonos += venta.total || 0;
             detalleAbonos.push({
@@ -5298,89 +6097,53 @@ export async function obtenerResumenTurno(idTurno) {
             totalVentasCompletas += venta.total || 0;
         }
 
-        // Tabaco: filtrar por productos específicos de tabaco
         if (venta.productos && Array.isArray(venta.productos)) {
             for (const prod of venta.productos) {
                 const nombreProducto = (prod.nombreProducto || '').toLowerCase().trim();
-                
-                // Normalizar espacios múltiples a uno solo
                 const nombreNormalizado = nombreProducto.replace(/\s+/g, ' ');
-                
-                const esTabaco = nombreNormalizado.includes('rothman azul media') ||
-                               nombreNormalizado.includes('rothman azul unidad') ||
-                               nombreNormalizado.includes('rothman blanco media') ||
-                               nombreNormalizado.includes('rothman blanco unidad') ||
-                               nombreNormalizado.includes('l&m media') ||
-                               nombreNormalizado.includes('l&m unidad') ||
-                               nombreNormalizado.includes('lucky media') ||
-                               nombreNormalizado.includes('lucky unidad') ||
-                               nombreNormalizado.includes('malboro media') ||
-                               nombreNormalizado.includes('malboro unidad');
-                
+                const esTabaco =
+                    nombreNormalizado.includes('rothman azul media') ||
+                    nombreNormalizado.includes('rothman azul unidad') ||
+                    nombreNormalizado.includes('rothman blanco media') ||
+                    nombreNormalizado.includes('rothman blanco unidad') ||
+                    nombreNormalizado.includes('l&m media') ||
+                    nombreNormalizado.includes('l&m unidad') ||
+                    nombreNormalizado.includes('lucky media') ||
+                    nombreNormalizado.includes('lucky unidad') ||
+                    nombreNormalizado.includes('malboro media') ||
+                    nombreNormalizado.includes('malboro unidad');
                 if (esTabaco) {
-                    // Intentar diferentes campos para el precio y cantidad
                     const precio = prod.precioVenta || prod.precio || 0;
                     const cantidad = prod.cantidad || 1;
                     const total = prod.total || (precio * cantidad);
-                    
                     totalTabaco += total;
                 }
             }
         }
     }
 
-    // 5. Procesar cuentas activas DEL TURNO (para consumo en local)
-    if (!Array.isArray(cuentasActivasDelTurno)) {
-        console.warn('cuentasActivasDelTurno no es un array:', cuentasActivasDelTurno);
-        cuentasActivasDelTurno = [];
-    }
-    
     for (const cuenta of cuentasActivasDelTurno) {
-        // console.log('Procesando cuenta del turno:', cuenta.cliente || cuenta.id, 'Tipo:', cuenta.tipo, 'Total:', cuenta.total);
-        
         if (cuenta.tipo === 'Consumo en el local') {
             totalNoCobradas += cuenta.total || 0;
         }
     }
     
-    // 6. Procesar TODAS las cuentas "En cuaderno" (independiente del turno)
-    if (!Array.isArray(todasCuentasEnCuaderno)) {
-        console.warn('todasCuentasEnCuaderno no es un array:', todasCuentasEnCuaderno);
-        todasCuentasEnCuaderno = [];
-    }
-    
     for (const cuenta of todasCuentasEnCuaderno) {
-        // console.log('Procesando cuenta En cuaderno:', cuenta.cliente || cuenta.id, 'Turno:', cuenta.turno, 'Total:', cuenta.total);
-        
-        // Recopilar detalles de cada cuenta en cuaderno
-        const cuentaDetalle = {
+        cuentasEnCuaderno.push({
             cliente: cuenta.cliente || cuenta.id || 'Cliente sin nombre',
             fechaCreacion: formatearFechaAbreviada(cuenta.fechaCreacion || cuenta.timestamp || cuenta.fecha),
             fechaModificacion: formatearFechaAbreviada(cuenta.fechaModificacion || cuenta.ultimaModificacion || cuenta.timestamp || cuenta.fecha),
             total: cuenta.total || 0,
             turno: cuenta.turno || 'Sin turno'
-        };
-        
-        // console.log('Detalle de cuenta agregado:', cuentaDetalle);
-        cuentasEnCuaderno.push(cuentaDetalle);
+        });
     }
-    
-    // console.log('Total cuentas En cuaderno encontradas:', cuentasEnCuaderno.length);
-    // console.log('Array cuentasEnCuaderno:', cuentasEnCuaderno);
 
-    // 7. Calcular pago de turno
     const pagoTurno = Math.round(totalCuentasCerradas * 0.10 + 7000);
-
-    // console.log('=== RESUMEN FINAL ===');
-    // console.log('Total tabaco:', totalTabaco);
-    // console.log('Total no cobradas:', totalNoCobradas);
-    // console.log('Cuentas en cuaderno:', cuentasEnCuaderno.length);
-    // console.log('Total cuentas cerradas:', totalCuentasCerradas);
 
     return {
         totalTabaco,
         totalNoCobradas,
-        cuentasEnCuaderno, // Cambio: array en lugar de total
+        cuentasEnCuaderno,
         totalCuentasCerradas,
         totalAbonos,
         totalVentasCompletas,
@@ -5395,210 +6158,122 @@ export async function obtenerResumenTurno(idTurno) {
  * @param {Object} resumen
  * @param {string} containerId
  */
-export function renderizarResumenTurno(resumen, containerId) {
+export async function renderizarResumenTurno(resumen, containerId) {
     const c = document.getElementById(containerId);
     if (!c) return;
     
-    // console.log('Renderizando resumen con:', resumen);
-    // console.log('Cuentas en cuaderno recibidas:', resumen.cuentasEnCuaderno);
-    
-    // Calcular total de cuentas en cuaderno
     const totalEnCuaderno = resumen.cuentasEnCuaderno.reduce((sum, cuenta) => sum + cuenta.total, 0);
-    // console.log('Total calculado En cuaderno:', totalEnCuaderno);
-    
-    // Generar listado de cuentas en cuaderno
     let listadoCuentasEnCuaderno = '';
     if (resumen.cuentasEnCuaderno.length > 0) {
-        // console.log('Generando listado para', resumen.cuentasEnCuaderno.length, 'cuentas');
-        
-        const listItems = resumen.cuentasEnCuaderno.map(cuenta => {
-            // console.log('Generando item para:', cuenta);
-            return `<li class="small text-muted mt-1">
-                👤 <strong>${cuenta.cliente}</strong> 
-                <span class="badge bg-secondary ms-1">${cuenta.turno}</span><br>
-                📅 ${cuenta.fechaCreacion} → ⏰ ${cuenta.fechaModificacion}<br>
-                💰 <span class="text-dark fw-bold">${formatearPrecio(cuenta.total)}</span>
-            </li>`;
-        }).join('');
-        
         listadoCuentasEnCuaderno = `
             <details class="mt-2">
                 <summary class="resumen-summary-clickable">
                     Ver detalles (${resumen.cuentasEnCuaderno.length} cuenta${resumen.cuentasEnCuaderno.length !== 1 ? 's' : ''})
                 </summary>
-                <ul class="list-unstyled mt-2 ms-3">${listItems}</ul>
+                <ul class="list-unstyled mt-2 ms-3">
+                    ${resumen.cuentasEnCuaderno.map(cuenta => `
+                        <li class="small text-muted mt-1">
+                            👤 <strong>${cuenta.cliente}</strong> 
+                            <span class="badge bg-secondary ms-1">${cuenta.turno}</span><br>
+                            📅 ${cuenta.fechaCreacion} → ⏰ ${cuenta.fechaModificacion}<br>
+                            💰 <span class="text-dark fw-bold">${formatearPrecio(cuenta.total)}</span>
+                        </li>
+                    `).join('')}
+                </ul>
             </details>
         `;
-        
-        // console.log('HTML generado para listado:', listadoCuentasEnCuaderno);
-    } else {
-        // console.log('No hay cuentas En cuaderno para mostrar');
     }
-    
+
+    // 🔹 Obtener métricas Firebase
+    const actual = obtenerResumenFirebase();
+    const acumulado = await obtenerConsumoHistorico();
+
     c.innerHTML = `
-        <!-- Encabezado principal con información clara -->
         <div class="alert alert-primary text-center mb-4">
             <h3 class="mb-2">📊 Resumen de Tu Turno</h3>
             <p class="mb-0">Así terminaste tu día de trabajo</p>
         </div>
 
-        <!-- SECCIÓN 1: LO MÁS IMPORTANTE - DINERO RECIBIDO -->
+        <!-- SECCIÓN DINERO RECIBIDO -->
         <div class="card mb-4" style="border: 3px solid #28a745;">
-            <div class="card-header text-dark text-center" style="background-color: #f8f9fa !important;">
+            <div class="card-header text-dark text-center">
                 <h4 class="mb-0">💰 DINERO QUE RECIBISTE HOY</h4>
             </div>
             <div class="card-body">
-                <!-- DISEÑO RESPONSIVE: En móvil se apilan, en desktop se mantienen en línea -->
                 <div class="row text-center g-3">
-                    <div class="col-12 col-md-4">
-                        <div class="p-3 rounded" style="background-color: #ffffff !important; border: 1px solid #dee2e6 !important;">
-                            <div class="d-flex align-items-center justify-content-center mb-2">
-                                <span style="font-size: 2rem;">💵</span>
-                                <h5 class="text-dark mb-0 ms-2">Efectivo</h5>
-                            </div>
-                            <h3 class="text-dark mb-0 fw-bold">${formatearPrecio(resumen.tipoVenta.efectivo)}</h3>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <div class="p-3 rounded" style="background-color: #ffffff !important; border: 1px solid #dee2e6 !important;">
-                            <div class="d-flex align-items-center justify-content-center mb-2">
-                                <span style="font-size: 2rem;">📱</span>
-                                <h5 class="text-info mb-0 ms-2">Nequi</h5>
-                            </div>
-                            <h3 class="text-info mb-0 fw-bold">${formatearPrecio(resumen.tipoVenta.nequi)}</h3>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <div class="p-3 rounded" style="background-color: #ffffff !important; border: 1px solid #dee2e6 !important;">
-                            <div class="d-flex align-items-center justify-content-center mb-2">
-                                <span style="font-size: 2rem;">💳</span>
-                                <h5 class="text-warning mb-0 ms-2">Daviplata</h5>
-                            </div>
-                            <h3 class="text-warning mb-0 fw-bold">${formatearPrecio(resumen.tipoVenta.daviplata)}</h3>
-                        </div>
-                    </div>
+                    <div class="col-12 col-md-4"><h5>💵 Efectivo</h5><h3>${formatearPrecio(resumen.tipoVenta.efectivo)}</h3></div>
+                    <div class="col-12 col-md-4"><h5>📱 Nequi</h5><h3>${formatearPrecio(resumen.tipoVenta.nequi)}</h3></div>
+                    <div class="col-12 col-md-4"><h5>💳 Daviplata</h5><h3>${formatearPrecio(resumen.tipoVenta.daviplata)}</h3></div>
                 </div>
                 <hr>
                 <div class="text-center">
-                    <h3 class="text-dark mb-0">
-                        <strong>TOTAL RECIBIDO: ${formatearPrecio(resumen.totalCuentasCerradas)}</strong>
-                    </h3>
-                    ${resumen.totalAbonos > 0 ? `
-                        <div class="mt-2">
-                            <small class="text-muted">Incluye:</small><br>
-                            <span class="badge bg-primary me-2">💰 Ventas completas: ${formatearPrecio(resumen.totalVentasCompletas)}</span>
-                            <span class="badge bg-info">📋 Abonos parciales: ${formatearPrecio(resumen.totalAbonos)}</span>
-                        </div>
-                    ` : ''}
+                    <h3><strong>TOTAL: ${formatearPrecio(resumen.totalCuentasCerradas)}</strong></h3>
                 </div>
             </div>
         </div>
 
-        ${resumen.totalAbonos > 0 ? `
-        <!-- SECCIÓN ESPECIAL: ABONOS RECIBIDOS -->
-        <div class="card mb-4" style="border: 2px solid #17a2b8;">
-            <div class="card-header text-white text-center" style="background-color: #17a2b8 !important;">
-                <h4 class="mb-0">📋 ABONOS PARCIALES RECIBIDOS</h4>
-            </div>
-            <div class="card-body">
-                <div class="text-center mb-3">
-                    <h4 class="text-info mb-0">Total en abonos: ${formatearPrecio(resumen.totalAbonos)}</h4>
-                    <small class="text-muted">${resumen.detalleAbonos.length} abono${resumen.detalleAbonos.length !== 1 ? 's' : ''} procesado${resumen.detalleAbonos.length !== 1 ? 's' : ''}</small>
-                </div>
-                <details class="mt-2">
-                    <summary class="resumen-summary-clickable">
-                        Ver detalles de abonos (${resumen.detalleAbonos.length})
-                    </summary>
-                    <div class="mt-3">
-                        ${resumen.detalleAbonos.map(abono => `
-                            <div class="border-start border-info border-3 ps-3 mb-2">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <strong>👤 ${abono.cliente}</strong><br>
-                                        <small class="text-muted">
-                                            📅 ${formatearFechaAbreviada(abono.fecha)}<br>
-                                            💳 ${abono.medioPago}<br>
-                                            💰 Saldo original: ${formatearPrecio(abono.saldoOriginal)}<br>
-                                            💸 Saldo restante: ${formatearPrecio(abono.saldoRestante)}
-                                        </small>
-                                    </div>
-                                    <div class="text-end">
-                                        <h5 class="text-info mb-0">${formatearPrecio(abono.monto)}</h5>
-                                        <small class="text-success">✅ Abono</small>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </details>
-            </div>
-        </div>
-        ` : ''}
-
-        <!-- SECCIÓN 2: DINERO PENDIENTE DE COBRAR -->
-        <div class="card mb-4" style="border: 2px solid #ffc107;">
-            <div class="card-header text-dark text-center" style="background-color: #fff3cd !important;">
-                <h4 class="mb-0">⏳ DINERO QUE AÚN NO HAS COBRADO</h4>
-            </div>
-            <div class="card-body">
-                <!-- DISEÑO RESPONSIVE: En móvil se apilan, en desktop lado a lado -->
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <div class="text-center p-3 rounded shadow-sm h-100" style="background-color: #ffffff !important; border: 1px solid #dee2e6 !important;">
-                            <div class="d-flex align-items-center justify-content-center mb-2">
-                                <span style="font-size: 2rem;">🍺</span>
-                                <div class="ms-2 text-start">
-                                    <h6 class="mb-0">Mesas que consumieron</h6>
-                                    <small class="text-muted">(aún no han pagado)</small>
-                                </div>
-                            </div>
-                            <h3 class="text-warning mb-0 fw-bold">${formatearPrecio(resumen.totalNoCobradas)}</h3>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <div class="text-center p-3 rounded shadow-sm h-100" style="background-color: #ffffff !important; border: 1px solid #dee2e6 !important;">
-                            <div class="d-flex align-items-center justify-content-center mb-2">
-                                <span style="font-size: 2rem;">📝</span>
-                                <div class="ms-2 text-start">
-                                    <h6 class="mb-0">Cuentas del cuaderno</h6>
-                                    <small class="text-muted">(fiadas de otros días)</small>
-                                </div>
-                            </div>
-                            <h3 class="text-warning mb-0 fw-bold">${formatearPrecio(totalEnCuaderno)}</h3>
-                            ${listadoCuentasEnCuaderno}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECCIÓN 3: OTROS PRODUCTOS -->
+        <!-- SECCIÓN PENDIENTES -->
         <div class="card mb-4">
-            <div class="card-header text-white text-center" style="background-color: #6c757d !important;">
-                <h5 class="mb-0">🚬 Otros productos vendidos</h5>
+            <div class="card-header text-dark text-center bg-warning">
+                <h4 class="mb-0">⏳ DINERO PENDIENTE DE COBRAR</h4>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 text-center">
+                    <div class="col-6">🍺 Consumo local<br><h4>${formatearPrecio(resumen.totalNoCobradas)}</h4></div>
+                    <div class="col-6">📝 Cuaderno<br><h4>${formatearPrecio(totalEnCuaderno)}</h4>${listadoCuentasEnCuaderno}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN PRODUCTOS -->
+        <div class="card mb-4">
+            <div class="card-header text-white text-center bg-secondary">
+                🚬 Otros productos vendidos
             </div>
             <div class="card-body text-center">
                 <h6>Cigarrillos</h6>
-                <h4 class="text-secondary">${formatearPrecio(resumen.totalTabaco)}</h4>
-                <small class="text-muted">Este dinero ya está incluido en el total recibido</small>
+                <h4>${formatearPrecio(resumen.totalTabaco)}</h4>
             </div>
         </div>
 
-        <!-- SECCIÓN 4: TU PAGO -->
-        <div class="card" style="border: 3px solid #007bff;">
-            <div class="card-header text-white text-center" style="background-color: #0d6efd !important;">
-                <h4 class="mb-0">💵 TU PAGO DE HOY</h4>
+        <!-- SECCIÓN PAGO -->
+        <div class="card">
+            <div class="card-header text-white text-center bg-primary">
+                💵 TU PAGO DE HOY
             </div>
             <div class="card-body text-center">
-                <h6 class="text-muted">10% de ventas cobradas + $7.000 de aseo</h6>
-                <h2 class="text-primary">
-                    <strong>${formatearPrecio(resumen.pagoTurno)}</strong>
-                </h2>
-                <small class="text-muted">Este es el dinero que te corresponde por tu trabajo de hoy</small>
+                <h2>${formatearPrecio(resumen.pagoTurno)}</h2>
+            </div>
+        </div>
+
+        <!-- 🔹 MÉTRICAS FIREBASE -->
+        <div class="card mt-3">
+            <div class="card-header">📊 Consumo Firebase (Turno actual)</div>
+            <div class="card-body small">
+                📖 Lecturas: ${actual.lecturas || 0}<br>
+                ✍️ Escrituras: ${actual.escrituras || 0}<br>
+                🗑️ Borrados: ${actual.borrados || 0}<br>
+                💾 Almacenamiento estimado: ${actual.almacenamiento || 0} KB<br>
+                📡 Transferencia estimada: ${actual.transferencia || 0} KB
+                ${actual.lecturas === 0 && actual.escrituras === 0 && actual.borrados === 0 ? '<br><em>No hay datos en este turno.</em>' : ''}
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">📈 Acumulado histórico</div>
+            <div class="card-body small">
+                📖 Lecturas: ${acumulado.lecturas || 0}<br>
+                ✍️ Escrituras: ${acumulado.escrituras || 0}<br>
+                🗑️ Borrados: ${acumulado.borrados || 0}<br>
+                💾 Almacenamiento neto estimado: ${acumulado.almacenamientoNeto || 0} KB<br>
+                📡 Transferencia estimada: ${acumulado.transferencia || 0} KB
+                ${acumulado.lecturas === 0 && acumulado.escrituras === 0 && acumulado.borrados === 0 ? '<br><em>No hay datos históricos.</em>' : ''}
             </div>
         </div>
     `;
 }
+
+
 
 
 
@@ -5619,15 +6294,17 @@ export function renderizarResumenTurno(resumen, containerId) {
 
 
 
+
 SincronizadorPrecios.js
 
 import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { wrappedGetDocs, wrappedUpdateDoc } from "./FirebaseWrapper.js";
 import { db } from "./Conexion.js";
 
 async function sincronizarPreciosDesdeInventario() {
     // 1. Obtener inventario
     const inventarioRef = collection(db, "inventario");
-    const inventarioSnap = await getDocs(inventarioRef);
+    const inventarioSnap = await wrappedGetDocs(inventarioRef);
     const inventario = {};
     inventarioSnap.forEach(doc => {
         inventario[doc.id] = doc.data();
@@ -5635,7 +6312,7 @@ async function sincronizarPreciosDesdeInventario() {
 
     // 2. Obtener cuentas activas
     const cuentasRef = collection(db, "cuentasActivas");
-    const cuentasSnap = await getDocs(cuentasRef);
+    const cuentasSnap = await wrappedGetDocs(cuentasRef);
 
     for (const cuentaDoc of cuentasSnap.docs) {
         const cuenta = cuentaDoc.data();
@@ -5668,14 +6345,14 @@ async function sincronizarPreciosDesdeInventario() {
                 }
             }
             if (actualizado) {
-                await updateDoc(doc(db, "cuentasActivas", cuentaDoc.id), { 
+                await wrappedUpdateDoc(doc(db, "cuentasActivas", cuentaDoc.id), { 
                     productos: cuenta.productos,
                     total: totalCuenta
                 });
             } else {
                 // Si no hubo cambios pero el total no coincide, igual actualiza el total
                 if (typeof cuenta.total !== "number" || cuenta.total !== totalCuenta) {
-                    await updateDoc(doc(db, "cuentasActivas", cuentaDoc.id), { total: totalCuenta });
+                    await wrappedUpdateDoc(doc(db, "cuentasActivas", cuentaDoc.id), { total: totalCuenta });
                 }
             }
         }
@@ -5685,6 +6362,8 @@ async function sincronizarPreciosDesdeInventario() {
 
 // Exponer para el HTML
 window.sincronizarPreciosDesdeInventario = sincronizarPreciosDesdeInventario;
+
+
 
 
 
@@ -6220,6 +6899,7 @@ export async function mostrarModalHistorialCliente(abonos, nombreCliente) {
 
 
 
+
 ################    ##      ####              ##
 ##                  ##      ##  ##            ##
 ##                  ##      ##    ##          ##
@@ -6252,6 +6932,14 @@ import {
     mostrarValidacion 
 } from "./SweetAlertManager.js";
 import { mostrarModalMedioPago } from "./Engranaje.js";
+import {
+    wrappedGetDocs,
+    wrappedGetDoc,
+    wrappedSetDoc,
+    wrappedUpdateDoc,
+    wrappedRunTransaction
+} from "./FirebaseWrapper.js";
+import { registrarOperacion } from "./FirebaseMetrics.js";
 
 const db = getFirestore(app);
 
@@ -6269,7 +6957,7 @@ export async function procesarVentaDirecta(carrito, medioPago) {
     if (!idTurno) {
         const turnosRef = collection(db, "turnos");
         const q = query(turnosRef, where("estado", "==", "activo"), orderBy("fechaInicio", "desc"), limit(1));
-        const snap = await getDocs(q);
+        const snap = await wrappedGetDocs(q);
         if (!snap.empty) {
             idTurno = snap.docs[0].id;
             localStorage.setItem("idTurno", idTurno);
@@ -6309,12 +6997,12 @@ export async function procesarVentaDirecta(carrito, medioPago) {
 
     // 6. Guardar la venta en el documento del turno activo dentro de 'cuentasCerradas'.
     const turnoRef = doc(db, "cuentasCerradas", idTurno);
-    const turnoSnap = await getDoc(turnoRef);
+    const turnoSnap = await wrappedGetDoc(turnoRef);
 
     if (!turnoSnap.exists()) {
-        await setDoc(turnoRef, { clientes: [clienteObj] });
+        await wrappedSetDoc(turnoRef, { clientes: [clienteObj] });
     } else {
-        await updateDoc(turnoRef, { clientes: arrayUnion(clienteObj) });
+        await wrappedUpdateDoc(turnoRef, { clientes: arrayUnion(clienteObj) });
     }
 }
 
@@ -6344,7 +7032,7 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
         minute: '2-digit'
     });
 
-    await runTransaction(db, async (transaction) => {
+    await wrappedRunTransaction(db, async (transaction) => {
         const cuentaDoc = await transaction.get(cuentaRef);
         
         // console.log('🔍 [TRANSACCIÓN] - Estado de la cuenta:');
@@ -6443,7 +7131,7 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
         }
         
         // console.log('🔄 [TRANSACCIÓN] - Ejecutando runTransaction...');
-    }).then(() => {
+    }, { lecturas: 1, escrituras: 1 }).then(() => {
         // console.log('✅ [TRANSACCIÓN] - runTransaction COMPLETADA exitosamente');
     }).catch((error) => {
         console.error('❌ [TRANSACCIÓN] - runTransaction FALLÓ:', error);
@@ -6644,6 +7332,9 @@ document.addEventListener('DOMContentLoaded', configurarEventosMobiles);
 
 
 
+
+
+
 ################    ##      ####              ##
 ##                  ##      ##  ##            ##
 ##                  ##      ##    ##          ##
@@ -6812,6 +7503,9 @@ index.html
         <button onclick="mostrarContainer('container1')" class="btn btn-success flex-fill">
             🛒 Hacer Venta
         </button>
+        <button onclick="mostrarContainer('containerCompras')" class="btn btn-warning flex-fill">
+            🛒 Registrar Compra
+        </button>
         <button onclick="mostrarContainer('containerResumenTurno')" class="btn btn-info flex-fill">
             📊 Ver Resumen del Dia
         </button>
@@ -6836,6 +7530,20 @@ index.html
         </button>
     </div>
 </div>
+<div class="containerCompras d-none" id="containerCompras">
+    <!-- Logo del local -->
+    <div class="logo-container-compras mb-3">
+        <img src="./pngs/LogoLocal.png" alt="Logo El Arrendajo Azul" class="logo-compras" />
+    </div>
+
+    <h1 class="titulo-superior">🛒 Compras</h1>
+    <div id="comprasContent" class="mt-3 mb-3"></div>
+    <div class="d-flex flex-wrap gap-2">
+        <button onclick="mostrarContainer('container2')" class="btn btn-primary flex-fill">
+            ↩️ Volver a INICIO
+        </button>
+    </div>
+</div>
 <div class="container3 d-none" id="container3">
     <div id="detalleCuentaContainer"></div>
 </div>
@@ -6846,6 +7554,7 @@ index.html
     <script type="module" src="JavaScript/Cuentas.js"></script>
     <script type="module" src="JavaScript/Export_Import.js"></script>
     <script type="module" src="JavaScript/SincronizadorPrecios.js"></script>
+    <script type="module" src="JavaScript/Compras.js"></script>
 
 </body>
 </html>

@@ -14,6 +14,7 @@ import {
     mostrarInfo,
     cerrarModal 
 } from "./SweetAlertManager.js";
+import { wrappedGetDocs } from "./FirebaseWrapper.js";
 
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -40,7 +41,7 @@ export function verificarSesionAutomatica() {
                     );
                     // console.log('🔵 Buscando turno activo para:', user.email);
                     
-                    const querySnapshot = await getDocs(q);
+                    const querySnapshot = await wrappedGetDocs(q);
                     // console.log('🔵 Resultado query turnos:', querySnapshot.size, 'documentos');
                     
                     if (!querySnapshot.empty) {
@@ -126,7 +127,7 @@ export async function iniciarSesion(email, password, recordar) {
             where("usuario", "==", email),
             where("estado", "==", "activo")
         );
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await wrappedGetDocs(q);
 
         if (!querySnapshot.empty) {
             // Si existe un turno activo, usarlo y no crear otro

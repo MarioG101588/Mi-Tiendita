@@ -10,6 +10,7 @@ import { agregarAlCarrito, aumentarCantidad, disminuirCantidad, quitarDelCarrito
 import { realizarVenta } from "./VentasApp.js";
 import { db } from './Conexion.js';
 import { cargarDetalleCuenta } from "./Cuentas.js";
+import { renderizarModuloCompras } from "./ComprasUI.js";
 
 // IMPORTACIONES de Firebase
 import { collection, onSnapshot, query, doc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
@@ -23,6 +24,11 @@ import {
     mostrarAdvertencia,
     mostrarInputNumerico 
 } from "./SweetAlertManager.js";
+import {
+    wrappedGetDocs,
+    wrappedUpdateDoc,
+    wrappedOnSnapshot
+} from "./FirebaseWrapper.js";
 
 // **FUNCIÓN UTILITARIA PARA CONVERTIR idTurno A FECHA LEGIBLE**
 function convertirIdTurnoAFecha(idTurno) {
@@ -82,7 +88,7 @@ function cargarCuentasAbiertas() {
         console.error("El contenedor para las cuentas activas no fue encontrado.");
         return;
     }
-    onSnapshot(q, async (querySnapshot) => {
+    wrappedOnSnapshot(q, async (querySnapshot) => {
         // Debounce para evitar actualizaciones muy frecuentes
         if (debounceTimer) {
             clearTimeout(debounceTimer);
@@ -152,7 +158,7 @@ function cargarCuentasAbiertas() {
                 //     timestamp: execTimestamp
                 // });
                 try {
-                    await updateDoc(doc(collection(db, "cuentasActivas"), clienteId), { tipo: 'En cuaderno' });
+                    await wrappedUpdateDoc(doc(collection(db, "cuentasActivas"), clienteId), { tipo: 'En cuaderno' });
                     cuenta.tipo = 'En cuaderno';
                     // console.log('✅ [CONVERSIÓN EXITOSA] TIMESTAMP:', execTimestamp, '-', clienteId, '- Actualizada en Firebase');
                 } catch (error) {
@@ -512,7 +518,7 @@ function mostrarContainer(idMostrar) {
     // console.log('✅ Elemento encontrado:', elementoDestino);
     
     // OCULTAR TODOS los containers - usando solo clases CSS
-    document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
+    document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno, .containerCompras').forEach(el => {
         el.classList.add('js-hidden', 'd-none');
         el.classList.remove('js-visible', 'd-block', 'container-visible');
     });
@@ -561,6 +567,10 @@ function mostrarContainer(idMostrar) {
             });
         }
     }
+    if (idMostrar === "containerCompras") {
+        // Mostrar módulo de compras
+        renderizarModuloCompras('comprasContent');
+    }
 };
 
 // Función para cerrar sesión (expuesta globalmente)
@@ -581,7 +591,7 @@ async function cerrarSesion() {
             await cerrarSesionAuth(); // Se llama a la función importada de Autenticacion.js
             
             // Oculta todos los containers y muestra el de inicio
-            document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno').forEach(el => {
+            document.querySelectorAll('.container, .container1, .container2, .container3, .containerPendientes, .containerResumenTurno, .containerCompras').forEach(el => {
                 el.classList.add('js-hidden', 'd-none');
                 el.classList.remove('js-visible', 'd-block', 'container-visible');
             });
@@ -745,7 +755,7 @@ async function buscarProductosParaCarrito(termino, resultadosDiv) {
         resultadosDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><br>Buscando...</div>';
         
         const inventarioRef = collection(db, "inventario");
-        const snapshot = await getDocs(inventarioRef);
+        const snapshot = await wrappedGetDocs(inventarioRef);
         
         const productos = [];
         const terminoLower = termino.toLowerCase();

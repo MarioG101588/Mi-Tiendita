@@ -4,6 +4,15 @@ import { formatearPrecio } from "./FormateoPrecios.js";
 import { mostrarCargando, mostrarExito, mostrarError, mostrarConfirmacion, mostrarInput, mostrarInputNumerico, mostrarAdvertencia, cerrarModal, mostrarPersonalizado, mostrarModalAbono} from "./SweetAlertManager.js";
 import { procesarAbono, obtenerHistorialAbono, renderizarHistorialAbonos, puedeRecibirAbono, eliminarHistorialAbono } from "./Abonos.js";
 import { mostrarModalMedioPago } from "./Engranaje.js";
+import {
+    wrappedGetDoc,
+    wrappedGetDocs,
+    wrappedSetDoc,
+    wrappedUpdateDoc,
+    wrappedDeleteDoc,
+    wrappedRunTransaction
+} from "./FirebaseWrapper.js";
+import { registrarOperacion } from "./FirebaseMetrics.js";
 
 const db = getFirestore(app);
 
@@ -12,7 +21,7 @@ window.diagnosticarFirestore = async function() {
     try {
         const collectionRef = collection(db, "cuentasActivas");
         const q = query(collectionRef, limit(1));
-        const snapshot = await getDocs(q);
+        const snapshot = await wrappedGetDocs(q);
         if (snapshot.empty) {
             console.error('❌ No hay documentos en cuentasActivas');
             return;
@@ -22,7 +31,7 @@ window.diagnosticarFirestore = async function() {
         const datosOriginales = primeraCtasnapshot.data();
         const testRef = doc(db, "cuentasActivas", primerDocId);
         try {
-            await updateDoc(testRef, {
+            await wrappedUpdateDoc(testRef, {
                 pruebaEscritura: new Date().toISOString(),
                 contadorPruebas: (datosOriginales.contadorPruebas || 0) + 1
             });
@@ -30,13 +39,13 @@ window.diagnosticarFirestore = async function() {
             console.error('❌ Error en escritura simple:', writeError);
             return;
         }
-        const docActualizado = await getDoc(testRef);
+        const docActualizado = await wrappedGetDoc(testRef);
         const datosNuevos = docActualizado.data();
         if (!datosNuevos.pruebaEscritura) {
             console.error('❌ Los datos NO se guardaron en Firestore');
         }
         try {
-            await updateDoc(testRef, {
+            await wrappedUpdateDoc(testRef, {
                 'productos.productoPrueba': {
                     nombre: 'Producto de Prueba',
                     precio: 1000,
@@ -57,18 +66,18 @@ window.diagnosticarFirestore = async function() {
 window.probarCambioNombre = async function(clienteId, nuevoNombre) {
     try {
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
-        const docActual = await getDoc(cuentaRef);
+        const docActual = await wrappedGetDoc(cuentaRef);
         if (!docActual.exists()) {
             console.error('❌ El documento no existe');
             return;
         }
         const datosActuales = docActual.data();
-        await updateDoc(cuentaRef, {
+        await wrappedUpdateDoc(cuentaRef, {
             cliente: nuevoNombre,
             ultimaModificacion: new Date().toISOString(),
             pruebaTimestamp: Date.now()
         });
-        const docVerificacion = await getDoc(cuentaRef);
+        const docVerificacion = await wrappedGetDoc(cuentaRef);
         const datosVerificacion = docVerificacion.data();
         if (datosVerificacion.cliente !== nuevoNombre) {
             console.error('❌ FALLO: El cambio de nombre NO funcionó');
@@ -124,7 +133,7 @@ export async function cargarDetalleCuenta(clienteId) {
 
     try {
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
-        const cuentaDoc = await getDoc(cuentaRef);
+        const cuentaDoc = await wrappedGetDoc(cuentaRef);
 
         if (!cuentaDoc.exists()) {
             detalleContainer.innerHTML = `<p>La cuenta no fue encontrada.</p>`;
@@ -301,7 +310,7 @@ export async function cargarDetalleCuenta(clienteId) {
 async function modificarCantidadProductoCuenta(clienteId, productoId, operacion) {
     try {
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
-        const cuentaDoc = await getDoc(cuentaRef);
+        const cuentaDoc = await wrappedGetDoc(cuentaRef);
         if (!cuentaDoc.exists()) return;
         
         const cuenta = cuentaDoc.data();
@@ -375,7 +384,7 @@ async function modificarCantidadProductoCuenta(clienteId, productoId, operacion)
         }
 
         try {
-            await updateDoc(cuentaRef, {
+            await wrappedUpdateDoc(cuentaRef, {
                 productos,
                 historial,
                 total: totalCuenta,
@@ -415,7 +424,7 @@ window.borrarCuentaActiva = async function(clienteId) {
     );
     if (!confirm.isConfirmed) return;
     try {
-        await deleteDoc(doc(db, "cuentasActivas", clienteId));
+        await wrappedDeleteDoc(doc(db, "cuentasActivas", clienteId));
         mostrarExito('La cuenta ha sido eliminada.');
         if (typeof mostrarContainer === 'function') mostrarContainer('container2');
     } catch (error) {
@@ -436,7 +445,7 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
     try {
         mostrarCargando('Cargando cuenta...');
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
-        const cuentaDoc = await getDoc(cuentaRef);
+        const cuentaDoc = await wrappedGetDoc(cuentaRef);
         if (!cuentaDoc.exists()) throw new Error("La cuenta no existe.");
         const cuenta = cuentaDoc.data();
         cerrarModal();
@@ -461,7 +470,7 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
         if (!idTurno) {
             const turnosRef = collection(db, "turnos");
             const q = query(turnosRef, where("estado", "==", "activo"), orderBy("fechaInicio", "desc"), limit(1));
-            const snap = await getDocs(q);
+            const snap = await wrappedGetDocs(q);
             if (!snap.empty) {
                 idTurno = snap.docs[0].id;
                 localStorage.setItem("idTurno", idTurno);
@@ -489,13 +498,13 @@ window.cerrarCuenta = async function (clienteId, esPagoAmericano = false) {
             throw new Error("Datos incompletos para guardar la venta.");
         }
         const turnoRef = doc(db, "cuentasCerradas", idTurno);
-        const turnoSnap = await getDoc(turnoRef);
+        const turnoSnap = await wrappedGetDoc(turnoRef);
         if (!turnoSnap.exists()) {
-            await setDoc(turnoRef, { clientes: [clienteObj] });
+            await wrappedSetDoc(turnoRef, { clientes: [clienteObj] });
         } else {
-            await updateDoc(turnoRef, { clientes: arrayUnion(clienteObj) });
+            await wrappedUpdateDoc(turnoRef, { clientes: arrayUnion(clienteObj) });
         }
-        await deleteDoc(cuentaRef);
+        await wrappedDeleteDoc(cuentaRef);
         await eliminarHistorialAbono(clienteId);
         mostrarExito('La venta ha sido registrada.');
         if (typeof mostrarContainer === 'function') mostrarContainer('container2');
@@ -541,11 +550,11 @@ window.editarNombreCliente = async function(clienteId, nombreActual) {
                 mostrarCargando('Actualizando nombre...');
                 try {
                     const cuentaRef = doc(db, "cuentasActivas", clienteId);
-                    const docSnapshot = await getDoc(cuentaRef);
+                    const docSnapshot = await wrappedGetDoc(cuentaRef);
                     if (!docSnapshot.exists()) {
                         throw new Error(`El documento con ID ${clienteId} no existe en cuentasActivas`);
                     }
-                    await updateDoc(cuentaRef, {
+                    await wrappedUpdateDoc(cuentaRef, {
                         cliente: nuevoNombre,
                         ultimaModificacion: new Date().toISOString()
                     });
@@ -605,7 +614,7 @@ async function buscarProductosEnInventario(termino, resultadosDiv, clienteId) {
     try {
         resultadosDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><br>Buscando...</div>';
         const inventarioRef = collection(db, "inventario");
-        const snapshot = await getDocs(inventarioRef);
+        const snapshot = await wrappedGetDocs(inventarioRef);
         const productos = [];
         const terminoLower = termino.toLowerCase();
         snapshot.forEach(doc => {
@@ -689,7 +698,7 @@ async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta
     });
 
     try {
-        await runTransaction(db, async (transaction) => {
+        await wrappedRunTransaction(db, async (transaction) => {
         const cuentaDoc = await transaction.get(cuentaRef);
         if (!cuentaDoc.exists()) {
             throw new Error(`La cuenta del cliente ${clienteId} no existe.`);
@@ -736,7 +745,7 @@ async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta
             historial: historialCuenta,
             ultimaModificacion: fechaFormateada
         });
-    });
+    }, { lecturas: 1, escrituras: 1 });
     } catch (error) {
         console.error('❌ ERROR EN agregarProductoACuentaEnBD:', error);
         throw error;
@@ -751,7 +760,7 @@ window.procesarAbonoCliente = async function(clienteId) {
     try {
         mostrarCargando('Cargando datos de la cuenta...');
         const cuentaRef = doc(db, "cuentasActivas", clienteId);
-        const cuentaSnap = await getDoc(cuentaRef);
+        const cuentaSnap = await wrappedGetDoc(cuentaRef);
         if (!cuentaSnap.exists()) {
             cerrarModal();
             await mostrarError('Cuenta no encontrada');

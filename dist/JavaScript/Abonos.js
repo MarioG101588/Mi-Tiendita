@@ -4,6 +4,14 @@ import { db } from './Conexion.js';
 import { formatearPrecio } from './FormateoPrecios.js';
 import { mostrarExito, mostrarError, mostrarCargando, cerrarModal } from './SweetAlertManager.js';
 import { doc, getDoc, setDoc, updateDoc, collection, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import {
+    wrappedGetDoc,
+    wrappedSetDoc,
+    wrappedUpdateDoc,
+    wrappedDeleteDoc,
+    wrappedRunTransaction
+} from "./FirebaseWrapper.js";
+import { registrarOperacion } from "./FirebaseMetrics.js";
 
 /**
  * Procesa un abono parcial de una cuenta
@@ -30,7 +38,7 @@ export async function procesarAbono(clienteId, montoAbono, medioPago, saldoActua
             throw new Error('El abono no puede ser mayor al saldo actual');
         }
 
-        const resultado = await runTransaction(db, async (transaction) => {
+        const resultado = await wrappedRunTransaction(db, async (transaction) => {
             // 1. Obtener datos actuales de la cuenta
             const cuentaRef = doc(db, 'cuentasActivas', clienteId);
             const cuentaDoc = await transaction.get(cuentaRef);
@@ -85,7 +93,7 @@ export async function procesarAbono(clienteId, montoAbono, medioPago, saldoActua
             }
 
             return { saldoRestante, ventaCerrada };
-        });
+        }, { lecturas: 2, escrituras: 2 });
 
         cerrarModal();
         
@@ -110,7 +118,7 @@ export async function procesarAbono(clienteId, montoAbono, medioPago, saldoActua
  */
 async function registrarVentaCerrada(ventaData, idTurno) {
     const cuentasCerradasRef = doc(db, 'cuentasCerradas', idTurno);
-    const cuentasCerradasSnap = await getDoc(cuentasCerradasRef);
+    const cuentasCerradasSnap = await wrappedGetDoc(cuentasCerradasRef);
     
     let clientesArray = [];
     if (cuentasCerradasSnap.exists()) {
@@ -119,7 +127,7 @@ async function registrarVentaCerrada(ventaData, idTurno) {
     
     clientesArray.push(ventaData);
     
-    await setDoc(cuentasCerradasRef, { clientes: clientesArray }, { merge: true });
+    await wrappedSetDoc(cuentasCerradasRef, { clientes: clientesArray }, { merge: true });
 }
 
 /**
@@ -128,7 +136,7 @@ async function registrarVentaCerrada(ventaData, idTurno) {
 export async function guardarHistorialAbono(clienteId, abonoData) {
     try {
         const historialRef = doc(db, 'cuentasActivas', 'historial_abonos');
-        const historialSnap = await getDoc(historialRef);
+        const historialSnap = await wrappedGetDoc(historialRef);
         
         let historialCompleto = {};
         if (historialSnap.exists()) {
@@ -141,7 +149,7 @@ export async function guardarHistorialAbono(clienteId, abonoData) {
         
         historialCompleto[clienteId].push(abonoData);
         
-        await setDoc(historialRef, historialCompleto);
+        await wrappedSetDoc(historialRef, historialCompleto);
         
     } catch (error) {
         console.error('Error guardando historial de abono:', error);
@@ -155,7 +163,7 @@ export async function guardarHistorialAbono(clienteId, abonoData) {
 export async function obtenerHistorialAbono(clienteId) {
     try {
         const historialRef = doc(db, 'cuentasActivas', 'historial_abonos');
-        const historialSnap = await getDoc(historialRef);
+        const historialSnap = await wrappedGetDoc(historialRef);
         
         if (historialSnap.exists()) {
             const historial = historialSnap.data();
@@ -176,13 +184,13 @@ export async function obtenerHistorialAbono(clienteId) {
 export async function eliminarHistorialAbono(clienteId) {
     try {
         const historialRef = doc(db, 'cuentasActivas', 'historial_abonos');
-        const historialSnap = await getDoc(historialRef);
+        const historialSnap = await wrappedGetDoc(historialRef);
         
         if (historialSnap.exists()) {
             const historialCompleto = historialSnap.data();
             delete historialCompleto[clienteId];
             
-            await setDoc(historialRef, historialCompleto);
+            await wrappedSetDoc(historialRef, historialCompleto);
         }
         
     } catch (error) {
@@ -235,7 +243,7 @@ export function puedeRecibirAbono(cuenta) {
 export async function obtenerClientesConAbonos() {
     try {
         const historialRef = doc(db, 'cuentasActivas', 'historial_abonos');
-        const historialSnap = await getDoc(historialRef);
+        const historialSnap = await wrappedGetDoc(historialRef);
         
         if (historialSnap.exists()) {
             const historial = historialSnap.data();
@@ -246,7 +254,7 @@ export async function obtenerClientesConAbonos() {
                 if (abonos && abonos.length > 0) {
                     // Obtener nombre del cliente desde la cuenta activa
                     const cuentaRef = doc(db, 'cuentasActivas', clienteId);
-                    const cuentaSnap = await getDoc(cuentaRef);
+                    const cuentaSnap = await wrappedGetDoc(cuentaRef);
                     
                     let nombreCliente = clienteId;
                     if (cuentaSnap.exists()) {

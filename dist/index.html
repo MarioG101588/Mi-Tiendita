@@ -150,6 +150,9 @@
         <button onclick="mostrarContainer('container1')" class="btn btn-success flex-fill">
             🛒 Hacer Venta
         </button>
+        <button onclick="mostrarContainer('containerCompras')" class="btn btn-warning flex-fill">
+            🛒 Registrar Compra
+        </button>
         <button onclick="mostrarContainer('containerResumenTurno')" class="btn btn-info flex-fill">
             📊 Ver Resumen del Dia
         </button>
@@ -174,6 +177,20 @@
         </button>
     </div>
 </div>
+<div class="containerCompras d-none" id="containerCompras">
+    <!-- Logo del local -->
+    <div class="logo-container-compras mb-3">
+        <img src="./pngs/LogoLocal.png" alt="Logo El Arrendajo Azul" class="logo-compras" />
+    </div>
+
+    <h1 class="titulo-superior">🛒 Compras</h1>
+    <div id="comprasContent" class="mt-3 mb-3"></div>
+    <div class="d-flex flex-wrap gap-2">
+        <button onclick="mostrarContainer('container2')" class="btn btn-primary flex-fill">
+            ↩️ Volver a INICIO
+        </button>
+    </div>
+</div>
 <div class="container3 d-none" id="container3">
     <div id="detalleCuentaContainer"></div>
 </div>
@@ -184,6 +201,7 @@
     <script type="module" src="JavaScript/Cuentas.js"></script>
     <script type="module" src="JavaScript/Export_Import.js"></script>
     <script type="module" src="JavaScript/SincronizadorPrecios.js"></script>
+    <script type="module" src="JavaScript/Compras.js"></script>
 
 </body>
 </html>

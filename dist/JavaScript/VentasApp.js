@@ -14,6 +14,14 @@ import {
     mostrarValidacion 
 } from "./SweetAlertManager.js";
 import { mostrarModalMedioPago } from "./Engranaje.js";
+import {
+    wrappedGetDocs,
+    wrappedGetDoc,
+    wrappedSetDoc,
+    wrappedUpdateDoc,
+    wrappedRunTransaction
+} from "./FirebaseWrapper.js";
+import { registrarOperacion } from "./FirebaseMetrics.js";
 
 const db = getFirestore(app);
 
@@ -31,7 +39,7 @@ export async function procesarVentaDirecta(carrito, medioPago) {
     if (!idTurno) {
         const turnosRef = collection(db, "turnos");
         const q = query(turnosRef, where("estado", "==", "activo"), orderBy("fechaInicio", "desc"), limit(1));
-        const snap = await getDocs(q);
+        const snap = await wrappedGetDocs(q);
         if (!snap.empty) {
             idTurno = snap.docs[0].id;
             localStorage.setItem("idTurno", idTurno);
@@ -71,12 +79,12 @@ export async function procesarVentaDirecta(carrito, medioPago) {
 
     // 6. Guardar la venta en el documento del turno activo dentro de 'cuentasCerradas'.
     const turnoRef = doc(db, "cuentasCerradas", idTurno);
-    const turnoSnap = await getDoc(turnoRef);
+    const turnoSnap = await wrappedGetDoc(turnoRef);
 
     if (!turnoSnap.exists()) {
-        await setDoc(turnoRef, { clientes: [clienteObj] });
+        await wrappedSetDoc(turnoRef, { clientes: [clienteObj] });
     } else {
-        await updateDoc(turnoRef, { clientes: arrayUnion(clienteObj) });
+        await wrappedUpdateDoc(turnoRef, { clientes: arrayUnion(clienteObj) });
     }
 }
 
@@ -106,7 +114,7 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
         minute: '2-digit'
     });
 
-    await runTransaction(db, async (transaction) => {
+    await wrappedRunTransaction(db, async (transaction) => {
         const cuentaDoc = await transaction.get(cuentaRef);
         
         // console.log('🔍 [TRANSACCIÓN] - Estado de la cuenta:');
@@ -205,7 +213,7 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
         }
         
         // console.log('🔄 [TRANSACCIÓN] - Ejecutando runTransaction...');
-    }).then(() => {
+    }, { lecturas: 1, escrituras: 1 }).then(() => {
         // console.log('✅ [TRANSACCIÓN] - runTransaction COMPLETADA exitosamente');
     }).catch((error) => {
         console.error('❌ [TRANSACCIÓN] - runTransaction FALLÓ:', error);

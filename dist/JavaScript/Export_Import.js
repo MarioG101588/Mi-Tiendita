@@ -1,11 +1,16 @@
 import { collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { db } from "./Conexion.js";
+import {
+    wrappedGetDocs,
+    wrappedSetDoc,
+    wrappedDeleteDoc
+} from "./FirebaseWrapper.js";
 
 // Asegúrate de incluir SheetJS en tu HTML: <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 async function exportarInventarioAExcel() {
     const inventarioRef = collection(db, "inventario");
-    const snapshot = await getDocs(inventarioRef);
+    const snapshot = await wrappedGetDocs(inventarioRef);
     const data = [];
     snapshot.forEach(doc => {
         const d = doc.data();
@@ -35,7 +40,7 @@ async function importarInventarioDesdeExcel(event) {
 
         // 1. Leer todos los productos actuales de Firestore
         const inventarioRef = collection(db, "inventario");
-        const snapshot = await getDocs(inventarioRef);
+        const snapshot = await wrappedGetDocs(inventarioRef);
         const productosFirestore = {};
         snapshot.forEach(docSnap => {
             productosFirestore[docSnap.id] = true;
@@ -47,7 +52,7 @@ async function importarInventarioDesdeExcel(event) {
             productosExcel.add(prod.Producto);
             // Actualizar o crear producto
             const docRef = doc(db, "inventario", prod.Producto);
-            await setDoc(docRef, {
+            await wrappedSetDoc(docRef, {
                 cantidad: Number(prod.Cantidad) || 0,
                 precioVenta: Number(prod.PrecioVenta) || 0,
                 fechaVencimiento: prod.FechaVencimiento || ""
@@ -57,7 +62,7 @@ async function importarInventarioDesdeExcel(event) {
         // 3. Eliminar productos que están en Firestore pero no en el Excel
         for (const id in productosFirestore) {
             if (!productosExcel.has(id)) {
-                await deleteDoc(doc(db, "inventario", id));
+                await wrappedDeleteDoc(doc(db, "inventario", id));
             }
         }
 

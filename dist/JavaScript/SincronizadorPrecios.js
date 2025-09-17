@@ -1,10 +1,11 @@
 import { collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { wrappedGetDocs, wrappedUpdateDoc } from "./FirebaseWrapper.js";
 import { db } from "./Conexion.js";
 
 async function sincronizarPreciosDesdeInventario() {
     // 1. Obtener inventario
     const inventarioRef = collection(db, "inventario");
-    const inventarioSnap = await getDocs(inventarioRef);
+    const inventarioSnap = await wrappedGetDocs(inventarioRef);
     const inventario = {};
     inventarioSnap.forEach(doc => {
         inventario[doc.id] = doc.data();
@@ -12,7 +13,7 @@ async function sincronizarPreciosDesdeInventario() {
 
     // 2. Obtener cuentas activas
     const cuentasRef = collection(db, "cuentasActivas");
-    const cuentasSnap = await getDocs(cuentasRef);
+    const cuentasSnap = await wrappedGetDocs(cuentasRef);
 
     for (const cuentaDoc of cuentasSnap.docs) {
         const cuenta = cuentaDoc.data();
@@ -45,14 +46,14 @@ async function sincronizarPreciosDesdeInventario() {
                 }
             }
             if (actualizado) {
-                await updateDoc(doc(db, "cuentasActivas", cuentaDoc.id), { 
+                await wrappedUpdateDoc(doc(db, "cuentasActivas", cuentaDoc.id), { 
                     productos: cuenta.productos,
                     total: totalCuenta
                 });
             } else {
                 // Si no hubo cambios pero el total no coincide, igual actualiza el total
                 if (typeof cuenta.total !== "number" || cuenta.total !== totalCuenta) {
-                    await updateDoc(doc(db, "cuentasActivas", cuentaDoc.id), { total: totalCuenta });
+                    await wrappedUpdateDoc(doc(db, "cuentasActivas", cuentaDoc.id), { total: totalCuenta });
                 }
             }
         }
