@@ -177,23 +177,7 @@ export function renderizarModuloCompras() {
                         <div class="input-group">
                             <span class="input-group-text">$</span>
                             <input type="number" id="precioVentaUnidadInput" class="form-control" min="0" inputmode="numeric" pattern="[0-9]*" value="${producto.precioVentaUnidad || ''}">
-                // Ocultar teclado numérico al perder foco en campos relevantes (solo móvil)
-                const camposNumericos = [
-                    'unidadesPresentacionInput',
-                    'precioPresentacionInput',
-                    'cantidadInput',
-                    'precioVentaUnidadInput'
-                ];
-                camposNumericos.forEach(id => {
-                    const campo = document.getElementById(id);
-                    if (campo) {
-                        campo.addEventListener('blur', () => {
-                            if (window.innerWidth <= 900) {
-                                campo.blur();
-                            }
-                        });
-                    }
-                });
+                
                         </div>
                     </div>
                     <div class="col-5">
@@ -209,6 +193,25 @@ export function renderizarModuloCompras() {
                 </div>
             </form>
         `;
+        setTimeout(() => {
+                    // Ocultar teclado numérico al perder foco en campos relevantes (solo móvil)
+                    const camposNumericos = [
+                        'unidadesPresentacionInput',
+                        'precioPresentacionInput',
+                        'cantidadInput',
+                        'precioVentaUnidadInput'
+                    ];
+                    camposNumericos.forEach(id => {
+                        const campo = document.getElementById(id);
+                        if (campo) {
+                            campo.addEventListener('blur', () => {
+                                if (window.innerWidth <= 900) {
+                                    campo.blur();
+                                }
+                            });
+                        }
+                    });
+                }, 100);
         let proveedoresActual = [];
         async function consultarProveedoresFirebase(filtro) {
             try {
