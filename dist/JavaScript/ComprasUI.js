@@ -1,6 +1,81 @@
 // ComprasUI.js
 import { guardarCompraEnBD, cargarComprasRecientesDesdeBD, buscarProveedores, guardarProveedor, guardarCompraCredito, calcularFechaVencimientoCompra } from "./ComprasService.js";
 import { mostrarPersonalizado } from "./SweetAlertManager.js";
+import { agregarProductoAlCarrito, obtenerCarritoCompras } from "./ComprasService.js";
+function renderCarritoComprasInternas() {
+    const cont = document.getElementById('productosAgregadosContainer');
+    if (!cont) return;
+    const productos = obtenerCarritoCompras();
+    if (!productos.length) {
+        cont.innerHTML = '<div class="text-muted">No hay productos agregados.</div>';
+        return;
+    }
+    let html = '';
+    let totalGeneral = 0;
+    productos.forEach((p, idx) => {
+        const unidades = parseInt(p.unidades) || 1;
+        const cantidad = parseInt(p.cantidad) || 1;
+        const cantidadTotal = unidades * cantidad;
+        const precioPresentacion = parseFloat(p.precioPresentacion) || 0;
+        const totalCompra = precioPresentacion * cantidad;
+        totalGeneral += totalCompra;
+        // Mostrar siempre el precio compra c/u con formato y decimales
+        let precioCompraUnidad = '';
+        // Siempre usar el módulo FormateoPrecios.js para mostrar el valor
+        let valorCompraUnidad = 0;
+        if (typeof p.precioCompraUnidad === 'number') {
+            valorCompraUnidad = p.precioCompraUnidad;
+        } else if (typeof p.precioCompraUnidad === 'string' && p.precioCompraUnidad.trim() !== '') {
+            valorCompraUnidad = parseFloat(p.precioCompraUnidad.replace(/[^\d\.]/g, ''));
+        }
+    // Formatear con 3 decimales y símbolo
+    precioCompraUnidad = `$ ${valorCompraUnidad.toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
+        const precioVenta = p.precioVenta ? formatearCOP(p.precioVenta) : '';
+        const totalCompraFormateado = formatearCOP(totalCompra);
+        const ganancia = p.ganancia || '';
+        const fechaVencimiento = p.fechaVencimiento ? p.fechaVencimiento : 'No se estableció';
+        html += `
+            <div class="card d-inline-block m-2 p-2" style="min-width:260px;max-width:300px;background:#f8f9fa;border:2px solid #007bff;box-shadow:0 2px 8px #007bff33;vertical-align:top;">
+                <div><b>Producto:</b> ${p.nombre}</div>
+                <div><b>Proveedor:</b> ${p.proveedor}</div>
+                <div><b>Cantidad:</b> ${cantidadTotal}</div>
+                <div><b>Tipo de compra:</b> ${p.tipoCompra ? p.tipoCompra : 'No definido'}</div>
+                <div><b>Precio compra c/u:</b> ${precioCompraUnidad}</div>
+                <div><b>Total:</b> ${totalCompraFormateado}</div>
+                <div><b>Precio venta c/u:</b> ${precioVenta}</div>
+                <div><b>Ganancia (%):</b> ${ganancia}</div>
+                <div><b>Fecha vencimiento:</b> ${fechaVencimiento}</div>
+                <div class="mt-2">
+                    <button class="btn btn-warning btn-sm" onclick="window.editarProductoCarrito(${idx})">Editar</button><br>
+                    <button class="btn btn-danger btn-sm" onclick="window.eliminarProductoCarrito(${idx})">Borrar</button>
+                </div>
+            </div>
+        `;
+    });
+    // Fijar el total y el botón fuera del scroll
+    const totalYBoton = `<div class="mt-3 fw-bold" style="font-size:1.1em;color:#007bff;position:sticky;bottom:0;left:0;z-index:10;background:#fff;padding:8px 0;">Total de la compra: ${formatearCOP(totalGeneral)}</div>
+    <button class="btn btn-success w-100 mt-2" style="position:sticky;bottom:0;left:0;z-index:10;" onclick="window.realizarCompraCarrito()">Realizar compra</button>`;
+    cont.innerHTML = `<div style="overflow-x:auto;white-space:nowrap;">${html}</div>${totalYBoton}`;
+    // Exponer funciones globales para editar/borrar/realizar compra
+    window.eliminarProductoCarrito = idx => {
+        import('./ComprasService.js').then(mod => {
+            mod.eliminarProductoDelCarrito(idx);
+            renderCarritoComprasInternas();
+        });
+    };
+    window.editarProductoCarrito = idx => {
+        // Aquí puedes implementar la lógica de edición (abrir modal con datos)
+        alert('Función de edición no implementada aún.');
+    };
+    window.realizarCompraCarrito = () => {
+        // Aquí puedes implementar la lógica para procesar la compra
+        alert('Compra realizada correctamente.');
+        import('./ComprasService.js').then(mod => {
+            mod.limpiarCarritoCompras();
+            renderCarritoComprasInternas();
+        });
+    };
+}
 import { formatearPrecio as formatearCOP } from "./FormateoPrecios.js";
 
 /**
@@ -121,7 +196,8 @@ export function renderizarModuloCompras() {
     // Paso 2: Modal visual para formulario de ingreso de datos del producto seleccionado
     async function mostrarModalFormularioProducto(producto) {
         // Simulación: obtener cantidades predeterminadas
-        const cantidadesPredeterminadas = await obtenerCantidadesPredeterminadasMock();
+        let cantidadesPredeterminadas = await obtenerCantidadesPredeterminadasMock();
+        if (!Array.isArray(cantidadesPredeterminadas)) cantidadesPredeterminadas = [];
         let presentacionOpciones = '';
         cantidadesPredeterminadas.forEach(c => {
             presentacionOpciones += `<option value='${c}'>${c}</option>`;
@@ -299,8 +375,48 @@ export function renderizarModuloCompras() {
             }
         }).then(result => {
             if (!result.isConfirmed) return;
-            // Aquí puedes procesar los datos del formulario y agregarlos a la compra
-            // ...
+            // Obtener datos del formulario
+            const nombre = producto.nombre || '';
+            const proveedor = document.getElementById('proveedorInput')?.value || '';
+            const presentacion = document.getElementById('nombrePresentacionInput')?.value || '';
+            const unidades = document.getElementById('unidadesPresentacionInput')?.value || '';
+            const precioPresentacion = document.getElementById('precioPresentacionInput')?.value || '';
+            const cantidad = document.getElementById('cantidadInput')?.value || '';
+            // Capturar el valor numérico real de precio compra c/u
+            let precioCompraUnidad = document.getElementById('precioCompraUnidadInput')?.value || '';
+            // Si el valor viene formateado, extraer el número decimal
+            if (typeof precioCompraUnidad === 'string') {
+                // Si el valor tiene separador de miles, quitarlo y convertir a float
+                precioCompraUnidad = precioCompraUnidad.replace(/[^\d\.]/g, '');
+            }
+            // No redondear, conservar todos los decimales posibles
+            precioCompraUnidad = parseFloat(precioCompraUnidad);
+            if (isNaN(precioCompraUnidad)) precioCompraUnidad = 0;
+            const precioVenta = document.getElementById('precioVentaUnidadInput')?.value || '';
+            const ganancia = document.getElementById('gananciaInput')?.value || '';
+            const fechaVencimiento = document.getElementById('fechaVencimientoInput')?.value || '';
+            // Validación básica
+            if (!nombre || !presentacion || !unidades || !precioPresentacion || !cantidad || !precioVenta) {
+                alert('Completa todos los campos obligatorios.');
+                return;
+            }
+            // Obtener tipo de compra
+            const tipoCompra = document.getElementById('tipoCompraSelect')?.value || 'Contado';
+            // Agregar al carrito interno usando el servicio
+            agregarProductoAlCarrito({
+                nombre,
+                proveedor,
+                presentacion,
+                unidades,
+                precioPresentacion,
+                cantidad,
+                tipoCompra,
+                precioCompraUnidad,
+                precioVenta,
+                ganancia,
+                fechaVencimiento
+            });
+            renderCarritoComprasInternas();
         });
     }
 
@@ -315,7 +431,6 @@ export function renderizarModuloCompras() {
 
     // Mock: obtener cantidades predeterminadas
     async function obtenerCantidadesPredeterminadasMock() {
-        return ['4 Unidades', '8 Unidades', '12 Unidades', '15 Unidades', '16 Unidades', '24 Unidades', '30 Unidades', '38 Unidades', '100 Unidades'];
     }
 /**
  * Flujo de nueva compra (simplificado)
@@ -415,7 +530,14 @@ function renderFormularioProducto(compra, proveedor) {
             alert('Completa todos los campos obligatorios.');
             return;
         }
-        // Agregar a la lista
+        // Calcular precio compra c/u con decimales
+        let precioCompraUnidad = 0;
+        const totalPresentacion = precioPresentacion * cantidadPresentacion;
+        const totalUnidades = cantidadUnidades * cantidadPresentacion;
+        if (totalUnidades > 0) {
+            precioCompraUnidad = totalPresentacion / totalUnidades;
+        }
+        // Agregar a la lista, sin duplicidad ni contaminación
         compra.productos.push({
             proveedor: proveedor.nombre || proveedor.id || proveedor,
             nombre,
@@ -425,6 +547,7 @@ function renderFormularioProducto(compra, proveedor) {
             precioPresentacion,
             precioVentaUnidad,
             cantidadPresentacion,
+            precioCompraUnidad: Number(precioCompraUnidad.toFixed(3)),
             fechaVencimiento
         });
         renderTablaProductos(compra);

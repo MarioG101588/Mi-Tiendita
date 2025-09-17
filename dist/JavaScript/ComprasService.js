@@ -1,3 +1,29 @@
+// Carrito interno de productos (memoria temporal)
+let carritoComprasInternas = [];
+
+export function agregarProductoAlCarrito(producto) {
+    carritoComprasInternas.push(producto);
+}
+
+export function obtenerCarritoCompras() {
+    return [...carritoComprasInternas];
+}
+
+export function eliminarProductoDelCarrito(idx) {
+    carritoComprasInternas.splice(idx, 1);
+}
+
+export function limpiarCarritoCompras() {
+    carritoComprasInternas = [];
+}
+
+export function validarProductoCarrito(producto) {
+    // Validación básica
+    if (!producto.nombre || !producto.presentacion || !producto.unidades || !producto.precioPresentacion || !producto.cantidad || !producto.precioVenta) {
+        return false;
+    }
+    return true;
+}
 // ComprasService.js
 // Servicio de persistencia para el módulo de compras
 import { db } from './Conexion.js';
