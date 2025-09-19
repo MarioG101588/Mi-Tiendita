@@ -24,6 +24,13 @@ export function validarProductoCarrito(producto) {
     }
     return true;
 }
+
+export function actualizarProductoEnCarrito(idx, productoActualizado) {
+    if (idx >= 0 && idx < carritoComprasInternas.length) {
+        carritoComprasInternas[idx] = productoActualizado;
+    }
+}
+
 // ComprasService.js
 // Servicio de persistencia para el módulo de compras
 import { db } from './Conexion.js';
