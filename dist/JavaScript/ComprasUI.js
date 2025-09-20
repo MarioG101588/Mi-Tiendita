@@ -1,8 +1,18 @@
 // ComprasUI.js
-import { guardarCompraEnBD, cargarComprasRecientesDesdeBD, buscarProveedores, guardarProveedor, guardarCompraCredito, calcularFechaVencimientoCompra } from "./ComprasService.js";
 import { mostrarPersonalizado } from "./SweetAlertManager.js";
-// Se añaden todas las funciones necesarias del servicio
-import { agregarProductoAlCarrito, obtenerCarritoCompras, actualizarProductoEnCarrito, eliminarProductoDelCarrito, limpiarCarritoCompras } from "./ComprasService.js";
+// Se importan todas las funciones necesarias del servicio, incluyendo la nueva
+import {
+    agregarProductoAlCarrito,
+    obtenerCarritoCompras,
+    actualizarProductoEnCarrito,
+    eliminarProductoDelCarrito,
+    limpiarCarritoCompras,
+    procesarYGuardarCompra, // <-- Nueva función importada
+    buscarProveedores,     // <-- Se mantienen las importaciones originales
+    guardarProveedor
+} from "./ComprasService.js";
+import { formatearPrecio as formatearCOP } from "./FormateoPrecios.js";
+
 
 function renderCarritoComprasInternas() {
     const cont = document.getElementById('productosAgregadosContainer');
@@ -22,14 +32,16 @@ function renderCarritoComprasInternas() {
         const totalCompra = precioPresentacion * cantidad;
         totalGeneral += totalCompra;
         let precioCompraUnidad = '';
-        let valorCompraUnidad = 0;
+        let valorCompraUnidad =
+            0;
         if (typeof p.precioCompraUnidad === 'number') {
             valorCompraUnidad = p.precioCompraUnidad;
         } else if (typeof p.precioCompraUnidad === 'string' && p.precioCompraUnidad.trim() !== '') {
             valorCompraUnidad = parseFloat(p.precioCompraUnidad.replace(/[^\d\.]/g, ''));
         }
         precioCompraUnidad = `$ ${valorCompraUnidad.toLocaleString('es-CO', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
-        const precioVenta = p.precioVenta ? formatearCOP(p.precioVenta) : '';
+        const precioVenta = p.precioVenta ? formatearCOP(p.precioVenta)
+            : '';
         const totalCompraFormateado = formatearCOP(totalCompra);
         const ganancia = p.ganancia || '';
         const fechaVencimiento = p.fechaVencimiento ? p.fechaVencimiento : 'No se estableció';
@@ -51,11 +63,13 @@ function renderCarritoComprasInternas() {
                 <div><b>Ganancia (%):</b> ${ganancia}</div>
                 <div><b>Fecha vencimiento:</b> ${fechaVencimiento}</div>
       
+ 
                 <div class="mt-2">
                     <button class="btn btn-warning btn-sm" onclick="window.editarProductoCarrito(${idx})">Editar</button><br>
                     <button class="btn btn-danger btn-sm" onclick="window.eliminarProductoCarrito(${idx})">Borrar</button>
                 </div>
             </div>
+        
         `;
     });
     const totalYBoton = `<div class="mt-3 fw-bold" style="font-size:1.1em;color:#007bff;position:sticky;bottom:0;left:0;z-index:10;background:#fff;padding:8px 0;">Total de la compra: ${formatearCOP(totalGeneral)}</div>
@@ -63,12 +77,10 @@ function renderCarritoComprasInternas() {
     onclick="window.realizarCompraCarrito()">Realizar compra</button>`;
     cont.innerHTML = `<div style="overflow-x:auto;white-space:nowrap;">${html}</div>${totalYBoton}`;
 }
-import { formatearPrecio as formatearCOP } from "./FormateoPrecios.js";
 
 export function renderizarModuloCompras() {
     const cont = document.getElementById("containerCompras");
     if (!cont) return;
-
     cont.innerHTML = `
         <div class="logo-container-compras">
             <img src="pngs/CarritoC.png" class="logo-compras" alt="Compras">
@@ -79,6 +91,7 @@ export function renderizarModuloCompras() {
             <button onclick="mostrarContainer('container2')" class="btn btn-primary">📋 Ir a INICIO</button>
         </div>
   
+   
         <div id="comprasFormContainer"></div>
         <div id="productosAgregadosContainer" class="mt-4" style="overflow-x:auto; white-space:nowrap;"></div>
         <div class="botones mt-3">
@@ -177,12 +190,10 @@ async function mostrarModalFormularioProducto(producto, editIndex = null) {
     const isEditing = editIndex !== null;
     const modalTitle = isEditing ? 'Editar producto' : 'Datos del producto';
     const confirmButtonText = isEditing ? 'Aplicar cambios' : 'Agregar';
-
     const proveedor = producto.proveedor || '';
     const proveedorDisabled = isEditing ? '' : (producto.proveedor ? 'disabled' : '');
     const etiquetaPresentacion = producto.presentacion ? producto.presentacion : 'presentación';
     const fechaVenc = producto.fechaVencimiento || '';
-    
     const html = `
         <form id='formProductoCompra' style='text-align:left;'>
             <label>Nombre producto</label>
@@ -299,7 +310,6 @@ async function mostrarModalFormularioProducto(producto, editIndex = null) {
                     diasCreditoInput.placeholder = 'Solo para crédito';
                 }
             });
-
             const noRequiereCheck = document.getElementById('noRequiereVencimientoCheck');
             const fechaVencInput = document.getElementById('fechaVencimientoInput');
             noRequiereCheck.onchange = () => {
@@ -320,9 +330,9 @@ async function mostrarModalFormularioProducto(producto, editIndex = null) {
                 proveedoresActual = proveedores;
                 proveedoresList.innerHTML = proveedoresActual.map(p => `<option value='${p.nombre}'>`).join("");
             });
-            
             function calcularValores() {
-                const precioPresentacion = parseFloat(document.getElementById('precioPresentacionInput').value) || 0;
+                const precioPresentacion = parseFloat(document.getElementById('precioPresentacionInput').value) ||
+                    0;
                 const cantidad = parseInt(document.getElementById('cantidadInput').value) || 1;
                 const unidadesPresentacion = parseInt(document.getElementById('unidadesPresentacionInput').value) || 1;
                 const precioVentaUnidad = parseFloat(document.getElementById('precioVentaUnidadInput').value) || 0;
@@ -362,13 +372,12 @@ async function mostrarModalFormularioProducto(producto, editIndex = null) {
             tipoCompra: document.getElementById('tipoCompraSelect')?.value || 'Contado',
             diasCredito: document.getElementById('diasCreditoInput')?.value || ''
         };
-        
+
         let precioCompraUnidad = document.getElementById('precioCompraUnidadInput')?.value || '';
         if (typeof precioCompraUnidad === 'string') {
             precioCompraUnidad = precioCompraUnidad.replace(/[^\d\.]/g, '');
         }
         datosFormulario.precioCompraUnidad = parseFloat(precioCompraUnidad) || 0;
-
         if (!datosFormulario.nombre || !datosFormulario.presentacion || !datosFormulario.unidades || !datosFormulario.precioPresentacion || !datosFormulario.cantidad || !datosFormulario.precioVenta) {
             alert('Completa todos los campos obligatorios.');
             return;
@@ -379,7 +388,7 @@ async function mostrarModalFormularioProducto(producto, editIndex = null) {
         } else {
             agregarProductoAlCarrito(datosFormulario);
         }
-        
+
         renderCarritoComprasInternas();
     });
 }
@@ -424,7 +433,6 @@ async function crearProveedorInteractivo(nombreInicial = '') {
     if (representante === null) return null;
     const telefono = prompt('Teléfono del representante (opcional):', '');
     if (telefono === null) return null;
-
     const datos = { nombre: nombre.trim(), representante: representante.trim() || null, telefono: telefono.trim() || null };
     try {
         await guardarProveedor(nombre.trim(), datos);
@@ -444,7 +452,8 @@ function formatearPrecio(valor) {
     }).format(valor);
 }
 
-// Funciones globales para botones
+// --- FUNCIONES GLOBALES PARA BOTONES ---
+
 window.editarProductoCarrito = (idx) => {
     const producto = obtenerCarritoCompras()[idx];
     if (producto) {
@@ -457,8 +466,60 @@ window.eliminarProductoCarrito = (idx) => {
     renderCarritoComprasInternas();
 };
 
-window.realizarCompraCarrito = () => {
-    alert('Compra realizada correctamente.');
-    limpiarCarritoCompras();
-    renderCarritoComprasInternas();
+// --- MODIFICACIÓN DEL BOTÓN "REALIZAR COMPRA" ---
+window.realizarCompraCarrito = async () => {
+    const productosEnCarrito = obtenerCarritoCompras();
+    if (productosEnCarrito.length === 0) {
+        mostrarPersonalizado({
+            title: 'Carrito vacío',
+            text: 'Agrega productos antes de realizar la compra.',
+            icon: 'warning'
+        });
+        return;
+    }
+
+    // Mensaje de confirmación
+    const confirmacion = await mostrarPersonalizado({
+        title: '¿Confirmar compra?',
+        text: `Se procesarán ${productosEnCarrito.length} producto(s). Esta acción actualizará el inventario y guardará los registros.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, realizar compra',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.isConfirmed) {
+        return;
+    }
+
+    // Mensaje de "Procesando"
+    mostrarPersonalizado({
+        title: 'Procesando compra...',
+        text: 'Por favor, espera un momento.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            mostrarPersonalizado.showLoading();
+        }
+    });
+
+    try {
+        await procesarYGuardarCompra();
+        
+        limpiarCarritoCompras();
+        renderCarritoComprasInternas();
+
+        await mostrarPersonalizado({
+            title: '¡Compra Exitosa!',
+            text: 'El inventario ha sido actualizado y la compra ha sido registrada.',
+            icon: 'success'
+        });
+
+    } catch (error) {
+        console.error("Error al realizar la compra:", error);
+        await mostrarPersonalizado({
+            title: 'Error',
+            text: `No se pudo completar la compra. ${error.message}`,
+            icon: 'error'
+        });
+    }
 };
