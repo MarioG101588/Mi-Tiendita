@@ -65,7 +65,7 @@ export async function procesarYGuardarCompra() {
         const inventarioSnap = await getDoc(inventarioRef);
 
         const cantidadTotalUnidades = (parseInt(producto.unidades, 10) || 1) * (parseInt(producto.cantidad, 10) || 1);
-        const precioCompraUnidadNum = Number(producto.precioCompraUnidad || 0);
+        const precioCompraUnidadNum = parseFloat(parseFloat(producto.precioCompraUnidad || 0).toFixed(3));
         const precioVentaNum = parseFloat(producto.precioVenta || 0);
 
         if (inventarioSnap.exists()) {
