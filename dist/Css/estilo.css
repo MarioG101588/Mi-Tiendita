@@ -2410,3 +2410,22 @@ body {
         max-height: 80px !important;
     }
 }
+
+/* Botón para eliminar producto en el modal de búsqueda */
+.btn-eliminar-busqueda {
+    background-color: #dc3545 !important; /* Rojo peligro */
+    color: white !important;
+    border: 1px solid #b02a37 !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    font-size: 1rem !important; /* Tamaño del ícono */
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0; /* Evita que el botón se encoja */
+    transition: background-color 0.2s ease;
+}
+
+.btn-eliminar-busqueda:hover {
+    background-color: #c82333 !important; /* Rojo más oscuro al pasar el mouse */
+    border-color: #a91e2c !important;
+}

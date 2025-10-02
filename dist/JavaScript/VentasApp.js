@@ -1,26 +1,8 @@
-import {
-    getFirestore, doc, getDoc, setDoc, collection,
-    query, where, orderBy, limit, getDocs, updateDoc, arrayUnion,
-    runTransaction, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, query, where, orderBy, limit, getDocs, updateDoc, arrayUnion, runTransaction, serverTimestamp, increment} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { app } from "./Conexion.js"; // Se asume que este archivo exporta la app de Firebase inicializada
-import { 
-    mostrarAdvertencia,
-    mostrarFormularioVenta, 
-    mostrarCargando, 
-    mostrarExito, 
-    mostrarError, 
-    cerrarModal,
-    mostrarValidacion 
-} from "./SweetAlertManager.js";
+import { mostrarAdvertencia, mostrarFormularioVenta, mostrarCargando, mostrarExito, mostrarError, cerrarModal, mostrarValidacion } from "./SweetAlertManager.js";
 import { mostrarModalMedioPago } from "./Engranaje.js";
-import {
-    wrappedGetDocs,
-    wrappedGetDoc,
-    wrappedSetDoc,
-    wrappedUpdateDoc,
-    wrappedRunTransaction
-} from "./FirebaseWrapper.js";
+import { wrappedGetDocs, wrappedGetDoc, wrappedSetDoc, wrappedUpdateDoc, wrappedRunTransaction } from "./FirebaseWrapper.js";
 import { registrarOperacion } from "./FirebaseMetrics.js";
 
 const db = getFirestore(app);
@@ -76,6 +58,36 @@ export async function procesarVentaDirecta(carrito, medioPago) {
     if (!clienteObj.productos.length) {
         throw new Error("No hay productos en el carrito para registrar.");
     }
+
+    try {
+        await wrappedRunTransaction(db, async (transaction) => {
+            
+            // A. LÓGICA AÑADIDA: Descontar cada producto del inventario
+            for (const idProducto in carrito) {
+                const itemCarrito = carrito[idProducto];
+                const inventarioRef = doc(db, "inventario", itemCarrito.nombre);
+                
+                // Usamos increment() para restar la cantidad de forma segura
+                transaction.update(inventarioRef, {
+                    cantidad: increment(-itemCarrito.cantidad)
+                });
+            }
+
+            // B. LÓGICA ORIGINAL (ADAPTADA): Guardar la venta en 'cuentasCerradas'
+            const turnoRef = doc(db, "cuentasCerradas", idTurno);
+            const turnoSnap = await transaction.get(turnoRef);
+
+            if (!turnoSnap.exists()) {
+                transaction.set(turnoRef, { clientes: [clienteObj] });
+            } else {
+                transaction.update(turnoRef, { clientes: arrayUnion(clienteObj) });
+            }
+        });
+    } catch (error) {
+        console.error("Error en la transacción de venta directa:", error);
+        throw new Error("No se pudo completar la venta y actualizar el inventario.");
+    }
+
 
     // 6. Guardar la venta en el documento del turno activo dentro de 'cuentasCerradas'.
     const turnoRef = doc(db, "cuentasCerradas", idTurno);
@@ -139,6 +151,11 @@ async function procesarVentaCliente(carrito, cliente, claseVenta) {
         for (const idProducto in carrito) {
             const itemCarrito = carrito[idProducto];
             
+            const inventarioRef = doc(db, "inventario", itemCarrito.nombre);
+            transaction.update(inventarioRef, {
+                cantidad: increment(-itemCarrito.cantidad) // Resta la cantidad del carrito
+            });
+
             // Agregar al historial
             registroHistorial.productos.push({
                 nombre: itemCarrito.nombre,

@@ -4,13 +4,7 @@ import { db } from './Conexion.js';
 import { formatearPrecio } from './FormateoPrecios.js';
 import { mostrarExito, mostrarError, mostrarCargando, cerrarModal } from './SweetAlertManager.js';
 import { doc, getDoc, setDoc, updateDoc, collection, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import {
-    wrappedGetDoc,
-    wrappedSetDoc,
-    wrappedUpdateDoc,
-    wrappedDeleteDoc,
-    wrappedRunTransaction
-} from "./FirebaseWrapper.js";
+import { wrappedGetDoc, wrappedSetDoc, wrappedUpdateDoc, wrappedDeleteDoc, wrappedRunTransaction} from "./FirebaseWrapper.js";
 import { registrarOperacion } from "./FirebaseMetrics.js";
 
 /**

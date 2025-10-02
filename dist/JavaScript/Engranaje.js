@@ -11,24 +11,10 @@ import { realizarVenta } from "./VentasApp.js";
 import { db } from './Conexion.js';
 import { cargarDetalleCuenta } from "./Cuentas.js";
 import { renderizarModuloCompras } from "./ComprasUI.js";
-
 // IMPORTACIONES de Firebase
 import { collection, onSnapshot, query, doc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
-import { 
-    mostrarPersonalizado, 
-    cerrarModal, 
-    mostrarConfirmacion, 
-    mostrarCargando, 
-    mostrarExito, 
-    mostrarError,
-    mostrarAdvertencia,
-    mostrarInputNumerico 
-} from "./SweetAlertManager.js";
-import {
-    wrappedGetDocs,
-    wrappedUpdateDoc,
-    wrappedOnSnapshot
-} from "./FirebaseWrapper.js";
+import { mostrarPersonalizado, cerrarModal, mostrarConfirmacion, mostrarCargando, mostrarExito, mostrarError, mostrarAdvertencia, mostrarInputNumerico} from "./SweetAlertManager.js";
+import { wrappedGetDocs, wrappedUpdateDoc, wrappedOnSnapshot, wrappedDeleteDoc} from "./FirebaseWrapper.js";
 
 // **FUNCIÓN UTILITARIA PARA CONVERTIR idTurno A FECHA LEGIBLE**
 function convertirIdTurnoAFecha(idTurno) {
@@ -750,16 +736,14 @@ async function buscarProductosParaCarrito(termino, resultadosDiv) {
         resultadosDiv.innerHTML = '<p class="text-muted">Escriba para buscar productos...</p>';
         return;
     }
-    
+
     try {
         resultadosDiv.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><br>Buscando...</div>';
-        
         const inventarioRef = collection(db, "inventario");
         const snapshot = await wrappedGetDocs(inventarioRef);
-        
+
         const productos = [];
         const terminoLower = termino.toLowerCase();
-        
         snapshot.forEach(doc => {
             const nombreProducto = doc.id.toLowerCase();
             if (nombreProducto.includes(terminoLower)) {
@@ -772,40 +756,47 @@ async function buscarProductosParaCarrito(termino, resultadosDiv) {
                 });
             }
         });
-        
+
         if (productos.length === 0) {
             resultadosDiv.innerHTML = '<p class="text-warning">No se encontraron productos con ese nombre.</p>';
             return;
         }
-        
+
         let html = '<div class="list-group">';
         productos.forEach(producto => {
             const precio = formatearPrecio(producto.precio);
+            
+            // <-- CAMBIO PRINCIPAL: Se ajusta la estructura para incluir el botón de eliminar -->
             html += `
-                <button type="button" class="list-group-item list-group-item-action text-start d-flex justify-content-between align-items-center" 
-                        onclick="seleccionarProductoParaCarrito('${producto.id}', ${producto.precio})"
-                        style="min-height: 60px; border-left: 3px solid #28a745;">
-                    <div>
+                <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" 
+                     onclick="window.seleccionarProductoParaCarrito('${producto.id}', ${producto.precio})"
+                     style="cursor: pointer; min-height: 60px; border-left: 3px solid #28a745; padding: 8px 12px;">
+                    
+                    <div class="flex-grow-1">
                         <div class="fw-bold" style="color: #333; font-size: 1rem;">${producto.nombre}</div>
-                        <small style="color: #ffffff; font-size: 0.85rem;">Stock: ${producto.cantidad} disponibles</small>
+                        <small class="text-muted" style="font-size: 0.85rem;">Stock: ${producto.cantidad} disponibles</small>
                     </div>
-                    <div class="text-end">
+
+                    <div class="text-end me-2">
                         <div class="fw-bold" style="color: #fff; background: #28a745; padding: 4px 8px; border-radius: 4px; font-size: 1rem;">${precio}</div>
-                        <small style="color: #28a745; font-weight: bold; font-size: 0.8rem;">por unidad</small>
                     </div>
-                </button>
+                    
+                    <button class="btn btn-eliminar-busqueda" 
+                            onclick="window.eliminarProductoDesdeBuscador('${producto.id}', event)">
+                        🗑️
+                    </button>
+                </div>
             `;
         });
         html += '</div>';
-        
+
         resultadosDiv.innerHTML = html;
-        
+
     } catch (error) {
         resultadosDiv.innerHTML = '<p class="text-danger">Error al buscar productos.</p>';
         console.error('Error buscando productos para carrito:', error);
     }
 }
-
 // **FUNCIÓN PARA SELECCIONAR PRODUCTO Y AGREGARLO AL CARRITO**
 window.seleccionarProductoParaCarrito = async function(nombreProducto, precioVenta) {
     try {
@@ -882,5 +873,43 @@ window.verHistorialCliente = async function(clienteId, nombreCliente) {
         cerrarModal();
         mostrarError('Error al cargar historial del cliente', error.message);
         console.error('Error en verHistorialCliente:', error);
+    }
+};
+/**
+ * Elimina un producto del inventario directamente desde el buscador, con confirmación.
+ * @param {string} productoId - El nombre (ID) del producto a eliminar.
+ * @param {Event} event - El objeto del evento click para detener la propagación.
+ */
+window.eliminarProductoDesdeBuscador = async function(productoId, event) {
+    // Detiene el evento para que no se active el clic del elemento padre (que agrega al carrito)
+    event.stopPropagation();
+
+    // Pide confirmación al usuario para evitar borrados accidentales
+    const confirmacion = await mostrarConfirmacion(
+        '¿Eliminar Producto?',
+        `¿Estás seguro de que deseas eliminar "${productoId}" del inventario de forma permanente? Esta acción no se puede deshacer.`,
+        'Sí, eliminar',
+        'Cancelar'
+    );
+
+    if (confirmacion.isConfirmed) {
+        mostrarCargando('Eliminando producto...');
+        try {
+            const productoRef = doc(db, "inventario", productoId);
+            await wrappedDeleteDoc(productoRef); // Usa tu wrapper para borrar
+            
+            mostrarExito('¡Producto Eliminado!', `"${productoId}" ha sido borrado del inventario.`);
+
+            // Refresca la lista de búsqueda para que el producto ya no aparezca
+            const inputBusqueda = document.querySelector('.swal2-input');
+            if (inputBusqueda && inputBusqueda.value) {
+                const resultadosDiv = inputBusqueda.nextElementSibling;
+                await buscarProductosParaCarrito(inputBusqueda.value, resultadosDiv);
+            }
+
+        } catch (error) {
+            console.error("Error al eliminar producto desde buscador:", error);
+            mostrarError("Error", "No se pudo eliminar el producto.");
+        }
     }
 };

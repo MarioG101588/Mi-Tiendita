@@ -1,19 +1,11 @@
-import {getFirestore, doc, getDoc, setDoc, deleteDoc, collection,query, where, orderBy, limit, getDocs, updateDoc, arrayUnion, runTransaction} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { app } from "./Conexion.js"; // debe exportar `app`
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, query, where, orderBy, limit, getDocs, updateDoc, arrayUnion, runTransaction, increment } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";import { app } from "./Conexion.js"; // debe exportar `app`
 import { formatearPrecio } from "./FormateoPrecios.js";
 import { mostrarCargando, mostrarExito, mostrarError, mostrarConfirmacion, mostrarInput, mostrarInputNumerico, mostrarAdvertencia, cerrarModal, mostrarPersonalizado, mostrarModalAbono} from "./SweetAlertManager.js";
 import { procesarAbono, obtenerHistorialAbono, renderizarHistorialAbonos, puedeRecibirAbono, eliminarHistorialAbono } from "./Abonos.js";
 import { mostrarModalMedioPago } from "./Engranaje.js";
-import {
-    wrappedGetDoc,
-    wrappedGetDocs,
-    wrappedSetDoc,
-    wrappedUpdateDoc,
-    wrappedDeleteDoc,
-    wrappedRunTransaction
-} from "./FirebaseWrapper.js";
+import { wrappedGetDoc, wrappedGetDocs, wrappedSetDoc, wrappedUpdateDoc, wrappedDeleteDoc, wrappedRunTransaction } from "./FirebaseWrapper.js";
 import { registrarOperacion } from "./FirebaseMetrics.js";
-
+modificarCantidadProductoCuenta
 const db = getFirestore(app);
 
 // **FUNCIÓN DE DIAGNÓSTICO COMPLETO PARA FIRESTORE**
@@ -308,105 +300,100 @@ export async function cargarDetalleCuenta(clienteId) {
 // --- FUNCIONES PARA EDITAR CANTIDAD DE PRODUCTOS EN CUENTAS ACTIVAS ---
 
 async function modificarCantidadProductoCuenta(clienteId, productoId, operacion) {
+    const cuentaRef = doc(db, "cuentasActivas", clienteId);
+
     try {
-        const cuentaRef = doc(db, "cuentasActivas", clienteId);
-        const cuentaDoc = await wrappedGetDoc(cuentaRef);
-        if (!cuentaDoc.exists()) return;
-        
-        const cuenta = cuentaDoc.data();
-        const productos = { ...cuenta.productos };
-        const historial = [...(cuenta.historial || [])];
-        const producto = productos[productoId];
-        if (!producto) return;
-
-        const fechaActual = new Date();
-        const fechaFormateada = fechaActual.toLocaleString('es-CO', { 
-            timeZone: 'America/Bogota',
-            year: 'numeric', 
-            month: '2-digit', 
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        const idTurno = localStorage.getItem("idTurno") || cuenta.turno;
-
-        let cantidadCambio = 0;
-        let tipoOperacion = '';
-
-        if (operacion === 'aumentar') {
-            producto.cantidad += 1;
-            cantidadCambio = 1;
-            tipoOperacion = 'Agregado';
-            producto.ultimaFecha = fechaFormateada;
-            if (!producto.primerPedido) {
-                producto.primerPedido = fechaFormateada;
+        // Envolvemos toda la lógica en una transacción para seguridad
+        await wrappedRunTransaction(db, async (transaction) => {
+            const cuentaDoc = await transaction.get(cuentaRef);
+            if (!cuentaDoc.exists()) {
+                throw new Error("La cuenta no fue encontrada");
             }
-        } else if (operacion === 'disminuir') {
-            if (producto.cantidad <= 1) {
-                delete productos[productoId];
-                cantidadCambio = -producto.cantidad;
-                tipoOperacion = 'Eliminado';
-            } else {
-                producto.cantidad -= 1;
+
+            const cuenta = cuentaDoc.data();
+            const productos = { ...cuenta.productos };
+            const historial = [...(cuenta.historial || [])];
+            const producto = productos[productoId];
+            if (!producto) return;
+
+            // Referencia al producto en el inventario
+            const inventarioRef = doc(db, "inventario", productoId);
+
+            const fechaActual = new Date();
+            const fechaFormateada = fechaActual.toLocaleString('es-CO', { timeZone: 'America/Bogota' });
+            const idTurno = localStorage.getItem("idTurno") || cuenta.turno;
+            let cantidadCambio = 0;
+            let tipoOperacion = '';
+
+            if (operacion === 'aumentar') {
+                producto.cantidad += 1;
+                cantidadCambio = 1;
+                tipoOperacion = 'Agregado';
+                producto.ultimaFecha = fechaFormateada;
+                // Descontar 1 del inventario
+                transaction.update(inventarioRef, { cantidad: increment(-1) });
+
+            } else if (operacion === 'disminuir') {
                 cantidadCambio = -1;
                 tipoOperacion = 'Reducido';
                 producto.ultimaFecha = fechaFormateada;
+
+                // Devolver 1 al inventario
+                transaction.update(inventarioRef, { cantidad: increment(1) });
+
+                if (producto.cantidad <= 1) {
+                    delete productos[productoId];
+                    tipoOperacion = 'Eliminado';
+                } else {
+                    producto.cantidad -= 1;
+                }
             }
-        }
 
-        if (productos[productoId]) {
-            producto.total = producto.cantidad * (producto.precioUnidad ?? producto.precioVenta ?? 0);
-            productos[productoId] = producto;
-        }
+            if (productos[productoId]) {
+                producto.total = producto.cantidad * (producto.precioUnidad ?? producto.precioVenta ?? 0);
+                productos[productoId] = producto;
+            }
 
-        const precioUnitario = producto?.precioUnidad ?? producto?.precioVenta ?? 0;
-        const valorCambio = Math.abs(cantidadCambio) * precioUnitario;
-        
-        const registroHistorial = {
-            fecha: fechaFormateada,
-            turno: idTurno,
-            tipo: 'modificacion',
-            operacion: tipoOperacion,
-            productos: [{
-                nombre: producto?.nombre || 'Producto',
-                cantidad: cantidadCambio,
-                precioVenta: precioUnitario,
-                total: operacion === 'disminuir' ? -valorCambio : valorCambio
-            }],
-            subtotal: operacion === 'disminuir' ? -valorCambio : valorCambio
-        };
+            let totalCuenta = 0;
+            for (const pid in productos) {
+                totalCuenta += productos[pid].total ?? 0;
+            }
 
-        historial.push(registroHistorial);
+            // Lógica para registrar el cambio en el historial
+            const precioUnitario = producto?.precioUnidad ?? producto?.precioVenta ?? 0;
+            const valorCambio = Math.abs(cantidadCambio) * precioUnitario;
+            const registroHistorial = {
+                fecha: fechaFormateada,
+                turno: idTurno,
+                tipo: 'modificacion',
+                operacion: tipoOperacion,
+                productos: [{
+                    nombre: producto?.nombre || 'Producto',
+                    cantidad: cantidadCambio,
+                    precioVenta: precioUnitario,
+                    total: operacion === 'disminuir' ? -valorCambio : valorCambio
+                }],
+                subtotal: operacion === 'disminuir' ? -valorCambio : valorCambio
+            };
+            historial.push(registroHistorial);
 
-        let totalCuenta = 0;
-        for (const pid in productos) {
-            totalCuenta += productos[pid].total ?? 0;
-        }
-
-        try {
-            await wrappedUpdateDoc(cuentaRef, {
+            // Actualizar la cuenta en la base de datos
+            transaction.update(cuentaRef, {
                 productos,
                 historial,
                 total: totalCuenta,
                 ultimaActualizacion: new Date()
             });
-        } catch (firestoreError) {
-            console.error('❌ ERROR ESPECÍFICO DE FIRESTORE:', firestoreError);
-            throw firestoreError;
-        }
+        }, { lecturas: 1, escrituras: 2 }); // Opciones para el wrapper
 
+        // Actualizar la vista en la pantalla DESPUÉS de que la transacción fue exitosa
         await cargarDetalleCuenta(clienteId);
-        const mensaje = operacion === 'aumentar' 
-            ? `✅ Agregada 1 unidad de ${producto.nombre}` 
-            : `➖ ${producto.cantidad === 0 ? 'Eliminado' : 'Reducida 1 unidad de'} ${producto.nombre}`;
-        //mostrarExito(mensaje);
 
     } catch (error) {
         console.error('❌ ERROR COMPLETO EN modificarCantidadProductoCuenta:', error);
         mostrarError('No se pudo modificar la cantidad: ' + error.message);
     }
 }
-
 window.aumentarCantidadCuenta = function(clienteId, productoId) {
     modificarCantidadProductoCuenta(clienteId, productoId, 'aumentar');
 };
@@ -703,6 +690,12 @@ async function agregarProductoACuentaEnBD(clienteId, nombreProducto, precioVenta
         if (!cuentaDoc.exists()) {
             throw new Error(`La cuenta del cliente ${clienteId} no existe.`);
         }
+
+        const inventarioRef = doc(db, "inventario", nombreProducto);
+            transaction.update(inventarioRef, {
+                cantidad: increment(-cantidad) // Resta la cantidad que se está agregando
+            });
+
         const dataCuenta = cuentaDoc.data();
         const productosCuenta = dataCuenta.productos || {};
         const historialCuenta = dataCuenta.historial || [];
