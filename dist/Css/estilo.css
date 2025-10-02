@@ -2416,15 +2416,14 @@ body {
     background-color: #dc3545 !important; /* Rojo peligro */
     color: white !important;
     border: 1px solid #b02a37 !important;
-    border-radius: 6px !important;
-    padding: 6px 10px !important;
-    font-size: 1rem !important; /* Tamaño del ícono */
+    border-radius: 4px !important;
+    padding: 0.5px 4px !important;   /* Menos espacio interno */
+    font-size: 0.8rem !important;  /* Texto/ícono más pequeño */
     line-height: 1;
     cursor: pointer;
-    flex-shrink: 0; /* Evita que el botón se encoja */
+    flex-shrink: 0;
     transition: background-color 0.2s ease;
 }
-
 .btn-eliminar-busqueda:hover {
     background-color: #c82333 !important; /* Rojo más oscuro al pasar el mouse */
     border-color: #a91e2c !important;
